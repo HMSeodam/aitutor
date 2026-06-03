@@ -1,0 +1,972 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>PDF AI 어시스턴트</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<style>
+:root{
+  --ink:#1c1917;--ink2:#57534e;--ink3:#a8a29e;
+  --bg:#f5f5f4;--sf:#fafaf9;--ln:#e7e5e4;--ln2:#d6d3d1;
+  --bl:#1d4ed8;--bll:#dbeafe;--blm:#3b82f6;
+  --am:#92400e;--aml:#fef3c7;
+  --rd:#dc2626;--rdl:#fee2e2;
+  --r:10px;--rl:14px;
+  --sh:0 4px 16px rgba(0,0,0,.08);
+  --shl:0 8px 32px rgba(0,0,0,.14);
+  --tr:.15s cubic-bezier(.4,0,.2,1);
+  --hh:52px;--cw:360px;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+html,body{height:100%;overflow:hidden;background:var(--bg);}
+body{font-family:'Apple SD Gothic Neo','Noto Sans KR',system-ui,sans-serif;color:var(--ink);display:flex;flex-direction:column;}
+
+/* HEADER */
+#hdr{height:var(--hh);flex-shrink:0;background:var(--sf);border-bottom:1px solid var(--ln);display:flex;align-items:center;gap:10px;padding:0 14px;z-index:50;}
+.logo{display:flex;align-items:center;gap:8px;font-size:15px;font-weight:700;white-space:nowrap;}
+.lm{width:30px;height:30px;border-radius:8px;background:linear-gradient(135deg,#1d4ed8,#7c3aed);display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.lm svg{width:16px;height:16px;fill:none;stroke:#fff;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
+.hm{flex:1;min-width:0;display:flex;justify-content:center;}
+.plbl{font-size:13px;color:var(--ink2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:300px;}
+.hr{display:flex;align-items:center;gap:8px;flex-shrink:0;}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--ln2);}
+.dot.on{background:#22c55e;}.dot.err{background:var(--rd);}
+.hb{display:flex;align-items:center;gap:5px;padding:6px 12px;border-radius:var(--r);border:1px solid var(--ln2);background:var(--sf);color:var(--ink2);font-size:12.5px;font-weight:500;cursor:pointer;transition:all var(--tr);white-space:nowrap;font-family:inherit;}
+.hb:hover{background:var(--bg);}
+.hb.p{background:var(--bl);border-color:var(--bl);color:#fff;}.hb.p:hover{background:#1e40af;}
+
+/* MAIN */
+#main{flex:1;display:flex;overflow:hidden;}
+
+/* PDF PANEL */
+#pdfP{flex:1;min-width:0;display:flex;flex-direction:column;background:#3a3a3a;}
+#pdfTb{background:#262626;padding:7px 14px;display:flex;align-items:center;gap:7px;flex-shrink:0;border-bottom:1px solid #111;flex-wrap:wrap;}
+.pb{display:flex;align-items:center;gap:4px;background:rgba(255,255,255,.1);border:none;border-radius:6px;color:#ccc;padding:5px 9px;font-size:12.5px;cursor:pointer;transition:background var(--tr);font-family:inherit;white-space:nowrap;}
+.pb:hover{background:rgba(255,255,255,.18);}.pb:disabled{opacity:.35;cursor:default;}
+.pb svg{width:13px;height:13px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
+.pgi{font-size:12.5px;color:#aaa;min-width:60px;text-align:center;}
+.zmi{font-size:12px;color:#888;min-width:38px;text-align:center;}
+.tsep{width:1px;height:18px;background:rgba(255,255,255,.1);flex-shrink:0;}
+.htxt{font-size:12px;color:#666;}
+
+#pdfSc{flex:1;overflow:auto;display:flex;align-items:flex-start;justify-content:center;padding:20px;}
+#pdfSc::-webkit-scrollbar{width:6px;height:6px;}
+#pdfSc::-webkit-scrollbar-thumb{background:rgba(255,255,255,.15);border-radius:3px;}
+
+/* DROP ZONE */
+#dz{width:100%;max-width:480px;margin:auto;border:2px dashed rgba(255,255,255,.15);border-radius:16px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;cursor:pointer;transition:all var(--tr);color:#888;text-align:center;padding:48px 28px;min-height:300px;}
+#dz:hover,#dz.over{border-color:rgba(59,130,246,.6);background:rgba(59,130,246,.05);}
+#dz svg{width:52px;height:52px;stroke:rgba(255,255,255,.2);fill:none;stroke-width:1.2;}
+#dz .dt{font-size:15px;color:#aaa;font-weight:500;}
+#dz .ds{font-size:12.5px;color:#666;line-height:1.65;}
+
+/* PDF 뷰어 */
+#pdfV{position:relative;display:none;box-shadow:0 6px 32px rgba(0,0,0,.5);border-radius:3px;}
+#pdfCv{display:block;border-radius:3px;}
+
+/* PDF.js 텍스트 레이어 */
+#tlayer{
+  position:absolute;top:0;left:0;overflow:hidden;opacity:1;line-height:1;
+  user-select:text;-webkit-user-select:text;
+}
+#tlayer span{
+  color:transparent;position:absolute;white-space:pre;cursor:text;transform-origin:0% 0%;
+}
+#tlayer span::selection{background:rgba(37,99,235,.3);}
+#tlayer span::-moz-selection{background:rgba(37,99,235,.3);}
+#tlayer .endOfContent{
+  display:block;position:absolute;left:0;bottom:0;right:0;top:100%;user-select:none;cursor:default;
+}
+
+/* 선택 팝업 */
+#selPop{
+  position:fixed;z-index:700;background:#18181b;border-radius:12px;
+  padding:10px 12px;display:none;flex-direction:column;gap:7px;
+  box-shadow:var(--shl);width:230px;pointer-events:auto;
+}
+.sp-l{font-size:11px;color:#71717a;font-weight:600;}
+.sp-p{font-size:12px;color:#d4d4d8;max-height:52px;overflow:hidden;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;line-height:1.5;}
+.sp-bs{display:flex;gap:6px;}
+.spb{flex:1;padding:7px;border:none;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;}
+.spb.ask{background:#2563eb;color:#fff;}.spb.ask:hover{background:#1d4ed8;}
+.spb.cl{background:rgba(255,255,255,.08);color:#a1a1aa;}.spb.cl:hover{background:rgba(255,255,255,.14);}
+
+/* DIVIDER */
+#dv{width:5px;background:var(--bg);flex-shrink:0;cursor:col-resize;transition:background var(--tr);}
+#dv:hover,#dv.drag{background:var(--blm);}
+
+/* CHAT PANEL */
+#chatP{width:var(--cw);flex-shrink:0;display:flex;flex-direction:column;background:var(--sf);border-left:1px solid var(--ln);}
+.chd{padding:12px 15px 10px;border-bottom:1px solid var(--ln);flex-shrink:0;}
+.chdR{display:flex;align-items:center;justify-content:space-between;margin-bottom:3px;}
+.cht{font-size:14px;font-weight:700;}
+.chs{font-size:12px;color:var(--ink3);}
+.ib{background:none;border:none;cursor:pointer;color:var(--ink3);padding:4px;border-radius:6px;transition:all var(--tr);display:flex;align-items:center;}
+.ib:hover{background:var(--bg);color:var(--ink2);}
+.ib svg{width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
+
+/* 글자 크기 조절 */
+.fcbtns{display:flex;align-items:center;gap:3px;}
+.fcb{
+  background:var(--bg);border:1px solid var(--ln2);border-radius:5px;
+  cursor:pointer;color:var(--ink2);font-family:inherit;font-weight:600;
+  line-height:1;transition:all var(--tr);padding:3px 6px;
+}
+.fcb:hover{background:var(--ln);border-color:var(--ink3);}
+.fcb.sm{font-size:10px;}
+.fcb.lg{font-size:14px;}
+
+.scRow{display:flex;align-items:center;gap:8px;padding:8px 14px;border-bottom:1px solid var(--ln);flex-shrink:0;}
+.scTog{display:flex;border:1px solid var(--ln2);border-radius:8px;overflow:hidden;flex:1;}
+.sc{flex:1;padding:5px 4px;border:none;background:transparent;font-size:11.5px;font-family:inherit;cursor:pointer;color:var(--ink2);transition:all var(--tr);white-space:nowrap;}
+.sc.on{background:var(--bl);color:#fff;font-weight:600;}
+.sc:disabled{opacity:.4;cursor:not-allowed;}
+
+.chips{display:flex;gap:5px;padding:8px 13px;flex-wrap:wrap;flex-shrink:0;border-bottom:1px solid var(--ln);}
+.chip{padding:4px 10px;border-radius:20px;border:1px solid var(--ln2);background:var(--bg);color:var(--ink2);font-size:11.5px;cursor:pointer;transition:all var(--tr);font-family:inherit;}
+.chip:hover{background:var(--bll);border-color:var(--bl);color:var(--bl);}
+
+#msgs{flex:1;overflow-y:auto;padding:13px;display:flex;flex-direction:column;gap:11px;}
+#msgs::-webkit-scrollbar{width:4px;}
+#msgs::-webkit-scrollbar-thumb{background:var(--ln2);border-radius:2px;}
+
+.wlc{text-align:center;padding:28px 14px;display:flex;flex-direction:column;align-items:center;gap:10px;}
+.wi{width:46px;height:46px;border-radius:50%;background:var(--bll);display:flex;align-items:center;justify-content:center;}
+.wi svg{width:22px;height:22px;fill:none;stroke:var(--bl);stroke-width:1.8;stroke-linecap:round;}
+.wlc h3{font-size:14px;font-weight:700;}
+.wlc p{font-size:12.5px;color:var(--ink2);line-height:1.7;}
+
+.msg{display:flex;flex-direction:column;gap:3px;animation:pop .18s ease;}
+@keyframes pop{from{opacity:0;transform:translateY(5px);}to{opacity:1;}}
+.msg.u{align-items:flex-end;}.msg.ai{align-items:flex-start;}
+.sndr{font-size:11px;font-weight:600;color:var(--ink3);padding:0 2px;}
+.msg.ai .sndr{color:var(--bl);}
+/* 사용자 버블 — 고정 크기 */
+.msg.u .bbl{background:var(--bl);color:#fff;border-bottom-right-radius:4px;font-size:13.5px;}
+/* AI 버블 — JS로 직접 font-size 적용 */
+.msg.ai .bbl{background:var(--bg);color:var(--ink);border-bottom-left-radius:4px;}
+.bbl{max-width:93%;padding:9px 13px;border-radius:var(--rl);line-height:1.75;word-break:break-word;}
+.bbl code{background:rgba(0,0,0,.07);padding:1px 5px;border-radius:4px;font-size:12px;font-family:monospace;}
+.mts{font-size:11px;color:var(--ink3);padding:0 2px;}
+.ctxb{background:var(--aml);border:1px solid #fde68a;border-radius:8px;padding:6px 10px;font-size:12px;color:var(--am);max-width:93%;line-height:1.5;}
+.tyw{background:var(--bg);border-radius:var(--rl);border-bottom-left-radius:4px;padding:10px 14px;display:flex;gap:5px;align-items:center;}
+.td{width:7px;height:7px;border-radius:50%;background:var(--ink3);animation:td 1.2s infinite;}
+.td:nth-child(2){animation-delay:.2s;}.td:nth-child(3){animation-delay:.4s;}
+@keyframes td{0%,100%{transform:translateY(0);opacity:.4;}50%{transform:translateY(-5px);opacity:1;}}
+.errb{background:var(--rdl);border-left:3px solid var(--rd);border-radius:var(--r);padding:9px 12px;font-size:13px;color:#991b1b;max-width:93%;line-height:1.6;}
+.wrnb{background:var(--aml);border-left:3px solid #f59e0b;border-radius:var(--r);padding:9px 12px;font-size:13px;color:var(--am);max-width:93%;line-height:1.6;}
+/* 계속 보기 버튼 */
+.cont-btn{
+  display:inline-flex;align-items:center;gap:5px;
+  margin-top:2px;padding:6px 13px;
+  border:1px solid var(--blm);border-radius:20px;
+  background:var(--bll);color:var(--bl);
+  font-size:12px;font-weight:600;font-family:inherit;
+  cursor:pointer;transition:all var(--tr);
+}
+.cont-btn:hover{background:var(--bl);color:#fff;}
+
+.cin{padding:10px 12px 13px;border-top:1px solid var(--ln);flex-shrink:0;}
+.cinB{display:flex;gap:8px;align-items:flex-end;border:1.5px solid var(--ln2);border-radius:var(--rl);padding:8px 8px 8px 12px;background:var(--sf);transition:border-color var(--tr);}
+.cinB:focus-within{border-color:var(--blm);}
+#ci{flex:1;border:none;outline:none;background:transparent;font-family:inherit;font-size:13.5px;color:var(--ink);resize:none;min-height:36px;max-height:110px;line-height:1.6;overflow-y:auto;}
+#ci::placeholder{color:var(--ink3);}
+#sb{width:36px;height:36px;border-radius:10px;flex-shrink:0;background:var(--bl);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all var(--tr);}
+#sb:hover{background:#1e40af;}#sb:disabled{background:var(--ln2);cursor:default;}
+#sb svg{width:17px;height:17px;fill:none;stroke:#fff;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;}
+.cinh{font-size:11px;color:var(--ink3);text-align:center;margin-top:5px;}
+
+/* 모달 */
+.mbg{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:400;display:flex;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(3px);}
+.modal{background:var(--sf);border-radius:20px;padding:28px 28px 24px;width:100%;max-width:440px;box-shadow:var(--shl);}
+.modal h2{font-size:17px;font-weight:700;margin-bottom:6px;}
+.modal p{font-size:13px;color:var(--ink2);line-height:1.7;margin-bottom:14px;}
+.modal p a{color:var(--bl);}
+.modal label{font-size:12.5px;font-weight:600;color:var(--ink2);display:block;margin-bottom:6px;}
+.modal input{width:100%;border:1.5px solid var(--ln2);border-radius:var(--r);padding:10px 14px;font-size:13.5px;font-family:monospace;color:var(--ink);background:var(--bg);outline:none;transition:border-color var(--tr);margin-bottom:16px;}
+.modal input:focus{border-color:var(--blm);}
+.macts{display:flex;gap:10px;justify-content:flex-end;}
+.mbtn{padding:10px 22px;border-radius:var(--r);border:none;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;transition:all var(--tr);}
+.mbtn.ok{background:var(--bl);color:#fff;}.mbtn.ok:hover{background:#1e40af;}
+.mbtn.sk{background:var(--bg);color:var(--ink2);border:1px solid var(--ln2);}.mbtn.sk:hover{background:var(--ln);}
+
+/* FAB */
+#fab{position:fixed;bottom:20px;right:20px;z-index:100;width:52px;height:52px;border-radius:50%;background:var(--bl);border:none;box-shadow:var(--shl);cursor:pointer;display:none;align-items:center;justify-content:center;}
+#fab svg{width:24px;height:24px;fill:none;stroke:#fff;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
+.bdg{position:absolute;top:-2px;right:-2px;width:18px;height:18px;border-radius:50%;background:#ef4444;color:#fff;font-size:11px;font-weight:700;display:none;align-items:center;justify-content:center;border:2px solid var(--sf);}
+
+/* 반응형 */
+@media(max-width:768px){
+  :root{--cw:100%;}
+  .logo span{display:none;}
+  .plbl{max-width:130px;}
+  #dv{display:none;}
+  #chatP{position:fixed;bottom:0;left:0;right:0;height:58vh;z-index:80;transform:translateY(100%);border-left:none;border-top:1px solid var(--ln);border-radius:16px 16px 0 0;box-shadow:0 -4px 24px rgba(0,0,0,.12);transition:transform .3s cubic-bezier(.4,0,.2,1);}
+  #chatP.open{transform:translateY(0);}
+  #fab{display:flex;}
+  #cbtn{display:flex !important;}
+  .chips{gap:4px;}.chip{font-size:11px;padding:4px 8px;}
+}
+@media(max-width:480px){
+  #pdfTb{padding:6px 10px;gap:5px;}
+  .pb{padding:4px 8px;font-size:12px;}
+  .pgi{min-width:50px;font-size:12px;}
+}
+*::-webkit-scrollbar{width:5px;height:5px;}
+*::-webkit-scrollbar-track{background:transparent;}
+*::-webkit-scrollbar-thumb{background:var(--ln2);border-radius:3px;}
+</style>
+</head>
+<body>
+
+<!-- API 모달 -->
+<div class="mbg" id="apiM">
+  <div class="modal">
+    <h2>🔑 Gemini API 키 설정</h2>
+    <p>
+      Google AI Studio에서 API 키를 발급받아 입력하세요.<br>
+      키는 브라우저 로컬 스토리지에만 저장됩니다.<br>
+      발급: <a href="https://aistudio.google.com/apikey" target="_blank">aistudio.google.com/apikey</a>
+    </p>
+    <label>API Key (Gemini 2.5 Flash)</label>
+    <input type="password" id="apiInp" placeholder="AIza..." autocomplete="off"/>
+    <div class="macts">
+      <button class="mbtn sk" onclick="skipM()">나중에</button>
+      <button class="mbtn ok" onclick="saveKey()">저장하고 시작</button>
+    </div>
+  </div>
+</div>
+
+<!-- 선택 팝업 -->
+<div id="selPop">
+  <div class="sp-l">선택된 텍스트</div>
+  <div class="sp-p" id="spPv"></div>
+  <div class="sp-bs">
+    <button class="spb ask" id="askBtn">이 부분 질문하기</button>
+    <button class="spb cl"  id="clsBtn">닫기</button>
+  </div>
+</div>
+
+<!-- 헤더 -->
+<div id="hdr">
+  <div class="logo">
+    <div class="lm"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div>
+    <span>PDF AI 어시스턴트</span>
+  </div>
+  <div class="hm"><span class="plbl" id="plbl">PDF를 업로드하세요</span></div>
+  <div class="hr">
+    <div class="dot" id="stD"></div>
+    <button class="hb" onclick="document.getElementById('apiM').style.display='flex'">키 설정</button>
+    <label class="hb p" for="fi" style="cursor:pointer;">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+      PDF 열기
+    </label>
+  </div>
+</div>
+
+<div id="main">
+  <!-- PDF 패널 -->
+  <div id="pdfP">
+    <div id="pdfTb">
+      <button class="pb" id="pvBtn" onclick="goPage(-1)" disabled><svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>이전</button>
+      <span class="pgi" id="pgi">— / —</span>
+      <button class="pb" id="nxBtn" onclick="goPage(1)" disabled>다음<svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg></button>
+      <div class="tsep"></div>
+      <button class="pb" onclick="doZ(-0.2)"><svg viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/></svg></button>
+      <span class="zmi" id="zmL">120%</span>
+      <button class="pb" onclick="doZ(0.2)"><svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></button>
+      <div class="tsep"></div>
+      <span class="htxt">텍스트를 드래그하여 선택 → AI 질문</span>
+    </div>
+    <div id="pdfSc">
+      <div id="dz" onclick="document.getElementById('fi').click()">
+        <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+        <div class="dt">PDF 파일을 드래그하거나 클릭하여 업로드</div>
+        <div class="ds">강의 교재 PDF를 올리면 AI가 내용을 분석합니다<br>텍스트를 드래그 선택 후 바로 질문 가능</div>
+      </div>
+      <div id="pdfV">
+        <canvas id="pdfCv"></canvas>
+        <div id="tlayer"></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="dv"></div>
+
+  <!-- 채팅 패널 -->
+  <div id="chatP">
+    <div class="chd">
+      <div class="chdR">
+        <span class="cht">AI 질의응답</span>
+        <div style="display:flex;align-items:center;gap:6px;">
+          <!-- 글자 크기 조절 -->
+          <div class="fcbtns">
+            <button class="fcb sm" id="fcSmall" title="글자 작게">A-</button>
+            <button class="fcb lg" id="fcLarge" title="글자 크게">A+</button>
+          </div>
+          <button class="ib" onclick="clearC()" title="대화 초기화">
+            <svg viewBox="0 0 24 24"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 101.85-4.36L1 10"/></svg>
+          </button>
+          <button class="ib" id="cbtn" onclick="togC()" style="display:none;" title="닫기">
+            <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </button>
+        </div>
+      </div>
+      <div class="chs" id="chs">PDF를 업로드한 후 질문하세요</div>
+    </div>
+
+    <div class="scRow" id="scRow" style="display:none;">
+      <span style="font-size:12px;font-weight:500;flex-shrink:0;">범위:</span>
+      <div class="scTog">
+        <button class="sc" id="scS" onclick="setSc('sel')" disabled>선택 영역</button>
+        <button class="sc on" id="scA" onclick="setSc('all')">전체 PDF</button>
+        <button class="sc" id="scPg" onclick="setSc('page')">현재 페이지</button>
+      </div>
+    </div>
+
+    <div class="chips" id="chpRow" style="display:none;">
+      <button class="chip" onclick="qk(this)">핵심 내용 요약</button>
+      <button class="chip" onclick="qk(this)">중요 개념 설명</button>
+      <button class="chip" onclick="qk(this)">어려운 용어 풀이</button>
+      <button class="chip" onclick="qk(this)">예상 시험 문제</button>
+    </div>
+
+    <div id="msgs">
+      <div class="wlc" id="wm">
+        <div class="wi"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg></div>
+        <h3>PDF 강의 AI 도우미</h3>
+        <p>교재 PDF를 업로드하고<br>궁금한 내용을 질문해 보세요.<br><br>텍스트를 <strong>마우스로 드래그</strong>하거나<br>모바일에서 <strong>길게 눌러 드래그</strong>하면<br>해당 부분에 대해 집중 질문할 수 있습니다.</p>
+      </div>
+    </div>
+
+    <div class="cin">
+      <div class="cinB">
+        <textarea id="ci" placeholder="질문을 입력하세요..." rows="1"
+          onkeydown="onK(event)" oninput="grow(this)" disabled></textarea>
+        <button id="sb" onclick="doSend()" disabled>
+          <svg viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+        </button>
+      </div>
+      <div class="cinh">Enter 전송 · Shift+Enter 줄바꿈</div>
+    </div>
+  </div>
+</div>
+
+<button id="fab" onclick="togC()">
+  <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+  <div class="bdg" id="bdg"></div>
+</button>
+
+<input type="file" id="fi" accept=".pdf" style="display:none;" onchange="loadPDF(this)">
+
+<script>
+pdfjsLib.GlobalWorkerOptions.workerSrc =
+  'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+const MODEL = 'gemini-2.5-flash';
+
+// ── 앱 상태 ──
+const G = {
+  key:  localStorage.getItem('gk') || '',
+  pdf:  null, pg: 1, tot: 0, zm: 1.2,
+  txts: {},          // 페이지별 텍스트 캐시
+  fn: '',
+  // [수정1·4] 대화 히스토리: {role, parts} 배열 — 단순 축적 방식
+  hist: [],
+  // [수정1·4] 시스템 프롬프트는 별도 보관 (매 요청마다 재조합하지 않음)
+  sysPrompt: '',
+  scope: 'all', selTxt: '',
+  chatOpen: false, unread: 0, busy: false,
+  // [수정3] 글자 크기 — JS로 직접 관리
+  fontSize: 13.5,
+  mob: () => window.innerWidth <= 768,
+};
+
+// 팝업 닫기 플래그 (닫기 직후 재열림 방지)
+let popupJustClosed = false;
+
+/* ── 초기화 ── */
+(function () {
+  if (G.key) { closeM(); setDot(true); }
+  document.getElementById('apiInp').value = G.key;
+
+  // [수정3] 글자 크기 버튼 — addEventListener로 등록
+  document.getElementById('fcSmall').addEventListener('click', () => adjFont(-1));
+  document.getElementById('fcLarge').addEventListener('click', () => adjFont(1));
+
+  // 선택 팝업 버튼
+  document.getElementById('askBtn').addEventListener('click', e => { e.stopPropagation(); askSel(); });
+  document.getElementById('clsBtn').addEventListener('click', e => {
+    e.stopPropagation();
+    popupJustClosed = true;
+    hideP();
+    try { window.getSelection()?.removeAllRanges(); } catch(_) {}
+    setTimeout(() => { popupJustClosed = false; }, 300);
+  });
+
+  setupDiv(); setupDrop(); setupSelEvents();
+  checkMob(); window.addEventListener('resize', checkMob);
+})();
+
+/* ── 모달 ── */
+function saveKey() {
+  const k = document.getElementById('apiInp').value.trim();
+  if (!k) { alert('API 키를 입력해 주세요.'); return; }
+  G.key = k; localStorage.setItem('gk', k);
+  closeM(); setDot(true);
+}
+function skipM()  { closeM(); }
+function closeM() { document.getElementById('apiM').style.display = 'none'; }
+function setDot(ok) { document.getElementById('stD').className = 'dot' + (ok ? ' on' : ' err'); }
+
+/* ── [수정3] 글자 크기 조절 — AI 버블에 inline style 직접 적용 ── */
+function adjFont(d) {
+  G.fontSize = Math.max(10, Math.min(22, G.fontSize + d * 1.5));
+  // 기존 AI 버블 전부 업데이트
+  document.querySelectorAll('.msg.ai .bbl').forEach(el => {
+    el.style.fontSize = G.fontSize + 'px';
+  });
+}
+
+/* ── PDF 로드 ── */
+async function loadPDF(inp) {
+  const f = inp.files[0]; if (!f) return;
+  G.fn = f.name; G.txts = {}; G.hist = []; G.pg = 1; G.sysPrompt = '';
+  try {
+    G.pdf = await pdfjsLib.getDocument({ data: await f.arrayBuffer() }).promise;
+    G.tot = G.pdf.numPages;
+    document.getElementById('dz').style.display   = 'none';
+    document.getElementById('pdfV').style.display = 'block';
+    await render(G.pg);
+    bgEx();  // 백그라운드 텍스트 추출
+    document.getElementById('plbl').textContent     = f.name;
+    document.getElementById('scRow').style.display  = 'flex';
+    document.getElementById('chpRow').style.display = 'flex';
+    document.getElementById('chs').textContent      = `📄 ${f.name} · ${G.tot}페이지`;
+    document.getElementById('ci').disabled   = false;
+    document.getElementById('sb').disabled   = false;
+    document.getElementById('ci').placeholder = '교재 내용에 대해 질문하세요...';
+    const wm = document.getElementById('wm'); if (wm) wm.remove();
+    addAI(`**${f.name}** 업로드 완료! 총 **${G.tot}페이지**입니다.\n\n텍스트를 마우스로 드래그하면 해당 부분에 대해 집중 질문할 수 있습니다.`);
+    if (G.mob()) openC();
+  } catch (e) { alert('PDF 로드 오류: ' + e.message); }
+}
+
+/* ── 렌더링 ── */
+async function render(n) {
+  if (!G.pdf) return;
+  const pg = await G.pdf.getPage(n);
+  const vp = pg.getViewport({ scale: G.zm });
+  const cv = document.getElementById('pdfCv');
+  cv.width = vp.width; cv.height = vp.height;
+  const viewer = document.getElementById('pdfV');
+  viewer.style.width = vp.width + 'px'; viewer.style.height = vp.height + 'px';
+  await pg.render({ canvasContext: cv.getContext('2d'), viewport: vp }).promise;
+
+  const tl = document.getElementById('tlayer');
+  tl.innerHTML = '';
+  tl.style.width = vp.width + 'px'; tl.style.height = vp.height + 'px';
+  tl.style.setProperty('--scale-factor', G.zm.toString());
+
+  const tc = await pg.getTextContent();
+  G.txts[n] = tc.items.map(it => ({ str: it.str }));
+
+  const task = pdfjsLib.renderTextLayer({
+    textContentSource: tc, container: tl, viewport: vp, textDivs: [],
+  });
+  await task.promise;
+  updNav();
+}
+
+async function bgEx() {
+  for (let i = 1; i <= G.tot; i++) {
+    if (G.txts[i]) continue;
+    try {
+      const pg = await G.pdf.getPage(i);
+      const tc = await pg.getTextContent();
+      G.txts[i] = tc.items.map(it => ({ str: it.str }));
+    } catch (_) {}
+  }
+}
+
+function updNav() {
+  document.getElementById('pgi').textContent = `${G.pg} / ${G.tot}`;
+  document.getElementById('pvBtn').disabled  = G.pg <= 1;
+  document.getElementById('nxBtn').disabled  = G.pg >= G.tot;
+  document.getElementById('zmL').textContent = Math.round(G.zm * 100) + '%';
+}
+function goPage(d) {
+  const n = G.pg + d; if (n < 1 || n > G.tot) return;
+  G.pg = n; render(n); clrSel();
+}
+function doZ(d) {
+  G.zm = Math.max(0.5, Math.min(3, G.zm + d));
+  if (G.pdf) render(G.pg);
+}
+
+/* ── 텍스트 선택 팝업 ── */
+function setupSelEvents() {
+  document.addEventListener('mouseup', e => {
+    if (!G.pdf) return;
+    if (document.getElementById('selPop').contains(e.target)) return;
+    setTimeout(() => chkSel(e.clientX, e.clientY), 60);
+  });
+  document.addEventListener('touchend', e => {
+    if (!G.pdf) return;
+    if (document.getElementById('selPop').contains(e.target)) return;
+    const t = e.changedTouches[0];
+    setTimeout(() => chkSel(t.clientX, t.clientY), 120);
+  });
+  document.addEventListener('mousedown', e => {
+    if (popupJustClosed) return;
+    const pop = document.getElementById('selPop');
+    if (pop.style.display === 'flex' && !pop.contains(e.target)) {
+      const tl = document.getElementById('tlayer');
+      if (!tl || !tl.contains(e.target)) hideP();
+    }
+  });
+}
+
+function chkSel(cx, cy) {
+  if (popupJustClosed) return;
+  const sel = window.getSelection();
+  if (!sel || sel.isCollapsed) return;
+  const txt = sel.toString().trim();
+  if (txt.length < 2) return;
+  const tl = document.getElementById('tlayer');
+  if (!tl || !sel.anchorNode || !tl.contains(sel.anchorNode)) return;
+  G.selTxt = txt;
+  document.getElementById('scS').disabled = false;
+  showP(cx, cy, txt);
+}
+
+function showP(cx, cy, txt) {
+  const p = document.getElementById('selPop');
+  document.getElementById('spPv').textContent = txt.length > 100 ? txt.slice(0, 100) + '…' : txt;
+  p.style.display = 'flex';
+  const vw = window.innerWidth, vh = window.innerHeight;
+  let l = cx + 12, t = cy + 12;
+  if (l + 240 > vw - 8) l = cx - 240 - 8;
+  if (t + 130 > vh - 8) t = cy - 130 - 8;
+  p.style.left = Math.max(8, l) + 'px'; p.style.top = Math.max(8, t) + 'px';
+}
+function hideP() { document.getElementById('selPop').style.display = 'none'; }
+
+function clrSel() {
+  G.selTxt = '';
+  try { window.getSelection()?.removeAllRanges(); } catch (_) {}
+  hideP();
+  document.getElementById('scS').disabled = true;
+  if (G.scope === 'sel') setSc('all');
+}
+
+function askSel() {
+  hideP(); setSc('sel');
+  if (G.mob()) openC();
+  const ci = document.getElementById('ci');
+  ci.value = '이 내용을 자세히 설명해줘'; grow(ci);
+  doSend();
+}
+
+/* ── 범위 ── */
+function setSc(v) {
+  G.scope = v;
+  ['scS','scA','scPg'].forEach(id => document.getElementById(id).classList.remove('on'));
+  document.getElementById({ sel:'scS', all:'scA', page:'scPg' }[v]).classList.add('on');
+}
+
+/* ── 전송 ── */
+function onK(e) { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); doSend(); } }
+function grow(el) { el.style.height = 'auto'; el.style.height = Math.min(el.scrollHeight, 110) + 'px'; }
+
+// [수정2] 칩 클릭 — 선택 텍스트 없으면 무조건 전체 PDF 범위로
+function qk(btn) {
+  if (!G.selTxt) setSc('all');
+  const ci = document.getElementById('ci');
+  ci.value = btn.textContent; grow(ci);
+  doSend();
+}
+
+async function doSend() {
+  if (G.busy || !G.key) { return; }
+  const ci = document.getElementById('ci');
+  const q = ci.value.trim(); if (!q) return;
+  ci.value = ''; ci.style.height = 'auto';
+  addUser(q);
+  G.busy = true; document.getElementById('sb').disabled = true;
+
+  // scope 방어: sel인데 selTxt 없으면 all로
+  if (G.scope === 'sel' && !G.selTxt) setSc('all');
+
+  // ── 컨텍스트 구성 ──
+  let ctxLabel = '';
+  let ctxBody  = '';
+  if (G.scope === 'sel' && G.selTxt) {
+    ctxLabel = `[선택된 텍스트 · ${G.pg}페이지]`;
+    ctxBody  = G.selTxt;
+    addCtx(`선택 영역: "${G.selTxt.slice(0, 60)}${G.selTxt.length > 60 ? '…' : ''}"`);
+  } else if (G.scope === 'page') {
+    ctxLabel = `[현재 페이지 · ${G.pg}/${G.tot}페이지]`;
+    ctxBody  = pgTxt(G.pg);
+  } else {
+    ctxLabel = `[전체 PDF · ${G.tot}페이지]`;
+    const parts = [];
+    for (let i = 1; i <= G.tot; i++) {
+      const t = pgTxt(i); if (t) parts.push(`[${i}페이지]\n${t}`);
+    }
+    ctxBody = parts.join('\n\n');
+  }
+
+  // [수정2] 텍스트 추출 미완 시에도 빈 문자열 대신 안내 텍스트로 대체 (오류 없이 진행)
+  if (!ctxBody.trim()) {
+    ctxBody = '(아직 텍스트를 불러오는 중입니다. 잠시 후 다시 시도해 주세요.)';
+  }
+
+  const ctx = `${ctxLabel}\n${ctxBody}`;
+
+  // ── 이미지 생성 요청 감지 ──
+  const imgKeywords = /이미지|그림|사진|시각화|표현해|그려|일러스트|장면|풍경|묘사.*이미지|image|draw|paint|illustrat|generat.*image|picture/i;
+  const isImageReq = imgKeywords.test(q);
+
+  showTy();
+  try {
+    // 이미지 요청이면 이미지 생성 API 시도
+    if (isImageReq) {
+      const imgResult = await callGeminiImage(q, ctx);
+      rmTy();
+      if (imgResult.imageB64) {
+        addAIImage(imgResult.imageB64, imgResult.text);
+      } else {
+        addAI(imgResult.text);
+      }
+      G.hist.push({ role: 'user',  parts: [{ text: q                          }] });
+      G.hist.push({ role: 'model', parts: [{ text: imgResult.text || '(이미지)' }] });
+      if (G.hist.length > 20) G.hist = G.hist.slice(-20);
+      if (G.mob() && !G.chatOpen) { G.unread++; const b=document.getElementById('bdg'); b.textContent=G.unread; b.style.display='flex'; }
+      G.busy = false; document.getElementById('sb').disabled = false;
+      return;
+    }
+
+    const result = await callGemini(q, ctx);
+    rmTy();
+    addAI(result.text);
+    // 히스토리에 추가
+    G.hist.push({ role: 'user',  parts: [{ text: q           }] });
+    G.hist.push({ role: 'model', parts: [{ text: result.text }] });
+    if (G.hist.length > 20) G.hist = G.hist.slice(-20);
+    // 응답이 잘린 경우 "계속 보기" 버튼 표시
+    if (result.truncated) addContinueBtn();
+    if (G.mob() && !G.chatOpen) {
+      G.unread++;
+      const b = document.getElementById('bdg'); b.textContent = G.unread; b.style.display = 'flex';
+    }
+  } catch (e) {
+    rmTy();
+    const m = (e.message || '').toLowerCase();
+    if (m.includes('image_unavail') || m.startsWith('image_unavail')) {
+      addWrn(
+        '🎨 <strong>이미지 생성 불가</strong><br>' +
+        '이미지 생성(gemini-2.5-flash-image)은 <strong>Google AI Studio 결제 설정</strong>이 필요합니다.<br>' +
+        '텍스트로 대신 설명해 드릴게요. 다시 질문해 주세요!'
+      );
+    } else if (m.includes('quota') || m.includes('resource_exhausted')) {
+      addWrn('⚡ <strong>API 사용량 초과</strong><br>잠시 후 다시 시도해 주세요.');
+    } else if (m.includes('api_key') || m.includes('401') || m.includes('403')) {
+      addErr('🔑 API 키 오류: 키 설정을 확인해 주세요.');
+      setDot(false);
+    } else {
+      addErr('⚠️ ' + (e.message || '알 수 없는 오류'));
+    }
+  } finally {
+    G.busy = false; document.getElementById('sb').disabled = false;
+  }
+}
+
+function pgTxt(n) {
+  return (G.txts[n] || []).map(it => it.str).join(' ').replace(/\s+/g, ' ').trim();
+}
+
+/* ── [수정1·4] Gemini API — 올바른 contents 구조 ──
+   Gemini 멀티턴: [user, model, user, model, ..., user]
+   - system prompt는 첫 user turn에 포함
+   - hist는 이전 대화쌍 (user+model)
+   - 현재 질문은 마지막 user turn
+*/
+/* ── Gemini 이미지 생성 (gemini-2.5-flash-image) ── */
+async function callGeminiImage(q, ctx) {
+  // 이미지 생성용 프롬프트: 교재 내용 기반으로 시각화 지시
+  const imgPrompt =
+    `Based on the following Korean educational material, create a visual illustration.\n` +
+    `교재 내용:\n${ctx.slice(0, 3000)}\n\n` +
+    `User request: ${q}\n` +
+    `Generate a beautiful, detailed artistic illustration that visually represents the concepts, ` +
+    `scenes, or ideas described. Style: artistic, evocative, high quality.`;
+
+  const resp = await fetch(
+    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image:generateContent?key=${G.key}`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contents: [{ role: 'user', parts: [{ text: imgPrompt }] }],
+        generationConfig: { responseModalities: ['Text', 'Image'] }
+      })
+    }
+  );
+
+  if (!resp.ok) {
+    const err = await resp.json().catch(() => ({}));
+    const msg = (err.error?.message || `HTTP ${resp.status}`);
+    // 결제 미설정 등 이미지 생성 불가 시 텍스트로 폴백
+    if (/billing|payment|quota|permission|not support/i.test(msg)) {
+      throw new Error('IMAGE_UNAVAIL:' + msg);
+    }
+    throw new Error(msg);
+  }
+
+  const data = await resp.json();
+  const parts = data.candidates?.[0]?.content?.parts || [];
+  let imageB64 = null;
+  let textParts = [];
+  for (const p of parts) {
+    if (p.inlineData?.mimeType?.startsWith('image/')) {
+      imageB64 = 'data:' + p.inlineData.mimeType + ';base64,' + p.inlineData.data;
+    } else if (p.text) {
+      textParts.push(p.text);
+    }
+  }
+  return { imageB64, text: textParts.join('') };
+}
+
+/* ── 이미지 버블 UI ── */
+function addAIImage(b64, caption) {
+  const d = mk('div msg ai');
+  const capHtml = caption ? `<div style="font-size:${G.fontSize}px;margin-top:8px;color:var(--ink2);line-height:1.6;">${md(caption)}</div>` : '';
+  d.innerHTML =
+    `<span class="sndr">Gemini 2.5 Flash Image</span>` +
+    `<div class="bbl" style="padding:8px;background:var(--bg);">` +
+      `<img src="${b64}" style="width:100%;border-radius:8px;display:block;" alt="AI 생성 이미지"/>` +
+      capHtml +
+    `</div>` +
+    `<span class="mts">${ts()}</span>`;
+  app(d);
+}
+
+async function callGemini(q, ctx) {
+  // 시스템 프롬프트 (교재 내용 + 규칙)
+  const sys =
+    `당신은 대학 강의 교재 전문 학습 도우미입니다.\n파일명: ${G.fn}\n\n` +
+    `아래는 PDF 강의 교재 내용입니다:\n${'─'.repeat(40)}\n` +
+    `${ctx.slice(0, 55000)}\n${'─'.repeat(40)}\n\n` +
+    `응답 규칙:\n` +
+    `1. 반드시 위 교재 내용에 근거하여 답하세요.\n` +
+    `2. 교재에 없는 내용은 "교재에 명시되어 있지 않습니다"라고 솔직하게 말하세요.\n` +
+    `3. 학생이 이해하기 쉽게 친절하고 명확하게 설명하세요.\n` +
+    `4. 필요 시 몇 페이지의 내용인지 언급하세요.\n` +
+    `5. 반드시 한국어로 답변하세요.\n` +
+    `6. **굵은 글씨**로 핵심 용어를 강조하세요.`;
+
+  // contents 배열 구성
+  // 첫 turn: system + 현재 질문
+  // 이후 turn: hist(이전 대화) → 현재 질문
+  let contents;
+  if (G.hist.length === 0) {
+    // 첫 질문
+    contents = [
+      { role: 'user',  parts: [{ text: `${sys}\n\n질문: ${q}` }] }
+    ];
+  } else {
+    // 연속 질문: system은 첫 user turn에만, 이후는 히스토리 그대로
+    // Gemini는 첫 turn이 반드시 user여야 하고, user-model이 교대로 와야 함
+    const firstUserText = G.hist[0]?.parts?.[0]?.text || '';
+    // 히스토리가 이미 올바른 교대 구조인지 확인
+    contents = [
+      { role: 'user',  parts: [{ text: `${sys}\n\n질문: ${firstUserText}` }] },
+      ...G.hist.slice(1),          // model 응답부터 나머지 히스토리
+      { role: 'user',  parts: [{ text: q }] }  // 현재 질문
+    ];
+  }
+
+  const resp = await fetch(
+    `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${G.key}`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contents,
+        generationConfig: {
+          maxOutputTokens: 65536,
+          temperature: 0.7,
+        }
+      })
+    }
+  );
+
+  if (!resp.ok) {
+    const err = await resp.json().catch(() => ({}));
+    const msg = err.error?.message || `HTTP ${resp.status}`;
+    throw new Error(msg);
+  }
+
+  const data = await resp.json();
+
+  // 오류 응답 체크
+  if (data.error) throw new Error(data.error.message || '알 수 없는 오류');
+
+  // finish_reason 체크
+  const candidate = data.candidates?.[0];
+  if (!candidate) throw new Error('응답 후보가 없습니다.');
+
+  const finishReason = candidate.finishReason;
+  if (finishReason === 'SAFETY') throw new Error('안전 정책에 의해 차단된 응답입니다.');
+
+  const parts = candidate.content?.parts || [];
+  const txt = parts.filter(p => !p.thought).map(p => p.text || '').join('').trim();
+  if (!txt) throw new Error('빈 응답을 받았습니다. 다시 시도해 주세요.');
+
+  // 응답이 잘린 경우 (MAX_TOKENS) truncated 플래그 반환
+  return { text: txt, truncated: finishReason === 'MAX_TOKENS' };
+}
+
+/* ── 메시지 UI ── */
+function ts()  { return new Date().toLocaleTimeString('ko-KR', { hour:'2-digit', minute:'2-digit' }); }
+function mk(c) { const d = document.createElement('div'); d.className = c; return d; }
+function app(el) {
+  const m = document.getElementById('msgs'); m.appendChild(el); m.scrollTop = m.scrollHeight;
+}
+function esc(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+function md(s) {
+  return esc(s)
+    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+    .replace(/\*(.+?)\*/g,     '<em>$1</em>')
+    .replace(/`([^`]+)`/g,     '<code>$1</code>')
+    .replace(/\n/g,            '<br>');
+}
+
+function addUser(t) {
+  const d = mk('div msg u');
+  d.innerHTML = `<div class="bbl">${esc(t).replace(/\n/g,'<br>')}</div><span class="mts">${ts()}</span>`;
+  app(d);
+}
+function addAI(t) {
+  const d = mk('div msg ai');
+  // [수정3] inline style로 현재 fontSize 직접 적용
+  d.innerHTML = `<span class="sndr">Gemini 2.5 Flash</span><div class="bbl" style="font-size:${G.fontSize}px">${md(t)}</div><span class="mts">${ts()}</span>`;
+  app(d);
+}
+function addCtx(t) {
+  const d = mk('div msg ai');
+  d.innerHTML = `<div class="ctxb">📌 ${esc(t)}</div>`;
+  app(d);
+}
+function addErr(t) {
+  const d = mk('div msg ai');
+  d.innerHTML = `<div class="errb">${esc(t)}</div>`;
+  app(d);
+}
+function addWrn(t) {
+  const d = mk('div msg ai');
+  d.innerHTML = `<div class="wrnb">${t}</div>`;
+  app(d);
+}
+
+/* 응답이 잘렸을 때 "계속 보기" 버튼 */
+function addContinueBtn() {
+  const d = mk('div msg ai');
+  d.id = 'contBtnWrap';
+  d.innerHTML = `<button class="cont-btn" onclick="continueAnswer()">▶ 이어서 계속 보기</button>`;
+  app(d);
+}
+
+async function continueAnswer() {
+  // 계속보기 버튼 제거
+  const wrap = document.getElementById('contBtnWrap');
+  if (wrap) wrap.remove();
+
+  if (G.busy || !G.key) return;
+  G.busy = true;
+  document.getElementById('sb').disabled = true;
+  showTy();
+  try {
+    const result = await callGemini('이전 답변을 이어서 계속 작성해줘. 앞에서 말한 내용은 반복하지 말고 끊긴 부분부터 이어서 작성해줘.', '');
+    rmTy();
+    addAI(result.text);
+    G.hist.push({ role: 'user',  parts: [{ text: '계속'       }] });
+    G.hist.push({ role: 'model', parts: [{ text: result.text }] });
+    if (result.truncated) addContinueBtn();
+  } catch (e) {
+    rmTy();
+    addErr('⚠️ ' + (e.message || '이어보기 실패'));
+  } finally {
+    G.busy = false;
+    document.getElementById('sb').disabled = false;
+  }
+}
+function showTy() {
+  const d = mk('div msg ai'); d.id = 'tym';
+  d.innerHTML = `<span class="sndr">Gemini 2.5 Flash</span><div class="tyw"><div class="td"></div><div class="td"></div><div class="td"></div></div>`;
+  app(d);
+}
+function rmTy() { const t = document.getElementById('tym'); if (t) t.remove(); }
+function clearC() {
+  G.hist = []; G.selTxt = ''; setSc('all');
+  document.getElementById('msgs').innerHTML = '';
+  if (G.pdf) addAI('대화가 초기화되었습니다. 다시 질문해 주세요!');
+}
+
+/* ── 드롭존 ── */
+function setupDrop() {
+  const dz = document.getElementById('dz');
+  dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('over'); });
+  dz.addEventListener('dragleave', () => dz.classList.remove('over'));
+  dz.addEventListener('drop', e => {
+    e.preventDefault(); dz.classList.remove('over');
+    const f = e.dataTransfer.files[0];
+    if (f && f.type === 'application/pdf') {
+      const dt = new DataTransfer(); dt.items.add(f);
+      document.getElementById('fi').files = dt.files;
+      loadPDF(document.getElementById('fi'));
+    }
+  });
+}
+
+/* ── 구분자 드래그 ── */
+function setupDiv() {
+  const dv = document.getElementById('dv');
+  let drag = false, sx = 0, sw = 0;
+  dv.addEventListener('mousedown', e => {
+    drag = true; sx = e.clientX;
+    sw = document.getElementById('chatP').offsetWidth;
+    dv.classList.add('drag'); document.body.style.userSelect = 'none';
+  });
+  window.addEventListener('mousemove', e => {
+    if (!drag) return;
+    const w = Math.max(280, Math.min(580, sw + (sx - e.clientX)));
+    document.getElementById('chatP').style.width = w + 'px';
+  });
+  window.addEventListener('mouseup', () => {
+    if (drag) { drag = false; dv.classList.remove('drag'); document.body.style.userSelect = ''; }
+  });
+}
+
+/* ── 모바일 ── */
+function checkMob() {
+  const m = G.mob();
+  document.getElementById('cbtn').style.display = m ? 'flex' : 'none';
+  document.getElementById('fab').style.display  = m ? 'flex' : 'none';
+  if (!m) { document.getElementById('chatP').classList.remove('open'); G.chatOpen = false; }
+}
+function togC() { G.chatOpen ? closeC() : openC(); }
+function openC() {
+  document.getElementById('chatP').classList.add('open');
+  G.chatOpen = true; G.unread = 0;
+  document.getElementById('bdg').style.display = 'none';
+  setTimeout(() => { const m = document.getElementById('msgs'); m.scrollTop = m.scrollHeight; }, 150);
+}
+function closeC() { document.getElementById('chatP').classList.remove('open'); G.chatOpen = false; }
+</script>
+</body>
+</html>
