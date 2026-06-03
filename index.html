@@ -51,6 +51,10 @@ body{font-family:'Apple SD Gothic Neo','Noto Sans KR',system-ui,sans-serif;color
 .htxt{font-size:12px;color:#666;}
 
 #pdfSc{flex:1;overflow:auto;display:flex;align-items:flex-start;justify-content:center;padding:20px;}
+/* 모바일: justify-content center 대신 flex-start — 넓은 PDF가 왼쪽 잘림 방지 */
+@media(max-width:768px){
+  #pdfSc{justify-content:flex-start;padding:12px;}
+}
 #pdfSc::-webkit-scrollbar{width:6px;height:6px;}
 #pdfSc::-webkit-scrollbar-thumb{background:rgba(255,255,255,.15);border-radius:3px;}
 
@@ -167,6 +171,14 @@ body{font-family:'Apple SD Gothic Neo','Noto Sans KR',system-ui,sans-serif;color
 }
 .cont-btn:hover{background:var(--bl);color:#fff;}
 
+/* 드래그 핸들 — 모바일 채팅창 상단 */
+#dragHandle{
+  display:none; /* PC에서 숨김, 모바일 미디어쿼리에서 block */
+  width:40px;height:4px;border-radius:2px;
+  background:var(--ln2);margin:10px auto 4px;
+  flex-shrink:0;cursor:grab;
+}
+
 .cin{padding:10px 12px 13px;border-top:1px solid var(--ln);flex-shrink:0;}
 .cinB{display:flex;gap:8px;align-items:flex-end;border:1.5px solid var(--ln2);border-radius:var(--rl);padding:8px 8px 8px 12px;background:var(--sf);transition:border-color var(--tr);}
 .cinB:focus-within{border-color:var(--blm);}
@@ -207,6 +219,10 @@ body{font-family:'Apple SD Gothic Neo','Noto Sans KR',system-ui,sans-serif;color
   #fab{display:flex;}
   #cbtn{display:flex !important;}
   .chips{gap:4px;}.chip{font-size:11px;padding:4px 8px;}
+  /* 모바일: Enter 힌트 숨김 */
+  .cinh{display:none;}
+  /* 드래그 핸들 바 */
+  #dragHandle{display:block;}
 }
 @media(max-width:480px){
   #pdfTb{padding:6px 10px;gap:5px;}
@@ -296,6 +312,7 @@ body{font-family:'Apple SD Gothic Neo','Noto Sans KR',system-ui,sans-serif;color
 
   <!-- 채팅 패널 -->
   <div id="chatP">
+    <div id="dragHandle"></div>
     <div class="chd">
       <div class="chdR">
         <span class="cht">AI 질의응답</span>
@@ -405,7 +422,7 @@ let popupJustClosed = false;
     setTimeout(() => { popupJustClosed = false; }, 300);
   });
 
-  setupDiv(); setupDrop(); setupSelEvents();
+  setupDiv(); setupDrop(); setupSelEvents(); setupDragClose();
   checkMob(); window.addEventListener('resize', checkMob);
 })();
 
@@ -436,6 +453,15 @@ async function loadPDF(inp) {
   try {
     G.pdf = await pdfjsLib.getDocument({ data: await f.arrayBuffer() }).promise;
     G.tot = G.pdf.numPages;
+
+    // 모바일: 첫 페이지 기본 크기(scale=1) 기준으로 화면 너비에 맞게 줌 자동 계산
+    if (G.mob()) {
+      const firstPg = await G.pdf.getPage(1);
+      const baseVp  = firstPg.getViewport({ scale: 1 });
+      const avail   = document.getElementById('pdfSc').clientWidth - 24; // 패딩 제외
+      G.zm = Math.min(Math.max(avail / baseVp.width, 0.5), 3);
+    }
+
     document.getElementById('dz').style.display   = 'none';
     document.getElementById('pdfV').style.display = 'block';
     await render(G.pg);
@@ -964,9 +990,60 @@ function openC() {
   document.getElementById('chatP').classList.add('open');
   G.chatOpen = true; G.unread = 0;
   document.getElementById('bdg').style.display = 'none';
+  // 채팅창 열리면 FAB 숨김
+  document.getElementById('fab').style.display = 'none';
   setTimeout(() => { const m = document.getElementById('msgs'); m.scrollTop = m.scrollHeight; }, 150);
 }
-function closeC() { document.getElementById('chatP').classList.remove('open'); G.chatOpen = false; }
+function closeC() {
+  document.getElementById('chatP').classList.remove('open');
+  G.chatOpen = false;
+  // 채팅창 닫히면 FAB 다시 표시 (모바일만)
+  if (G.mob()) document.getElementById('fab').style.display = 'flex';
+}
+
+/* ── 모바일 채팅창 드래그로 닫기 ── */
+function setupDragClose() {
+  const panel  = document.getElementById('chatP');
+  const handle = document.getElementById('dragHandle');
+  let startY = 0, curY = 0, dragging = false;
+
+  function onStart(e) {
+    if (!G.mob() || !G.chatOpen) return;
+    dragging = true;
+    startY = e.touches ? e.touches[0].clientY : e.clientY;
+    curY   = startY;
+    panel.style.transition = 'none'; // 드래그 중 애니메이션 끄기
+  }
+  function onMove(e) {
+    if (!dragging) return;
+    curY = e.touches ? e.touches[0].clientY : e.clientY;
+    const dy = Math.max(0, curY - startY); // 아래 방향만
+    panel.style.transform = `translateY(${dy}px)`;
+  }
+  function onEnd() {
+    if (!dragging) return;
+    dragging = false;
+    panel.style.transition = '';
+    const dy = curY - startY;
+    if (dy > 80) {
+      // 80px 이상 내리면 닫기
+      panel.style.transform = '';
+      closeC();
+    } else {
+      // 복원
+      panel.style.transform = '';
+    }
+  }
+
+  // 터치
+  handle.addEventListener('touchstart', onStart, { passive: true });
+  window.addEventListener('touchmove',  onMove,  { passive: true });
+  window.addEventListener('touchend',   onEnd);
+  // PC 마우스 (테스트용)
+  handle.addEventListener('mousedown', onStart);
+  window.addEventListener('mousemove', e => { if (dragging) onMove(e); });
+  window.addEventListener('mouseup',   onEnd);
+}
 </script>
 </body>
 </html>
