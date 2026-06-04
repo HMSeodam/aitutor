@@ -19,8 +19,9 @@
   --hh:52px;--cw:360px;
 }
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
-html,body{height:100%;overflow:hidden;background:var(--bg);}
-body{font-family:'Apple SD Gothic Neo','Noto Sans KR',system-ui,sans-serif;color:var(--ink);display:flex;flex-direction:column;}
+html,body{height:100%;height:100dvh;overflow:hidden;background:var(--bg);}
+body{font-family:'Apple SD Gothic Neo','Noto Sans KR',system-ui,sans-serif;color:var(--ink);display:flex;flex-direction:column;height:var(--real-vh,100dvh);}
+#main{flex:1;display:flex;overflow:hidden;min-height:0;}
 
 /* HEADER */
 #hdr{height:var(--hh);flex-shrink:0;background:var(--sf);border-bottom:1px solid var(--ln);display:flex;align-items:center;gap:10px;padding:0 14px;z-index:50;}
@@ -37,7 +38,6 @@ body{font-family:'Apple SD Gothic Neo','Noto Sans KR',system-ui,sans-serif;color
 .hb.p{background:var(--bl);border-color:var(--bl);color:#fff;}.hb.p:hover{background:#1e40af;}
 
 /* MAIN */
-#main{flex:1;display:flex;overflow:hidden;}
 
 /* PDF PANEL */
 #pdfP{flex:1;min-width:0;display:flex;flex-direction:column;background:#3a3a3a;}
@@ -45,7 +45,15 @@ body{font-family:'Apple SD Gothic Neo','Noto Sans KR',system-ui,sans-serif;color
 .pb{display:flex;align-items:center;gap:4px;background:rgba(255,255,255,.1);border:none;border-radius:6px;color:#ccc;padding:5px 9px;font-size:12.5px;cursor:pointer;transition:background var(--tr);font-family:inherit;white-space:nowrap;}
 .pb:hover{background:rgba(255,255,255,.18);}.pb:disabled{opacity:.35;cursor:default;}
 .pb svg{width:13px;height:13px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
-.pgi{font-size:12.5px;color:#aaa;min-width:60px;text-align:center;}
+/* 페이지 표시 — 클릭하면 입력 모드로 전환 */
+.pgi{font-size:12.5px;color:#aaa;min-width:60px;text-align:center;cursor:pointer;border-radius:5px;padding:3px 5px;transition:background var(--tr);}
+.pgi:hover{background:rgba(255,255,255,.12);color:#ddd;}
+#pgiInput{
+  font-size:12.5px;color:#fff;min-width:60px;text-align:center;
+  background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);
+  border-radius:5px;padding:3px 5px;outline:none;display:none;
+  font-family:inherit;width:80px;
+}
 .zmi{font-size:12px;color:#888;min-width:38px;text-align:center;}
 .tsep{width:1px;height:18px;background:rgba(255,255,255,.1);flex-shrink:0;}
 .htxt{font-size:12px;color:#666;}
@@ -131,7 +139,7 @@ body{font-family:'Apple SD Gothic Neo','Noto Sans KR',system-ui,sans-serif;color
 .chip{padding:4px 10px;border-radius:20px;border:1px solid var(--ln2);background:var(--bg);color:var(--ink2);font-size:11.5px;cursor:pointer;transition:all var(--tr);font-family:inherit;}
 .chip:hover{background:var(--bll);border-color:var(--bl);color:var(--bl);}
 
-#msgs{flex:1;overflow-y:auto;padding:13px;display:flex;flex-direction:column;gap:11px;}
+#msgs{flex:1;overflow-y:auto;overflow-x:hidden;padding:13px;display:flex;flex-direction:column;gap:11px;scroll-behavior:smooth;-webkit-overflow-scrolling:touch;}
 #msgs::-webkit-scrollbar{width:4px;}
 #msgs::-webkit-scrollbar-thumb{background:var(--ln2);border-radius:2px;}
 
@@ -179,7 +187,30 @@ body{font-family:'Apple SD Gothic Neo','Noto Sans KR',system-ui,sans-serif;color
   flex-shrink:0;cursor:grab;
 }
 
-.cin{padding:10px 12px 13px;border-top:1px solid var(--ln);flex-shrink:0;}
+.cin{padding:8px 12px 13px;border-top:1px solid var(--ln);flex-shrink:0;}
+/* 옵션 행 */
+.cin-opts{display:flex;align-items:center;gap:6px;margin-bottom:7px;}
+/* 웹 검색 토글 버튼 */
+.web-toggle{
+  display:flex;align-items:center;gap:4px;
+  padding:4px 10px;border-radius:20px;
+  border:1px solid var(--ln2);background:var(--bg);
+  color:var(--ink2);font-size:12px;font-weight:500;
+  cursor:pointer;transition:all var(--tr);font-family:inherit;
+  white-space:nowrap;
+}
+.web-toggle svg{width:13px;height:13px;flex-shrink:0;}
+.web-toggle:hover{border-color:var(--blm);color:var(--bl);}
+.web-toggle.on{background:var(--bll);border-color:var(--bl);color:var(--bl);font-weight:700;}
+/* 모델 선택 */
+.model-sel{
+  margin-left:auto;
+  border:1px solid var(--ln2);border-radius:var(--r);
+  padding:4px 8px;font-size:12px;color:var(--ink2);
+  background:var(--bg);outline:none;cursor:pointer;
+  font-family:inherit;transition:border-color var(--tr);
+}
+.model-sel:focus{border-color:var(--blm);}
 .cinB{display:flex;gap:8px;align-items:flex-end;border:1.5px solid var(--ln2);border-radius:var(--rl);padding:8px 8px 8px 12px;background:var(--sf);transition:border-color var(--tr);}
 .cinB:focus-within{border-color:var(--blm);}
 #ci{flex:1;border:none;outline:none;background:transparent;font-family:inherit;font-size:13.5px;color:var(--ink);resize:none;min-height:36px;max-height:110px;line-height:1.6;overflow-y:auto;}
@@ -214,15 +245,28 @@ body{font-family:'Apple SD Gothic Neo','Noto Sans KR',system-ui,sans-serif;color
   .logo span{display:none;}
   .plbl{max-width:130px;}
   #dv{display:none;}
-  #chatP{position:fixed;bottom:0;left:0;right:0;height:58vh;z-index:80;transform:translateY(100%);border-left:none;border-top:1px solid var(--ln);border-radius:16px 16px 0 0;box-shadow:0 -4px 24px rgba(0,0,0,.12);transition:transform .3s cubic-bezier(.4,0,.2,1);}
+  #chatP{
+    position:fixed;bottom:0;left:0;right:0;
+    width:100%;max-width:100vw;
+    height:58dvh;z-index:80;
+    transform:translateY(100%);
+    border-left:none;border-top:1px solid var(--ln);
+    border-radius:16px 16px 0 0;
+    box-shadow:0 -4px 24px rgba(0,0,0,.12);
+    transition:transform .3s cubic-bezier(.4,0,.2,1);
+    overflow:hidden;
+  }
   #chatP.open{transform:translateY(0);}
   #fab{display:flex;}
   #cbtn{display:flex !important;}
   .chips{gap:4px;}.chip{font-size:11px;padding:4px 8px;}
-  /* 모바일: Enter 힌트 숨김 */
   .cinh{display:none;}
-  /* 드래그 핸들 바 */
   #dragHandle{display:block;}
+  /* 메시지 버블 최대 너비 제한 */
+  .bbl{max-width:88%;}
+  .ctxb,.errb,.wrnb,.cont-btn{max-width:88%;}
+  /* 헤더 파일명 잘림 */
+  .chs{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%;}
 }
 @media(max-width:480px){
   #pdfTb{padding:6px 10px;gap:5px;}
@@ -286,7 +330,8 @@ body{font-family:'Apple SD Gothic Neo','Noto Sans KR',system-ui,sans-serif;color
   <div id="pdfP">
     <div id="pdfTb">
       <button class="pb" id="pvBtn" onclick="goPage(-1)" disabled><svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>이전</button>
-      <span class="pgi" id="pgi">— / —</span>
+      <span class="pgi" id="pgi" onclick="openPgiInput()" title="클릭하여 페이지 입력">— / —</span>
+      <input type="number" id="pgiInput" min="1" onkeydown="onPgiKey(event)" onblur="closePgiInput()"/>
       <button class="pb" id="nxBtn" onclick="goPage(1)" disabled>다음<svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg></button>
       <div class="tsep"></div>
       <button class="pb" onclick="doZ(-0.2)"><svg viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/></svg></button>
@@ -358,6 +403,20 @@ body{font-family:'Apple SD Gothic Neo','Noto Sans KR',system-ui,sans-serif;color
     </div>
 
     <div class="cin">
+      <!-- 옵션 행: 웹검색 토글 + 모델 선택 -->
+      <div class="cin-opts">
+        <!-- 웹 검색 토글 -->
+        <button id="webToggle" class="web-toggle" onclick="toggleWeb()" title="웹 검색 on/off">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 010 20M12 2a15.3 15.3 0 000 20"/></svg>
+          <span id="webLabel">웹 검색</span>
+        </button>
+        <!-- 모델 선택 -->
+        <select id="modelSel" class="model-sel" onchange="changeModel(this.value)">
+          <option value="gemini-2.5-flash">2.5 Flash</option>
+          <option value="gemini-3.1-flash-lite">3.1 Flash Lite</option>
+          <option value="gemini-3.5-flash">3.5 Flash</option>
+        </select>
+      </div>
       <div class="cinB">
         <textarea id="ci" placeholder="질문을 입력하세요..." rows="1"
           onkeydown="onK(event)" oninput="grow(this)" disabled></textarea>
@@ -381,21 +440,24 @@ body{font-family:'Apple SD Gothic Neo','Noto Sans KR',system-ui,sans-serif;color
 pdfjsLib.GlobalWorkerOptions.workerSrc =
   'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 
-const MODEL = 'gemini-2.5-flash';
+const MODELS = [
+  { id: 'gemini-2.5-flash',      label: '2.5 Flash (기본)' },
+  { id: 'gemini-3.1-flash-lite', label: '3.1 Flash Lite' },
+  { id: 'gemini-3.5-flash',      label: '3.5 Flash' },
+];
 
 // ── 앱 상태 ──
 const G = {
   key:  localStorage.getItem('gk') || '',
+  model: localStorage.getItem('gmodel') || 'gemini-2.5-flash',
+  webSearch: false,   // 웹 검색 on/off
   pdf:  null, pg: 1, tot: 0, zm: 1.2,
-  txts: {},          // 페이지별 텍스트 캐시
+  txts: {},
   fn: '',
-  // [수정1·4] 대화 히스토리: {role, parts} 배열 — 단순 축적 방식
   hist: [],
-  // [수정1·4] 시스템 프롬프트는 별도 보관 (매 요청마다 재조합하지 않음)
   sysPrompt: '',
   scope: 'all', selTxt: '',
   chatOpen: false, unread: 0, busy: false,
-  // [수정3] 글자 크기 — JS로 직접 관리
   fontSize: 13.5,
   mob: () => window.innerWidth <= 768,
 };
@@ -405,14 +467,21 @@ let popupJustClosed = false;
 
 /* ── 초기화 ── */
 (function () {
+  // 실제 뷰포트 높이를 CSS 변수로 주입 (개발자도구/주소창 높이 변화 대응)
+  function setVh() {
+    document.documentElement.style.setProperty('--real-vh', window.innerHeight + 'px');
+  }
+  setVh();
+  window.addEventListener('resize', setVh);
+
   if (G.key) { closeM(); setDot(true); }
   document.getElementById('apiInp').value = G.key;
+  // 모델 드롭다운 초기값
+  const ms = document.getElementById('modelSel');
+  if (ms) ms.value = G.model;
 
-  // [수정3] 글자 크기 버튼 — addEventListener로 등록
   document.getElementById('fcSmall').addEventListener('click', () => adjFont(-1));
   document.getElementById('fcLarge').addEventListener('click', () => adjFont(1));
-
-  // 선택 팝업 버튼
   document.getElementById('askBtn').addEventListener('click', e => { e.stopPropagation(); askSel(); });
   document.getElementById('clsBtn').addEventListener('click', e => {
     e.stopPropagation();
@@ -425,6 +494,25 @@ let popupJustClosed = false;
   setupDiv(); setupDrop(); setupSelEvents(); setupDragClose();
   checkMob(); window.addEventListener('resize', checkMob);
 })();
+
+/* ── 웹 검색 토글 ── */
+function toggleWeb() {
+  G.webSearch = !G.webSearch;
+  const btn = document.getElementById('webToggle');
+  btn.classList.toggle('on', G.webSearch);
+  // 웹 검색 ON이면 시스템 프롬프트 규칙 변경 안내
+  if (G.webSearch) {
+    addWrn('🌐 <strong>웹 검색 ON</strong> — 교재 내용 + 인터넷 최신 정보를 함께 답변합니다.');
+  }
+}
+
+/* ── 모델 변경 ── */
+function changeModel(val) {
+  G.model = val;
+  localStorage.setItem('gmodel', val);
+  G.hist = []; // 모델 변경 시 히스토리 초기화
+  addWrn(`🔄 모델이 <strong>${val}</strong>로 변경되었습니다. 대화가 초기화됩니다.`);
+}
 
 /* ── 모달 ── */
 function saveKey() {
@@ -525,6 +613,34 @@ function updNav() {
 function goPage(d) {
   const n = G.pg + d; if (n < 1 || n > G.tot) return;
   G.pg = n; render(n); clrSel();
+}
+
+/* ── 페이지 직접 입력 ── */
+function openPgiInput() {
+  if (!G.pdf) return;
+  const pgi = document.getElementById('pgi');
+  const inp = document.getElementById('pgiInput');
+  pgi.style.display = 'none';
+  inp.style.display = 'inline-block';
+  inp.value = G.pg;
+  inp.max   = G.tot;
+  inp.select();
+  inp.focus();
+}
+function closePgiInput() {
+  document.getElementById('pgi').style.display = '';
+  document.getElementById('pgiInput').style.display = 'none';
+}
+function onPgiKey(e) {
+  if (e.key === 'Enter') {
+    const n = parseInt(document.getElementById('pgiInput').value);
+    if (!isNaN(n) && n >= 1 && n <= G.tot) {
+      G.pg = n; render(n); clrSel();
+    }
+    closePgiInput();
+  } else if (e.key === 'Escape') {
+    closePgiInput();
+  }
 }
 function doZ(d) {
   G.zm = Math.max(0.5, Math.min(3, G.zm + d));
@@ -781,17 +897,31 @@ function addAIImage(b64, caption) {
 
 async function callGemini(q, ctx) {
   // 시스템 프롬프트 (교재 내용 + 규칙)
-  const sys =
-    `당신은 대학 강의 교재 전문 학습 도우미입니다.\n파일명: ${G.fn}\n\n` +
-    `아래는 PDF 강의 교재 내용입니다:\n${'─'.repeat(40)}\n` +
-    `${ctx.slice(0, 55000)}\n${'─'.repeat(40)}\n\n` +
-    `응답 규칙:\n` +
-    `1. 반드시 위 교재 내용에 근거하여 답하세요.\n` +
-    `2. 교재에 없는 내용은 "교재에 명시되어 있지 않습니다"라고 솔직하게 말하세요.\n` +
-    `3. 학생이 이해하기 쉽게 친절하고 명확하게 설명하세요.\n` +
-    `4. 필요 시 몇 페이지의 내용인지 언급하세요.\n` +
-    `5. 반드시 한국어로 답변하세요.\n` +
-    `6. **굵은 글씨**로 핵심 용어를 강조하세요.`;
+  const sysBase = G.webSearch
+    ? // 웹 검색 ON: 교재 + 인터넷 병행
+      `당신은 대학 강의 학습 도우미입니다.\n파일명: ${G.fn}\n\n` +
+      `아래 교재 내용을 기반으로 답하되, 교재에 없는 내용은 인터넷 검색으로 보완하세요:\n${'─'.repeat(40)}\n` +
+      `${ctx.slice(0, 40000)}\n${'─'.repeat(40)}\n\n` +
+      `응답 규칙:\n` +
+      `1. 교재 내용을 우선 활용하고, 부족한 부분은 최신 인터넷 정보로 보완하세요.\n` +
+      `2. 인터넷 정보를 활용할 경우 "인터넷 검색 결과:"로 구분하여 표시하세요.\n` +
+      `3. 사용자가 이해하기 쉽게 친절하고 명확하게 설명하세요.\n` +
+      `4. 사용자를 "학생분", "학생" 등으로 부르지 말고 그냥 설명만 해주세요.\n` +
+      `5. 반드시 한국어로 답변하세요.\n` +
+      `6. **굵은 글씨**로 핵심 용어를 강조하세요.`
+    : // 웹 검색 OFF: 교재 내용만
+      `당신은 대학 강의 교재 전문 학습 도우미입니다.\n파일명: ${G.fn}\n\n` +
+      `아래는 PDF 강의 교재 내용입니다:\n${'─'.repeat(40)}\n` +
+      `${ctx.slice(0, 55000)}\n${'─'.repeat(40)}\n\n` +
+      `응답 규칙:\n` +
+      `1. 반드시 위 교재 내용에 근거하여 답하세요.\n` +
+      `2. 교재에 없는 내용은 "교재에 명시되어 있지 않습니다"라고 솔직하게 말하세요.\n` +
+      `3. 사용자가 이해하기 쉽게 친절하고 명확하게 설명하세요.\n` +
+      `4. 사용자를 "학생분", "학생" 등으로 부르지 말고 그냥 설명만 해주세요.\n` +
+      `5. 필요 시 몇 페이지의 내용인지 언급하세요.\n` +
+      `6. 반드시 한국어로 답변하세요.\n` +
+      `7. **굵은 글씨**로 핵심 용어를 강조하세요.`;
+  const sys = sysBase;
 
   // contents 배열 구성
   // 첫 turn: system + 현재 질문
@@ -815,7 +945,7 @@ async function callGemini(q, ctx) {
   }
 
   const resp = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${G.key}`,
+    `https://generativelanguage.googleapis.com/v1beta/models/${G.model}:generateContent?key=${G.key}`,
     {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -824,7 +954,9 @@ async function callGemini(q, ctx) {
         generationConfig: {
           maxOutputTokens: 65536,
           temperature: 0.7,
-        }
+        },
+        // 웹 검색 모드일 때 google_search grounding 도구 추가
+        ...(G.webSearch ? { tools: [{ google_search: {} }] } : {})
       })
     }
   );
@@ -879,8 +1011,9 @@ function addUser(t) {
 }
 function addAI(t) {
   const d = mk('div msg ai');
-  // [수정3] inline style로 현재 fontSize 직접 적용
-  d.innerHTML = `<span class="sndr">Gemini 2.5 Flash</span><div class="bbl" style="font-size:${G.fontSize}px">${md(t)}</div><span class="mts">${ts()}</span>`;
+  // 현재 선택된 모델명을 레이블로 표시
+  const modelLabel = MODELS.find(m => m.id === G.model)?.label || G.model;
+  d.innerHTML = `<span class="sndr">Gemini ${modelLabel}</span><div class="bbl" style="font-size:${G.fontSize}px">${md(t)}</div><span class="mts">${ts()}</span>`;
   app(d);
 }
 function addCtx(t) {
@@ -933,7 +1066,8 @@ async function continueAnswer() {
 }
 function showTy() {
   const d = mk('div msg ai'); d.id = 'tym';
-  d.innerHTML = `<span class="sndr">Gemini 2.5 Flash</span><div class="tyw"><div class="td"></div><div class="td"></div><div class="td"></div></div>`;
+  const modelLabel2 = MODELS.find(m => m.id === G.model)?.label || G.model;
+  d.innerHTML = `<span class="sndr">Gemini ${modelLabel2}</span><div class="tyw"><div class="td"></div><div class="td"></div><div class="td"></div></div>`;
   app(d);
 }
 function rmTy() { const t = document.getElementById('tym'); if (t) t.remove(); }
@@ -985,61 +1119,97 @@ function checkMob() {
   document.getElementById('fab').style.display  = m ? 'flex' : 'none';
   if (!m) { document.getElementById('chatP').classList.remove('open'); G.chatOpen = false; }
 }
-function togC() { G.chatOpen ? closeC() : openC(); }
+function togC() { G.chatOpen ? slideDownC() : openC(); }
 function openC() {
-  document.getElementById('chatP').classList.add('open');
+  const panel = document.getElementById('chatP');
+  panel.classList.add('open');
+  panel.style.transform = '';
+  panel.style.height    = '';
   G.chatOpen = true; G.unread = 0;
   document.getElementById('bdg').style.display = 'none';
   // 채팅창 열리면 FAB 숨김
   document.getElementById('fab').style.display = 'none';
   setTimeout(() => { const m = document.getElementById('msgs'); m.scrollTop = m.scrollHeight; }, 150);
 }
+// X 버튼 / FAB 토글 → 아래로 슬라이드 (채팅창 유지, FAB 복원)
+function slideDownC() {
+  if (!G.mob()) { closeC(); return; }  // PC에서는 기존 closeC
+  const panel = document.getElementById('chatP');
+  panel.style.transition = 'transform .3s cubic-bezier(.4,0,.2,1)';
+  panel.style.transform  = 'translateY(100%)';
+  G.chatOpen = false;
+  document.getElementById('fab').style.display = 'flex';
+  setTimeout(() => {
+    // 슬라이드 완료 후 transform 초기화 (open 클래스는 유지)
+    panel.style.transition = '';
+    panel.style.transform  = '';
+    panel.classList.remove('open');
+  }, 320);
+}
 function closeC() {
   document.getElementById('chatP').classList.remove('open');
+  document.getElementById('chatP').style.transform = '';
   G.chatOpen = false;
-  // 채팅창 닫히면 FAB 다시 표시 (모바일만)
   if (G.mob()) document.getElementById('fab').style.display = 'flex';
 }
 
-/* ── 모바일 채팅창 드래그로 닫기 ── */
+/* ── 모바일 채팅창 드래그로 닫기/넓히기 ── */
 function setupDragClose() {
   const panel  = document.getElementById('chatP');
   const handle = document.getElementById('dragHandle');
   let startY = 0, curY = 0, dragging = false;
+  let baseHeightPx = 0;
+
+  function getHeightPx() { return panel.getBoundingClientRect().height; }
 
   function onStart(e) {
     if (!G.mob() || !G.chatOpen) return;
     dragging = true;
     startY = e.touches ? e.touches[0].clientY : e.clientY;
     curY   = startY;
-    panel.style.transition = 'none'; // 드래그 중 애니메이션 끄기
+    baseHeightPx = getHeightPx();
+    panel.style.transition = 'none';
   }
   function onMove(e) {
     if (!dragging) return;
+    if (e.cancelable) e.preventDefault(); // 핸들 드래그 중 페이지 스크롤 방지
     curY = e.touches ? e.touches[0].clientY : e.clientY;
-    const dy = Math.max(0, curY - startY); // 아래 방향만
-    panel.style.transform = `translateY(${dy}px)`;
+    const dy = curY - startY;
+    if (dy > 0) {
+      panel.style.height    = '';
+      panel.style.transform = `translateY(${Math.min(dy, window.innerHeight * 0.9)}px)`;
+    } else {
+      panel.style.transform = 'translateY(0)';
+      const newH = Math.min(baseHeightPx - dy, window.innerHeight * 0.92);
+      panel.style.height = newH + 'px';
+    }
   }
   function onEnd() {
     if (!dragging) return;
     dragging = false;
-    panel.style.transition = '';
     const dy = curY - startY;
+    panel.style.transition = 'height .25s ease, transform .25s ease';
     if (dy > 80) {
-      // 80px 이상 내리면 닫기
-      panel.style.transform = '';
-      closeC();
+      panel.style.transform = 'translateY(100%)';
+      panel.style.height    = '';
+      setTimeout(() => { panel.style.transition = ''; slideDownC(); }, 260);
+    } else if (dy < -40) {
+      const newH = Math.min(baseHeightPx - dy, window.innerHeight * 0.92);
+      panel.style.transform = 'translateY(0)';
+      panel.style.height    = newH + 'px';
+      setTimeout(() => { panel.style.transition = ''; }, 260);
     } else {
-      // 복원
-      panel.style.transform = '';
+      panel.style.transform = 'translateY(0)';
+      panel.style.height    = '';
+      setTimeout(() => { panel.style.transition = ''; }, 260);
     }
   }
 
-  // 터치
+  // 핸들에만 등록 — passive:false로 preventDefault 가능하게
   handle.addEventListener('touchstart', onStart, { passive: true });
-  window.addEventListener('touchmove',  onMove,  { passive: true });
-  window.addEventListener('touchend',   onEnd);
-  // PC 마우스 (테스트용)
+  handle.addEventListener('touchmove',  onMove,  { passive: false });
+  handle.addEventListener('touchend',   onEnd,   { passive: true });
+  // PC 마우스
   handle.addEventListener('mousedown', onStart);
   window.addEventListener('mousemove', e => { if (dragging) onMove(e); });
   window.addEventListener('mouseup',   onEnd);
