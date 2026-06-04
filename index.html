@@ -1116,7 +1116,8 @@ function setupDiv() {
 function checkMob() {
   const m = G.mob();
   document.getElementById('cbtn').style.display = m ? 'flex' : 'none';
-  document.getElementById('fab').style.display  = m ? 'flex' : 'none';
+  // FAB: 모바일이고 채팅창이 닫혀 있을 때만 표시
+  document.getElementById('fab').style.display  = (m && !G.chatOpen) ? 'flex' : 'none';
   if (!m) { document.getElementById('chatP').classList.remove('open'); G.chatOpen = false; }
 }
 function togC() { G.chatOpen ? slideDownC() : openC(); }
