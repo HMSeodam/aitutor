@@ -352,7 +352,7 @@ html.touch #dv::before{content:'';position:absolute;left:50%;top:50%;width:4px;h
 }
 .web-toggle svg{width:13px;height:13px;flex-shrink:0;}
 @media(hover:hover) and (pointer:fine){.web-toggle:hover{border-color:var(--blm);color:var(--bl);}}
-.web-toggle.on{background:var(--bl);border-color:var(--bl);color:#fff;font-weight:700;}
+.web-toggle.on{background:var(--bl);border-color:var(--bl);color:#fff;}
 /* 모델 선택 */
 .model-sel{
   margin-left:auto;
@@ -1079,7 +1079,6 @@ function toggleWeb() {
   const btn = document.getElementById('webToggle');
   btn.classList.toggle('on', G.webSearch);
   btn.setAttribute('aria-pressed', G.webSearch ? 'true' : 'false');
-  document.getElementById('webLabel').textContent = G.webSearch ? '웹 검색 켜짐' : '웹 검색';
   // 켜고 끌 때마다 대화창에 쌓이지 않도록 잠깐 뜨는 알림으로 안내
   toast(G.webSearch ? '웹 검색 켜짐 — 교재 + 인터넷 정보를 함께 답변합니다' : '웹 검색 꺼짐 — 교재 내용만으로 답변합니다');
 }
