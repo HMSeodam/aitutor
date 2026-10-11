@@ -35,8 +35,8 @@ body{font-family:'Apple SD Gothic Neo','Noto Sans KR',system-ui,sans-serif;color
 .dot{width:7px;height:7px;border-radius:50%;background:var(--ln2);}
 .dot.on{background:#22c55e;}.dot.err{background:var(--rd);}
 .hb{display:flex;align-items:center;gap:5px;padding:6px 12px;border-radius:var(--r);border:1px solid var(--ln2);background:var(--sf);color:var(--ink2);font-size:12.5px;font-weight:500;cursor:pointer;transition:all var(--tr);white-space:nowrap;font-family:inherit;}
-@media(hover:hover){.hb:hover{background:var(--bg);}}
-.hb.p{background:var(--bl);border-color:var(--bl);color:#fff;}@media(hover:hover){.hb.p:hover{background:#1e40af;}}
+@media(hover:hover) and (pointer:fine){.hb:hover{background:var(--bg);}}
+.hb.p{background:var(--bl);border-color:var(--bl);color:#fff;}@media(hover:hover) and (pointer:fine){.hb.p:hover{background:#1e40af;}}
 
 /* MAIN */
 
@@ -44,11 +44,11 @@ body{font-family:'Apple SD Gothic Neo','Noto Sans KR',system-ui,sans-serif;color
 #pdfP{flex:1;min-width:0;display:flex;flex-direction:column;background:#3a3a3a;}
 #pdfTb{background:#262626;padding:7px 14px;display:flex;align-items:center;gap:7px;flex-shrink:0;border-bottom:1px solid #111;flex-wrap:wrap;}
 .pb{display:flex;align-items:center;gap:4px;background:rgba(255,255,255,.1);border:none;border-radius:6px;color:#ccc;padding:5px 9px;font-size:12.5px;cursor:pointer;transition:background var(--tr);font-family:inherit;white-space:nowrap;}
-@media(hover:hover){.pb:hover{background:rgba(255,255,255,.18);}}.pb:disabled{opacity:.35;cursor:default;}
+@media(hover:hover) and (pointer:fine){.pb:hover{background:rgba(255,255,255,.18);}}.pb:disabled{opacity:.35;cursor:default;}
 .pb svg{width:13px;height:13px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
 /* 페이지 표시 — 클릭하면 입력 모드로 전환 */
 .pgi{font-size:12.5px;color:#aaa;min-width:60px;text-align:center;cursor:pointer;border-radius:5px;padding:3px 5px;transition:background var(--tr);}
-@media(hover:hover){.pgi:hover{background:rgba(255,255,255,.12);color:#ddd;}}
+@media(hover:hover) and (pointer:fine){.pgi:hover{background:rgba(255,255,255,.12);color:#ddd;}}
 #pgiInput{
   font-size:12.5px;color:#fff;min-width:60px;text-align:center;
   background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);
@@ -69,7 +69,7 @@ body{font-family:'Apple SD Gothic Neo','Noto Sans KR',system-ui,sans-serif;color
 
 /* DROP ZONE */
 #dz{width:100%;max-width:480px;margin:auto;border:2px dashed rgba(255,255,255,.15);border-radius:16px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;cursor:pointer;transition:all var(--tr);color:#888;text-align:center;padding:48px 28px;min-height:300px;}
-#dz.over{border-color:rgba(59,130,246,.6);background:rgba(59,130,246,.05);}@media(hover:hover){#dz:hover{border-color:rgba(59,130,246,.6);background:rgba(59,130,246,.05);}}
+#dz.over{border-color:rgba(59,130,246,.6);background:rgba(59,130,246,.05);}@media(hover:hover) and (pointer:fine){#dz:hover{border-color:rgba(59,130,246,.6);background:rgba(59,130,246,.05);}}
 #dz svg{width:52px;height:52px;stroke:rgba(255,255,255,.2);fill:none;stroke-width:1.2;}
 #dz .dt{font-size:15px;color:#aaa;font-weight:500;}
 #dz .ds{font-size:12.5px;color:#666;line-height:1.65;}
@@ -105,8 +105,8 @@ body{font-family:'Apple SD Gothic Neo','Noto Sans KR',system-ui,sans-serif;color
 .sp-p{font-size:12px;color:#d4d4d8;max-height:52px;overflow:hidden;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;line-height:1.5;}
 .sp-bs{display:flex;gap:6px;}
 .spb{flex:1;padding:7px;border:none;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;}
-.spb.ask{background:#2563eb;color:#fff;}@media(hover:hover){.spb.ask:hover{background:#1d4ed8;}}
-.spb.cl{background:rgba(255,255,255,.08);color:#a1a1aa;}@media(hover:hover){.spb.cl:hover{background:rgba(255,255,255,.14);}}
+.spb.ask{background:#2563eb;color:#fff;}@media(hover:hover) and (pointer:fine){.spb.ask:hover{background:#1d4ed8;}}
+.spb.cl{background:rgba(255,255,255,.08);color:#a1a1aa;}@media(hover:hover) and (pointer:fine){.spb.cl:hover{background:rgba(255,255,255,.14);}}
 
 /* ══════════ 필기(주석) 도구 ══════════ */
 #annTb{
@@ -120,10 +120,10 @@ body{font-family:'Apple SD Gothic Neo','Noto Sans KR',system-ui,sans-serif;color
   color:#bbb;padding:5px 8px;font-size:12px;cursor:pointer;
   font-family:inherit;white-space:nowrap;transition:all var(--tr);
 }
-@media(hover:hover){.ab:hover{background:rgba(255,255,255,.16);color:#eee;}}
+@media(hover:hover) and (pointer:fine){.ab:hover{background:rgba(255,255,255,.16);color:#eee;}}
 .ab.on{background:var(--bl);border-color:#60a5fa;color:#fff;font-weight:600;}
 .ab:disabled{opacity:.28;cursor:default;}
-@media(hover:hover){.ab:disabled:hover{background:rgba(255,255,255,.08);color:#bbb;}}
+@media(hover:hover) and (pointer:fine){.ab:disabled:hover{background:rgba(255,255,255,.08);color:#bbb;}}
 .ab svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0;}
 /* 색 스와치 */
 .sw{
@@ -131,7 +131,7 @@ body{font-family:'Apple SD Gothic Neo','Noto Sans KR',system-ui,sans-serif;color
   border:2px solid rgba(255,255,255,.22);
   transition:transform var(--tr),box-shadow var(--tr),border-color var(--tr);
 }
-@media(hover:hover){.sw:hover{transform:scale(1.14);}}
+@media(hover:hover) and (pointer:fine){.sw:hover{transform:scale(1.14);}}
 .sw.on{border-color:#fff;box-shadow:0 0 0 2px rgba(255,255,255,.32);}
 /* 굵기 */
 .wb{
@@ -139,7 +139,7 @@ body{font-family:'Apple SD Gothic Neo','Noto Sans KR',system-ui,sans-serif;color
   border:1px solid transparent;background:rgba(255,255,255,.08);
   display:flex;align-items:center;justify-content:center;transition:all var(--tr);
 }
-@media(hover:hover){.wb:hover{background:rgba(255,255,255,.16);}}
+@media(hover:hover) and (pointer:fine){.wb:hover{background:rgba(255,255,255,.16);}}
 .wb.on{background:var(--bl);border-color:#60a5fa;}
 .wb i{display:block;border-radius:50%;background:#e5e5e5;}
 .asep{width:1px;height:18px;background:rgba(255,255,255,.12);flex-shrink:0;margin:0 2px;}
@@ -182,8 +182,8 @@ body{font-family:'Apple SD Gothic Neo','Noto Sans KR',system-ui,sans-serif;color
   color:var(--ink3);cursor:pointer;display:flex;align-items:center;justify-content:center;
   transition:all var(--tr);
 }
-@media(hover:hover){.wbw:hover{background:var(--ln);color:var(--ink);}}
-@media(hover:hover){.wbw.close:hover{background:var(--rdl);color:var(--rd);}}
+@media(hover:hover) and (pointer:fine){.wbw:hover{background:var(--ln);color:var(--ink);}}
+@media(hover:hover) and (pointer:fine){.wbw.close:hover{background:var(--rdl);color:var(--rd);}}
 .wbw svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
 
 #wbTb{
@@ -196,10 +196,10 @@ body{font-family:'Apple SD Gothic Neo','Noto Sans KR',system-ui,sans-serif;color
   cursor:pointer;display:flex;align-items:center;justify-content:center;
   transition:all var(--tr);
 }
-@media(hover:hover){.wbb:hover{background:var(--ln);color:var(--ink);}}
+@media(hover:hover) and (pointer:fine){.wbb:hover{background:var(--ln);color:var(--ink);}}
 .wbb.on{background:var(--bl);border-color:var(--bl);color:#fff;}
 .wbb:disabled{opacity:.3;cursor:default;}
-@media(hover:hover){.wbb:disabled:hover{background:transparent;color:var(--ink2);}}
+@media(hover:hover) and (pointer:fine){.wbb:disabled:hover{background:transparent;color:var(--ink2);}}
 .wbb svg{width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;}
 .wbsep{width:1px;height:18px;background:var(--ln2);flex-shrink:0;margin:0 3px;}
 .wbsp{flex:1;}
@@ -209,14 +209,14 @@ body{font-family:'Apple SD Gothic Neo','Noto Sans KR',system-ui,sans-serif;color
   border:2px solid transparent;box-shadow:0 0 0 1px var(--ln2) inset;
   transition:transform var(--tr),border-color var(--tr);
 }
-@media(hover:hover){.wbsw:hover{transform:scale(1.15);}}
+@media(hover:hover) and (pointer:fine){.wbsw:hover{transform:scale(1.15);}}
 .wbsw.on{border-color:#fff;box-shadow:0 0 0 2px var(--ink);}
 .wbwd{
   width:24px;height:24px;border-radius:7px;padding:0;cursor:pointer;flex-shrink:0;
   border:1px solid transparent;background:transparent;
   display:flex;align-items:center;justify-content:center;transition:all var(--tr);
 }
-@media(hover:hover){.wbwd:hover{background:var(--ln);}}
+@media(hover:hover) and (pointer:fine){.wbwd:hover{background:var(--ln);}}
 .wbwd.on{background:var(--ink);}
 .wbwd i{display:block;border-radius:50%;background:var(--ink2);}
 .wbwd.on i{background:#fff;}
@@ -256,7 +256,7 @@ body{font-family:'Apple SD Gothic Neo','Noto Sans KR',system-ui,sans-serif;color
 #dv{width:5px;background:var(--bg);flex-shrink:0;cursor:col-resize;transition:background var(--tr);position:relative;touch-action:none;}
 #dv::after{content:'';position:absolute;top:0;bottom:0;left:-8px;right:-8px;}   /* 손가락으로 잡기 쉬운 넓은 영역 */
 html.touch #dv::before{content:'';position:absolute;left:50%;top:50%;width:4px;height:44px;margin:-22px 0 0 -2px;border-radius:2px;background:var(--ln2);}
-#dv.drag{background:var(--blm);}@media(hover:hover){#dv:hover{background:var(--blm);}}
+#dv.drag{background:var(--blm);}@media(hover:hover) and (pointer:fine){#dv:hover{background:var(--blm);}}
 
 /* CHAT PANEL */
 #chatP{width:var(--cw);flex-shrink:0;display:flex;flex-direction:column;background:var(--sf);border-left:1px solid var(--ln);}
@@ -265,7 +265,7 @@ html.touch #dv::before{content:'';position:absolute;left:50%;top:50%;width:4px;h
 .cht{font-size:14px;font-weight:700;}
 .chs{font-size:12px;color:var(--ink3);}
 .ib{background:none;border:none;cursor:pointer;color:var(--ink3);padding:4px;border-radius:6px;transition:all var(--tr);display:flex;align-items:center;}
-@media(hover:hover){.ib:hover{background:var(--bg);color:var(--ink2);}}
+@media(hover:hover) and (pointer:fine){.ib:hover{background:var(--bg);color:var(--ink2);}}
 .ib svg{width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
 
 /* 글자 크기 조절 */
@@ -275,7 +275,7 @@ html.touch #dv::before{content:'';position:absolute;left:50%;top:50%;width:4px;h
   cursor:pointer;color:var(--ink2);font-family:inherit;font-weight:600;
   line-height:1;transition:all var(--tr);padding:3px 6px;
 }
-@media(hover:hover){.fcb:hover{background:var(--ln);border-color:var(--ink3);}}
+@media(hover:hover) and (pointer:fine){.fcb:hover{background:var(--ln);border-color:var(--ink3);}}
 .fcb.sm{font-size:10px;}
 .fcb.lg{font-size:14px;}
 
@@ -287,7 +287,7 @@ html.touch #dv::before{content:'';position:absolute;left:50%;top:50%;width:4px;h
 
 .chips{display:flex;gap:5px;padding:8px 13px;flex-wrap:wrap;flex-shrink:0;border-bottom:1px solid var(--ln);}
 .chip{padding:4px 10px;border-radius:20px;border:1px solid var(--ln2);background:var(--bg);color:var(--ink2);font-size:11.5px;cursor:pointer;transition:all var(--tr);font-family:inherit;}
-@media(hover:hover){.chip:hover{background:var(--bll);border-color:var(--bl);color:var(--bl);}}
+@media(hover:hover) and (pointer:fine){.chip:hover{background:var(--bll);border-color:var(--bl);color:var(--bl);}}
 
 #msgs{flex:1;overflow-y:auto;overflow-x:hidden;padding:13px;display:flex;flex-direction:column;gap:11px;scroll-behavior:smooth;-webkit-overflow-scrolling:touch;}
 #msgs::-webkit-scrollbar{width:4px;}
@@ -327,7 +327,7 @@ html.touch #dv::before{content:'';position:absolute;left:50%;top:50%;width:4px;h
   font-size:12px;font-weight:600;font-family:inherit;
   cursor:pointer;transition:all var(--tr);
 }
-@media(hover:hover){.cont-btn:hover{background:var(--bl);color:#fff;}}
+@media(hover:hover) and (pointer:fine){.cont-btn:hover{background:var(--bl);color:#fff;}}
 
 /* 드래그 핸들 — 모바일 채팅창 상단 */
 #dragHandle{
@@ -351,8 +351,8 @@ html.touch #dv::before{content:'';position:absolute;left:50%;top:50%;width:4px;h
   white-space:nowrap;
 }
 .web-toggle svg{width:13px;height:13px;flex-shrink:0;}
-@media(hover:hover){.web-toggle:hover{border-color:var(--blm);color:var(--bl);}}
-.web-toggle.on{background:var(--bll);border-color:var(--bl);color:var(--bl);font-weight:700;}
+@media(hover:hover) and (pointer:fine){.web-toggle:hover{border-color:var(--blm);color:var(--bl);}}
+.web-toggle.on{background:var(--bl);border-color:var(--bl);color:#fff;font-weight:700;}
 /* 모델 선택 */
 .model-sel{
   margin-left:auto;
@@ -367,7 +367,7 @@ html.touch #dv::before{content:'';position:absolute;left:50%;top:50%;width:4px;h
 #ci{flex:1;border:none;outline:none;background:transparent;font-family:inherit;font-size:13.5px;color:var(--ink);resize:none;min-height:36px;max-height:110px;line-height:1.6;overflow-y:auto;}
 #ci::placeholder{color:var(--ink3);}
 #sb{width:36px;height:36px;border-radius:10px;flex-shrink:0;background:var(--bl);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all var(--tr);}
-@media(hover:hover){#sb:hover{background:#1e40af;}}#sb:disabled{background:var(--ln2);cursor:default;}
+@media(hover:hover) and (pointer:fine){#sb:hover{background:#1e40af;}}#sb:disabled{background:var(--ln2);cursor:default;}
 #sb svg{width:17px;height:17px;fill:none;stroke:#fff;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;}
 .cinh{font-size:11px;color:var(--ink3);text-align:center;margin-top:5px;}
 
@@ -382,8 +382,8 @@ html.touch #dv::before{content:'';position:absolute;left:50%;top:50%;width:4px;h
 .modal input:focus{border-color:var(--blm);}
 .macts{display:flex;gap:10px;justify-content:flex-end;}
 .mbtn{padding:10px 22px;border-radius:var(--r);border:none;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;transition:all var(--tr);}
-.mbtn.ok{background:var(--bl);color:#fff;}@media(hover:hover){.mbtn.ok:hover{background:#1e40af;}}
-.mbtn.sk{background:var(--bg);color:var(--ink2);border:1px solid var(--ln2);}@media(hover:hover){.mbtn.sk:hover{background:var(--ln);}}
+.mbtn.ok{background:var(--bl);color:#fff;}@media(hover:hover) and (pointer:fine){.mbtn.ok:hover{background:#1e40af;}}
+.mbtn.sk{background:var(--bg);color:var(--ink2);border:1px solid var(--ln2);}@media(hover:hover) and (pointer:fine){.mbtn.sk:hover{background:var(--ln);}}
 
 /* FAB */
 .bdg{position:absolute;top:-2px;right:-2px;width:18px;height:18px;border-radius:50%;background:#ef4444;color:#fff;font-size:11px;font-weight:700;display:none;align-items:center;justify-content:center;border:2px solid var(--sf);}
@@ -581,7 +581,7 @@ html.pin-ok #pinBtn{display:flex;}
 .acts{display:flex;gap:2px;margin-left:-6px;flex-wrap:wrap;}
 .act{height:32px;padding:0 9px;border-radius:16px;border:0;background:transparent;color:var(--ink2);font-size:12px;font-family:inherit;display:flex;align-items:center;gap:5px;cursor:pointer;}
 .act svg{width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
-@media(hover:hover){.act:hover{background:var(--ln);color:var(--ink);}}
+@media(hover:hover) and (pointer:fine){.act:hover{background:var(--ln);color:var(--ink);}}
 html.touch .act{height:40px;padding:0 10px;font-size:13px;}
 html.touch .act svg{width:17px;height:17px;}
 
@@ -829,7 +829,7 @@ body.sheet-up #toast.on{transform:translate(-50%,0);}
       <!-- 옵션 행: 웹검색 토글 + 모델 선택 -->
       <div class="cin-opts">
         <!-- 웹 검색 토글 -->
-        <button id="webToggle" class="web-toggle" onclick="toggleWeb()" title="웹 검색 on/off">
+        <button id="webToggle" class="web-toggle" onclick="toggleWeb()" title="웹 검색 켜기·끄기" aria-pressed="false">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 010 20M12 2a15.3 15.3 0 000 20"/></svg>
           <span id="webLabel">웹 검색</span>
         </button>
@@ -1078,10 +1078,10 @@ function toggleWeb() {
   G.webSearch = !G.webSearch;
   const btn = document.getElementById('webToggle');
   btn.classList.toggle('on', G.webSearch);
-  // 웹 검색 ON이면 시스템 프롬프트 규칙 변경 안내
-  if (G.webSearch) {
-    addWrn('🌐 <strong>웹 검색 ON</strong> — 교재 내용 + 인터넷 최신 정보를 함께 답변합니다.');
-  }
+  btn.setAttribute('aria-pressed', G.webSearch ? 'true' : 'false');
+  document.getElementById('webLabel').textContent = G.webSearch ? '웹 검색 켜짐' : '웹 검색';
+  // 켜고 끌 때마다 대화창에 쌓이지 않도록 잠깐 뜨는 알림으로 안내
+  toast(G.webSearch ? '웹 검색 켜짐 — 교재 + 인터넷 정보를 함께 답변합니다' : '웹 검색 꺼짐 — 교재 내용만으로 답변합니다');
 }
 
 /* ── 모델 변경 ── */
