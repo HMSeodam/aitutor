@@ -1,7 +1,15 @@
 <!DOCTYPE html>
+<!--
+  PDF AI 어시스턴트 (aitutor)
+  Copyright (c) 2026 서담 한민수 (Han Minsu), 동명대학교 (Tongmyong University)
+  Licensed under CC BY-NC-ND 4.0 — https://creativecommons.org/licenses/by-nc-nd/4.0/
+  고전어 구조 분석: TranslateDu v2.1 엔진 포함 (동일 저작자·동일 라이선스)
+  PDF.js: Apache License 2.0 (Mozilla Foundation)
+-->
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
+<meta name="author" content="서담 한민수 (Han Minsu), 동명대학교">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no, viewport-fit=cover, interactive-widget=resizes-content">
 <meta name="theme-color" content="#1c1917">
 <title>PDF AI 어시스턴트</title>
@@ -633,6 +641,51 @@ body.selbar-on #toast{bottom:calc(150px + env(safe-area-inset-bottom));}
 body.sheet-up #toast{bottom:auto;top:calc(58px + env(safe-area-inset-top));transform:translate(-50%,-12px);}
 body.sheet-up #toast.on{transform:translate(-50%,0);}
 
+/* ── PDF 안에서 검색 ── */
+body:not(.has-pdf) #findBtn{display:none;}
+#findBtn.on{background:var(--bll);border-color:var(--bl);color:var(--bl);}
+html.lay-sheet #findBtn.on{background:rgba(255,255,255,.14);color:#fff;}
+#findHl{position:absolute;inset:0;pointer-events:none;z-index:1;}
+#findHl .fh{position:absolute;background:rgba(255,214,0,.5);border-radius:2px;mix-blend-mode:multiply;}
+#findHl .fh.cur{background:rgba(255,128,0,.6);box-shadow:0 0 0 2px rgba(234,88,12,.85);}
+#findBar{
+  position:fixed;z-index:650;display:none;flex-direction:column;
+  background:var(--sf);border:1px solid var(--ln2);border-radius:14px;
+  box-shadow:0 10px 30px rgba(0,0,0,.22);overflow:hidden;
+}
+#findBar.on{display:flex;}
+html.find-open #pdfSc{padding-top:calc(var(--fbh,56px) + 8px);}
+.fbr{display:flex;align-items:center;gap:2px;padding:4px 4px 4px 10px;}
+.fbi{width:16px;height:16px;flex-shrink:0;fill:none;stroke:var(--ink3);stroke-width:2.2;stroke-linecap:round;}
+#findIn{flex:1;min-width:0;border:0;outline:none;background:transparent;font-family:inherit;font-size:14px;color:var(--ink);padding:8px 6px;}
+#findIn::-webkit-search-cancel-button{display:none;}
+#findCnt{font-size:12px;color:var(--ink3);white-space:nowrap;padding:0 4px;font-variant-numeric:tabular-nums;}
+#findCnt.none{color:var(--rd);}
+.fbb{width:32px;height:32px;border:0;border-radius:8px;background:transparent;color:var(--ink2);display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;padding:0;}
+.fbb svg{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
+.fbb.on{background:var(--bll);color:var(--bl);}
+@media(hover:hover) and (pointer:fine){.fbb:hover{background:var(--ln);color:var(--ink);}}
+html.touch .fbb{width:40px;height:40px;}
+html.touch #findIn{font-size:16px;}
+#findPanel{display:none;border-top:1px solid var(--ln);flex-direction:column;min-height:0;}
+#findBar.list #findPanel{display:flex;}
+.fop{display:flex;align-items:center;gap:6px;flex-wrap:wrap;padding:8px 10px;border-bottom:1px solid var(--ln);}
+.fchip{padding:4px 10px;border-radius:14px;border:1px solid var(--ln2);background:var(--bg);color:var(--ink2);font-size:12px;font-family:inherit;cursor:pointer;}
+.fchip.on{background:var(--bll);border-color:var(--bl);color:var(--bl);}
+html.touch .fchip{min-height:34px;font-size:13px;padding:0 12px;}
+#findSum{font-size:12px;color:var(--ink3);margin-left:auto;}
+#findList{overflow-y:auto;overscroll-behavior:contain;max-height:min(46vh,420px);}
+.fr{display:flex;gap:10px;align-items:flex-start;width:100%;text-align:left;border:0;border-bottom:1px solid var(--ln);background:transparent;padding:9px 12px;cursor:pointer;font-family:inherit;}
+.fr:last-child{border-bottom:0;}
+.fr.cur{background:#fff7ed;}
+@media(hover:hover) and (pointer:fine){.fr:hover{background:var(--bg);}}
+.fr .fp{flex-shrink:0;font-size:11.5px;font-weight:600;color:var(--bl);background:var(--bll);border-radius:6px;padding:2px 6px;margin-top:1px;font-variant-numeric:tabular-nums;}
+.fr .fs{font-size:13px;color:var(--ink2);line-height:1.6;word-break:break-all;}
+.fr .fs mark{background:#fde68a;color:var(--ink);border-radius:2px;padding:0 1px;}
+html.touch .fr{padding:12px 14px;}
+html.touch .fr .fs{font-size:14px;}
+.fmsg{padding:14px 12px;font-size:13px;color:var(--ink3);line-height:1.6;}
+
 @media (prefers-reduced-motion: reduce){
   #chatP,#annPill,#selBar,#toast,.msg{transition:none !important;animation:none !important;}
 }
@@ -667,15 +720,26 @@ body.sheet-up #toast.on{transform:translate(-50%,0);}
 </div>
 
 <!-- 선택 팝업 -->
-<div id="selPop" onmousedown="event.preventDefault()">
+<div id="selPop" onmousedown="if(event.target.tagName!=='SELECT')event.preventDefault()">
   <div class="sp-h">
-    <div class="sp-l">선택된 텍스트 <span id="spMeta"></span></div>
+    <div class="sp-l">선택된 텍스트 <span id="spMeta"></span>
+      <label class="lchip" id="spLangC" title="언어 바꾸기"><span class="lct"></span><svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+        <select id="spLang" onchange="setSelLang(this.value)" aria-label="선택한 글의 언어">
+        <option value="">일반 글 (번역)</option>
+          <option value="lzh">漢文 · 한문</option>
+          <option value="lzh-ko">懸吐 · 현토 한문</option>
+          <option value="lzh-ja">訓讀 · 일본 훈독 한문</option>
+          <option value="pi">Pāli · 팔리어</option>
+          <option value="sa">Saṃskṛta · 산스크리트어</option>
+          <option value="bo">བོད་ཡིག · 티베트어</option>
+        </select></label>
+    </div>
     <button class="sp-x" id="clsBtn" title="닫기 (Esc)" aria-label="닫기"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
   </div>
   <div class="sp-p" id="spPv"></div>
   <div class="sp-g">
     <button class="spa pri" onclick="popAct('ask')" title="입력창에 인용해 두고 직접 질문"><svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>질문</button>
-    <button class="spa" onclick="popAct('tr')" title="한국어로 직역"><svg viewBox="0 0 24 24"><path d="M5 8l6 6"/><path d="M4 14l6-6 2-3"/><path d="M2 5h12"/><path d="M7 2h1"/><path d="M22 22l-5-10-5 10"/><path d="M14 18h6"/></svg>번역</button>
+    <button class="spa trb" id="spTr" onclick="popAct('tr')" title="한국어로 직역"><svg viewBox="0 0 24 24"><path d="M5 8l6 6"/><path d="M4 14l6-6 2-3"/><path d="M2 5h12"/><path d="M7 2h1"/><path d="M22 22l-5-10-5 10"/><path d="M14 18h6"/></svg><span>번역</span></button>
     <button class="spa" onclick="popAct('ex')" title="자세히 풀이"><svg viewBox="0 0 24 24"><path d="M2 4h6a4 4 0 014 4v13a3 3 0 00-3-3H2z"/><path d="M22 4h-6a4 4 0 00-4 4v13a3 3 0 013-3h7z"/></svg>풀이</button>
     <button class="spa" onclick="popAct('hl')" title="선택한 글에 형광펜"><svg viewBox="0 0 24 24"><path d="M15 3l6 6-9 9H6v-6z"/><line x1="3" y1="21" x2="21" y2="21" stroke="#ffe600" stroke-width="3"/></svg>형광펜</button>
     <button class="spa" onclick="popAct('cp')" title="출처(파일명·쪽)를 붙여 복사"><svg viewBox="0 0 24 24"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>인용 복사</button>
@@ -692,6 +756,10 @@ body.sheet-up #toast.on{transform:translate(-50%,0);}
   <div class="hm"><span class="plbl" id="plbl">PDF를 업로드하세요</span></div>
   <div class="hr">
     <div class="dot" id="stD"></div>
+    <button class="hb" id="findBtn" onclick="openFind()" aria-label="PDF 안에서 검색 (Ctrl+F)" title="PDF 안에서 검색 (Ctrl+F)">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="20" y1="20" x2="16.2" y2="16.2"/></svg>
+      <span class="hbt">검색</span>
+    </button>
     <button class="hb" onclick="document.getElementById('apiM').style.display='flex'" aria-label="API 키 설정">
       <svg class="hbi" width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="7.5" cy="15.5" r="4.5"/><path d="M10.7 12.3L20 3"/><path d="M16 7l3 3"/><path d="M14 9l2 2"/></svg>
       <span class="hbt">키 설정</span>
@@ -811,6 +879,7 @@ body.sheet-up #toast.on{transform:translate(-50%,0);}
       </div>
       <div id="pdfV">
         <canvas id="pdfCv"></canvas>
+        <div id="findHl"></div>
         <div id="tlayer"></div>
         <canvas id="annCv"></canvas>
       </div>
@@ -832,6 +901,9 @@ body.sheet-up #toast.on{transform:translate(-50%,0);}
             <button class="fcb sm" id="fcSmall" title="글자 작게">A-</button>
             <button class="fcb lg" id="fcLarge" title="글자 크게">A+</button>
           </div>
+          <button class="ib" onclick="CL.edit(null,{})" title="고전어 구조 분석 (원문 직접 입력)" aria-label="고전어 구조 분석">
+            <svg viewBox="0 0 24 24"><rect x="3" y="4" width="7" height="7" rx="1.5"/><rect x="14" y="4" width="7" height="7" rx="1.5"/><rect x="3" y="15" width="7" height="5" rx="1.5"/><path d="M14 17.5h7M17.5 14v7"/></svg>
+          </button>
           <button class="ib" onclick="clearC()" title="대화 초기화">
             <svg viewBox="0 0 24 24"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 101.85-4.36L1 10"/></svg>
           </button>
@@ -993,12 +1065,25 @@ body.sheet-up #toast.on{transform:translate(-50%,0);}
 <div id="selBar" role="toolbar" aria-label="선택한 글로 할 일">
   <div class="sbh">
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#93c5fd" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 7h4v4c0 3-1.5 5-4 6"/><path d="M14 7h4v4c0 3-1.5 5-4 6"/></svg>
-    <div class="sbt"><span class="sbq" id="sbQ"></span><span class="sbm" id="sbM"></span></div>
+    <div class="sbt"><span class="sbq" id="sbQ"></span>
+      <span class="sbm"><span id="sbM"></span>
+        <label class="lchip" id="sbLangC" title="언어 바꾸기"><span class="lct"></span><svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+          <select id="sbLang" onchange="setSelLang(this.value)" aria-label="선택한 글의 언어">
+          <option value="">일반 글 (번역)</option>
+          <option value="lzh">漢文 · 한문</option>
+          <option value="lzh-ko">懸吐 · 현토 한문</option>
+          <option value="lzh-ja">訓讀 · 일본 훈독 한문</option>
+          <option value="pi">Pāli · 팔리어</option>
+          <option value="sa">Saṃskṛta · 산스크리트어</option>
+          <option value="bo">བོད་ཡིག · 티베트어</option>
+          </select></label>
+      </span>
+    </div>
     <button class="sbx" onclick="dismissSel()" aria-label="선택 해제"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
   </div>
   <div class="sbg">
     <button class="sba pri" onclick="selAct('ask')"><svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>질문</button>
-    <button class="sba" onclick="selAct('tr')"><svg viewBox="0 0 24 24"><path d="M5 8l6 6"/><path d="M4 14l6-6 2-3"/><path d="M2 5h12"/><path d="M7 2h1"/><path d="M22 22l-5-10-5 10"/><path d="M14 18h6"/></svg>번역</button>
+    <button class="sba trb" id="sbTr" onclick="selAct('tr')"><svg viewBox="0 0 24 24"><path d="M5 8l6 6"/><path d="M4 14l6-6 2-3"/><path d="M2 5h12"/><path d="M7 2h1"/><path d="M22 22l-5-10-5 10"/><path d="M14 18h6"/></svg><span>번역</span></button>
     <button class="sba" onclick="selAct('ex')"><svg viewBox="0 0 24 24"><path d="M2 4h6a4 4 0 014 4v13a3 3 0 00-3-3H2z"/><path d="M22 4h-6a4 4 0 00-4 4v13a3 3 0 013-3h7z"/></svg>풀이</button>
     <button class="sba" onclick="selAct('hl')"><svg viewBox="0 0 24 24"><path d="M15 3l6 6-9 9H6v-6z"/><line x1="3" y1="21" x2="21" y2="21" stroke="#ffe600" stroke-width="3"/></svg>형광펜</button>
     <button class="sba" onclick="selAct('cp')"><svg viewBox="0 0 24 24"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>인용 복사</button>
@@ -1007,6 +1092,27 @@ body.sheet-up #toast.on{transform:translate(-50%,0);}
 </div>
 
 <div id="toast" role="status" aria-live="polite"></div>
+
+<!-- ══ PDF 안에서 검색 ══ -->
+<div id="findBar" role="search">
+  <div class="fbr">
+    <svg class="fbi" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><line x1="20" y1="20" x2="16.2" y2="16.2"/></svg>
+    <input id="findIn" type="search" placeholder="PDF에서 찾기" autocomplete="off" enterkeyhint="search" aria-label="찾을 낱말">
+    <span id="findCnt"></span>
+    <button class="fbb" onclick="findStep(-1)" aria-label="이전 결과 (Shift+Enter)" title="이전 (Shift+Enter)"><svg viewBox="0 0 24 24"><polyline points="18 15 12 9 6 15"/></svg></button>
+    <button class="fbb" onclick="findStep(1)" aria-label="다음 결과 (Enter)" title="다음 (Enter)"><svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg></button>
+    <button class="fbb" id="findListB" onclick="togFindList()" aria-label="결과 목록" title="결과 목록"><svg viewBox="0 0 24 24"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><circle cx="4" cy="6" r="1"/><circle cx="4" cy="12" r="1"/><circle cx="4" cy="18" r="1"/></svg></button>
+    <button class="fbb" onclick="closeFind()" aria-label="검색 닫기 (Esc)" title="닫기 (Esc)"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+  </div>
+  <div id="findPanel">
+    <div class="fop">
+      <button class="fchip on" id="fOptSp" onclick="togFindOpt('sp')" aria-pressed="true">띄어쓰기 무시</button>
+      <button class="fchip on" id="fOptVar" onclick="togFindOpt('var')" aria-pressed="true">이체자 포함 (爲=為)</button>
+      <span id="findSum"></span>
+    </div>
+    <div id="findList"></div>
+  </div>
+</div>
 <button id="aiFab" class="fab2" onclick="openChat(1)" aria-label="AI 질문 열기"><svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg><span class="fbdg" id="fabBdg"></span></button>
 
 <input type="file" id="fi" accept=".pdf" style="display:none;" onchange="loadPDF(this)">
@@ -1162,6 +1268,7 @@ async function loadPDF(inp) {
   const f = inp.files[0]; if (!f) return;
   G.fn = f.name; G.txts = {}; G.hist = []; G.pg = 1; G.sysPrompt = '';
   G.ann = {}; G.uStack = {}; G.rStack = {};   // 새 PDF → 필기 초기화
+  closeFind();
   try {
     G.pdf = await pdfjsLib.getDocument({ data: await f.arrayBuffer() }).promise;
     G.tot = G.pdf.numPages;
@@ -1247,6 +1354,7 @@ async function renderNow(n) {
 
   const tl = document.getElementById('tlayer');
   tl.innerHTML = '';
+  document.getElementById('findHl').innerHTML = '';
   tl.style.width = vp.width + 'px'; tl.style.height = vp.height + 'px';
   tl.style.setProperty('--scale-factor', G.zm.toString());
 
@@ -1266,6 +1374,7 @@ async function renderNow(n) {
   const eoc = document.createElement('div');   // 선택 튐 방지용
   eoc.className = 'endOfContent';
   tl.appendChild(eoc);
+  if (FIND.open && FIND.hits.length) paintFind();    // 검색 중이면 이 쪽의 결과를 표시
 }
 
 async function bgEx() {
@@ -1437,6 +1546,287 @@ function setupWheelZoom() {
   }, { passive: false });
 }
 
+/* ══════════════════════════════════════════════════════════
+   PDF 안에서 검색
+   · 모든 쪽의 글을 찾고, 결과 목록(쪽 + 앞뒤 문맥)과 쪽 위 형광 표시를 보여 줍니다.
+   · 띄어쓰기 무시: '일체법'으로 '일체 법'도 찾음 (줄바꿈으로 끊긴 낱말 포함)
+   · 이체자 포함: 爲/為, 眞/真, 說/説 … 를 같은 글자로 봄
+   · 강희부수(⼀)·호환 한자(樂 U+F914)·전각 영숫자도 표준 글자로 맞춰 찾음
+   ══════════════════════════════════════════════════════════ */
+const FIND = { open: false, q: '', hits: [], idx: -1, sp: true, vars: true, token: 0, list: false };
+const VARIANT_GROUPS = ('為爲 説說 真眞 体體 仏佛 経經 来來 円圓 蔵藏 学學 覚覺 実實 尽盡 弁辯辨 乗乘 礼禮 対對 声聲 ' +
+  '縁緣 黒黑 帰歸 浄淨 証證 応應 断斷 変變 恵惠 会會 伝傳 写寫 尓爾 无無 万萬 与與 数數 号號 発發 当當 処處 ' +
+  '竜龍 亀龜 霊靈 様樣 観觀 歓歡 権權 総總 聴聽 読讀 続續 転轉 鉄鐵 釈釋 薬藥 気氣 灯燈 図圖 国國 圧壓 剣劍 ' +
+  '収收 乱亂 双雙 囲圍 帯帶 広廣 弥彌 従從 摂攝 拠據 斉齊 曽曾 歯齒 済濟 満滿 焼燒 獣獸 畳疊 痴癡 県縣 ' +
+  '秘祕 称稱 穏穩 粋粹 絵繪 継繼 舎舍 蛍螢 衆眾 装裝 覧覽 訳譯 誉譽 譲讓 賛贊 軽輕 辺邊 遅遲 郷鄕 隠隱 ' +
+  '雑雜 頼賴 駆驅 験驗 髄髓 黙默 険險 関關 両兩 争爭 亜亞 仮假 価價 倹儉 偽僞 児兒 内內 剤劑 勧勸 単單 ' +
+  '厳嚴 囑嘱 営營 団團 塩鹽 増增 壱壹 売賣 姫姬 娯娛 寛寬 将將 専專 巌巖 巣巢 廃廢 徳德 徴徵 恋戀 悪惡 ' +
+  '悩惱 慎愼 戦戰 戯戲 戸戶 拝拜 挙擧 揺搖 摂攝 晩晚 暁曉 楽樂 様樣 横橫 歩步 殻殼 毎每 沢澤 涙淚 渇渴 ' +
+  '渓溪 温溫 湾灣 滞滯 焔焰 犠犧 猟獵 瑶瑤 甁瓶 畫画 碍礙 禅禪 祷禱 穂穗 ' +
+  '緒緖 縄繩 臓臟 荘莊 虚虛 蝋蠟 衛衞 覇霸 謡謠 讃讚 豊豐 践踐 遥遙 醤醬 銭錢 鋳鑄 ' +
+  '錬鍊 闘鬪 隣鄰 静靜 顕顯 飲飮 餅餠 騒騷 髪髮 鶏鷄 麦麥 黄黃 齢齡').split(' ');
+const VARMAP = (() => {
+  const m = new Map();
+  for (const g of VARIANT_GROUPS) {
+    const cs = [...g]; if (cs.length < 2) continue;
+    for (const c of cs.slice(1)) if (c !== cs[0] && !m.has(c)) m.set(c, cs[0]);
+  }
+  return m;
+})();
+// 글자 하나를 검색용 표준 글자로 (빈 문자열 = 건너뜀)
+function foldCh(c) {
+  if (/\s/.test(c)) return FIND.sp ? '' : ' ';
+  const cp = c.codePointAt(0);
+  if ((cp >= 0x2E80 && cp <= 0x2FDF) || (cp >= 0xF900 && cp <= 0xFAFF) || (cp >= 0xFF01 && cp <= 0xFF5E)) c = c.normalize('NFKC');
+  c = c.toLowerCase();
+  if (FIND.vars && VARMAP.has(c)) c = VARMAP.get(c);
+  return c;
+}
+// 원문 → 접은 글 + 원문 위치 대응표
+function foldMap(raw) {
+  let out = ''; const map = [];
+  let i = 0;
+  for (const ch of raw) {
+    const f = foldCh(ch);
+    for (const fc of f) { out += fc; map.push(i); }
+    i += ch.length;
+  }
+  return { out, map };
+}
+function foldQuery(q) { return foldMap(q).out; }
+function pageRaw(n) { return (G.txts[n] || []).map(it => it.str).join(''); }
+
+function openFind() {
+  if (!G.pdf) return;
+  FIND.open = true;
+  document.documentElement.classList.add('find-open');
+  document.getElementById('findBar').classList.add('on');
+  document.getElementById('findBtn').classList.add('on');
+  dismissSel(); hideP();
+  if (G.layout === 'sheet' && G.sheet > 0) setSheet(0);
+  placeFindBar();
+  const inp = document.getElementById('findIn');
+  // 선택해 둔 글이 있으면 그 글로 바로 찾기
+  const sel = window.getSelection && window.getSelection().toString().trim();
+  if (sel && sel.length <= 40 && !sel.includes('\n')) { inp.value = cleanText(sel); runFind(); }
+  inp.focus(); inp.select();
+}
+function closeFind() {
+  FIND.open = false; FIND.hits = []; FIND.idx = -1; FIND.q = ''; FIND.token++;
+  const bar = document.getElementById('findBar');
+  if (!bar) return;
+  bar.classList.remove('on');
+  document.documentElement.classList.remove('find-open');
+  document.getElementById('findBtn').classList.remove('on');
+  document.getElementById('findHl').innerHTML = '';
+  const inp = document.getElementById('findIn');
+  if (document.activeElement === inp) inp.blur();
+}
+// 검색 막대는 PDF 영역의 오른쪽 위에 (휴대폰은 폭 전체)
+function placeFindBar() {
+  const bar = document.getElementById('findBar');
+  if (!FIND.open) return;
+  const r = document.getElementById('pdfSc').getBoundingClientRect();
+  const w = Math.min(460, r.width - 16);
+  bar.style.width = w + 'px';
+  bar.style.left = Math.round(r.right - w - 8) + 'px';
+  bar.style.top = Math.round(r.top + 8) + 'px';
+  const rowH = bar.querySelector('.fbr').offsetHeight;
+  document.documentElement.style.setProperty('--fbh', (rowH + 16) + 'px');
+}
+window.addEventListener('resize', () => setTimeout(placeFindBar, 150));
+
+function togFindList() {
+  FIND.list = !FIND.list;
+  document.getElementById('findBar').classList.toggle('list', FIND.list);
+  document.getElementById('findListB').classList.toggle('on', FIND.list);
+}
+function togFindOpt(which) {
+  if (which === 'sp') FIND.sp = !FIND.sp; else FIND.vars = !FIND.vars;
+  const b = document.getElementById(which === 'sp' ? 'fOptSp' : 'fOptVar');
+  const on = which === 'sp' ? FIND.sp : FIND.vars;
+  b.classList.toggle('on', on); b.setAttribute('aria-pressed', on);
+  runFind();
+}
+
+(function setupFind() {
+  const inp = document.getElementById('findIn');
+  let t = null;
+  inp.addEventListener('input', () => { clearTimeout(t); t = setTimeout(runFind, 260); });
+  inp.addEventListener('keydown', e => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      if (FIND.q !== inp.value.trim()) { clearTimeout(t); runFind(); return; }
+      findStep(e.shiftKey ? -1 : 1);
+    } else if (e.key === 'Escape') { e.preventDefault(); closeFind(); }
+  });
+})();
+
+// 모든 쪽에서 찾기 — 아직 글을 못 읽은 쪽은 이때 읽음
+async function runFind() {
+  const q = document.getElementById('findIn').value.trim();
+  const token = ++FIND.token;
+  FIND.q = q; FIND.hits = []; FIND.idx = -1;
+  document.getElementById('findHl').innerHTML = '';
+  const cnt = document.getElementById('findCnt');
+  const list = document.getElementById('findList');
+  cnt.classList.remove('none');
+  if (!q) { cnt.textContent = ''; list.innerHTML = ''; document.getElementById('findSum').textContent = ''; return; }
+  const fq = foldQuery(q);
+  if (!fq) return;
+
+  // 글 추출이 끝나지 않은 쪽 채우기
+  for (let i = 1; i <= G.tot; i++) {
+    if (G.txts[i]) continue;
+    cnt.textContent = `${i}/${G.tot}쪽 읽는 중…`;
+    try {
+      const pg = await G.pdf.getPage(i);
+      const tc = await pg.getTextContent();
+      G.txts[i] = tc.items.map(it => ({ str: it.str }));
+    } catch (_) { G.txts[i] = []; }
+    if (token !== FIND.token) return;            // 그 사이 검색어가 바뀜
+  }
+
+  let anyText = false;
+  for (let p = 1; p <= G.tot; p++) {
+    const raw = pageRaw(p);
+    if (raw.trim()) anyText = true;
+    const { out, map } = foldMap(raw);
+    let k = 0, from = 0, pos;
+    while ((pos = out.indexOf(fq, from)) !== -1) {
+      const s = map[pos], e = map[pos + fq.length - 1] + 1;
+      FIND.hits.push({ p, k: k++, s, e, raw });
+      from = pos + fq.length;
+      if (FIND.hits.length >= 2000) break;
+    }
+    if (FIND.hits.length >= 2000) break;
+  }
+  if (token !== FIND.token) return;
+
+  renderFindList(anyText);
+  if (!FIND.hits.length) {
+    cnt.textContent = '없음'; cnt.classList.add('none');
+    return;
+  }
+  // 지금 보고 있는 쪽 이후의 첫 결과부터
+  let first = FIND.hits.findIndex(h => h.p >= G.pg);
+  if (first < 0) first = 0;
+  goFind(first);
+}
+
+function renderFindList(anyText) {
+  const list = document.getElementById('findList');
+  const sum = document.getElementById('findSum');
+  list.innerHTML = '';
+  if (!FIND.hits.length) {
+    sum.textContent = '';
+    list.innerHTML = `<div class="fmsg">${anyText
+      ? '찾는 낱말이 없습니다. 띄어쓰기·이체자 옵션을 바꿔 보세요.'
+      : '이 PDF에는 글자 정보가 없습니다 (스캔한 이미지 PDF는 검색할 수 없습니다).'}</div>`;
+    return;
+  }
+  const pages = new Set(FIND.hits.map(h => h.p)).size;
+  sum.textContent = `${FIND.hits.length >= 2000 ? '2000+' : FIND.hits.length}건 · ${pages}쪽`;
+  const frag = document.createDocumentFragment();
+  FIND.hits.slice(0, 500).forEach((h, i) => {
+    const b = document.createElement('button');
+    b.className = 'fr'; b.dataset.i = i;
+    const pre = h.raw.slice(Math.max(0, h.s - 22), h.s).replace(/\s+/g, ' ');
+    const mid = h.raw.slice(h.s, h.e).replace(/\s+/g, ' ');
+    const post = h.raw.slice(h.e, h.e + 30).replace(/\s+/g, ' ');
+    b.innerHTML = `<span class="fp">${h.p}쪽</span><span class="fs">${h.s > 22 ? '…' : ''}${esc(pre)}<mark>${esc(mid)}</mark>${esc(post)}…</span>`;
+    b.onclick = () => { goFind(i); if (G.layout === 'sheet') togFindList(); };   // 휴대폰은 목록을 닫아 본문이 보이게
+    frag.appendChild(b);
+  });
+  if (FIND.hits.length > 500) {
+    const m = document.createElement('div'); m.className = 'fmsg';
+    m.textContent = `목록에는 처음 500건만 보입니다. ▲▼ 버튼으로 나머지도 이동할 수 있습니다.`;
+    frag.appendChild(m);
+  }
+  list.appendChild(frag);
+}
+
+function findStep(d) {
+  if (!FIND.hits.length) { if (document.getElementById('findIn').value.trim()) runFind(); return; }
+  goFind((FIND.idx + d + FIND.hits.length) % FIND.hits.length);
+}
+async function goFind(i) {
+  FIND.idx = i;
+  const h = FIND.hits[i];
+  document.getElementById('findCnt').textContent = `${i + 1} / ${FIND.hits.length >= 2000 ? '2000+' : FIND.hits.length}`;
+  document.querySelectorAll('#findList .fr').forEach(b => b.classList.toggle('cur', +b.dataset.i === i));
+  const curRow = document.querySelector(`#findList .fr[data-i="${i}"]`);
+  if (curRow) curRow.scrollIntoView({ block: 'nearest' });
+  FIND.scrollTo = true;
+  if (h.p !== G.pg) {
+    G.pg = h.p; clrSel();
+    await render(h.p);           // 그린 뒤 paintFind가 불림
+  } else {
+    paintFind();
+  }
+}
+
+// 지금 쪽의 결과를 형광으로 칠하고, 현재 결과가 보이도록 스크롤
+function paintFind() {
+  const layer = document.getElementById('findHl');
+  layer.innerHTML = '';
+  const tl = document.getElementById('tlayer');
+  const pageHits = FIND.hits.filter(h => h.p === G.pg);
+  if (!pageHits.length) return;
+  // 글자층의 글자 노드를 순서대로 이어 붙여 같은 방식으로 접기
+  const nodes = [], starts = [];
+  let raw = '';
+  const tw = document.createTreeWalker(tl, NodeFilter.SHOW_TEXT);
+  for (let n; (n = tw.nextNode());) { nodes.push(n); starts.push(raw.length); raw += n.nodeValue; }
+  const { out, map } = foldMap(raw);
+  const fq = foldQuery(FIND.q);
+  const locate = (idx) => {                       // 원문 위치 → (노드, 노드 안 위치)
+    let lo = 0, hi = starts.length - 1;
+    while (lo < hi) { const m = (lo + hi + 1) >> 1; if (starts[m] <= idx) lo = m; else hi = m - 1; }
+    return [nodes[lo], idx - starts[lo]];
+  };
+  const vr = document.getElementById('pdfV').getBoundingClientRect();
+  const cur = FIND.hits[FIND.idx];
+  let k = 0, from = 0, pos, curRect = null;
+  while ((pos = out.indexOf(fq, from)) !== -1) {
+    const s = map[pos], e = map[pos + fq.length - 1] + 1;
+    const isCur = cur && cur.p === G.pg && cur.k === k;
+    try {
+      const r = document.createRange();
+      const [sn, so] = locate(s), [en, eo] = locate(e - 1);
+      r.setStart(sn, so); r.setEnd(en, eo + 1);
+      // 글자마다 따로 나뉜 사각형을 줄 단위로 합쳐 한 덩어리로 표시
+      const boxes = [];
+      for (const rc of r.getClientRects()) {
+        if (rc.width < 1 || rc.height < 1) continue;
+        const L = boxes[boxes.length - 1], h = rc.height;
+        if (L && Math.abs((L.t + L.b) / 2 - (rc.top + rc.bottom) / 2) < h * 0.5 && rc.left <= L.r + h * 0.8) {
+          L.l = Math.min(L.l, rc.left); L.r = Math.max(L.r, rc.right); L.t = Math.min(L.t, rc.top); L.b = Math.max(L.b, rc.bottom);
+        } else boxes.push({ l: rc.left, r: rc.right, t: rc.top, b: rc.bottom });
+      }
+      for (const bx of boxes) {
+        const d = document.createElement('div');
+        d.className = 'fh' + (isCur ? ' cur' : '');
+        d.style.cssText = `left:${bx.l - vr.left - 1}px;top:${bx.t - vr.top - 1}px;width:${bx.r - bx.l + 2}px;height:${bx.b - bx.t + 2}px`;
+        layer.appendChild(d);
+        if (isCur && !curRect) curRect = { left: bx.l, right: bx.r, top: bx.t, bottom: bx.b };
+      }
+    } catch (_) {}
+    k++; from = pos + fq.length;
+  }
+  if (curRect && FIND.scrollTo) {
+    FIND.scrollTo = false;
+    const sc = document.getElementById('pdfSc');
+    const sr = sc.getBoundingClientRect();
+    const barH = FIND.open ? document.getElementById('findBar').offsetHeight + 16 : 0;
+    // 검색 막대 아래, 화면 위쪽 1/3 지점쯤으로
+    const wantTop = sr.top + barH + (sc.clientHeight - barH) * 0.3;
+    sc.scrollTop += curRect.top - wantTop;
+    const wantLeft = sr.left + sc.clientWidth / 2;
+    if (curRect.left < sr.left || curRect.right > sr.right) sc.scrollLeft += curRect.left - wantLeft;
+  }
+}
+
 /* ── 텍스트 선택 팝업 ── */
 function isTouch() { return document.documentElement.classList.contains('touch'); }
 
@@ -1538,22 +1928,61 @@ function chkSel(cx, cy) {
   if (!tl || !sel.anchorNode || !tl.contains(sel.anchorNode)) return;
   G.selTxt = txt; G.selPg = G.pg;
   selSnap = { text: txt, range: sel.getRangeAt(0).cloneRange(), pg: G.pg };
+  detectSnap(selSnap);
   document.getElementById('scS').disabled = false; syncScSel();
   showP(cx, cy, txt);
 }
 
 /* ── 손가락·펜으로 선택 → 아래 작업 막대 ── */
 let selSnap = null;   // 막대를 띄울 때의 선택 (버튼을 누르는 순간 선택이 풀려도 쓰도록 보관)
+let selHoldUntil = 0;  // 작업 막대를 누르는 동안엔 선택이 풀려도 막대를 닫지 않음
+
+/* ── 고전어 감지 → 언어 표시 · '번역'을 '분석'으로 ── */
+function detectSnap(snap) {
+  const d = CL.detect(snap.text);
+  snap.lang = d ? d.lang : '';
+  snap.seg = d ? d.segment : snap.text;
+  snap.translit = d ? d.translit : '';
+  snap.mixed = !!(d && d.mixed);
+  snap.manual = false;
+  updLangUI();
+}
+function setSelLang(v) {
+  if (!selSnap) return;
+  selSnap.lang = v; selSnap.manual = true;
+  if (!selSnap.seg) selSnap.seg = selSnap.text;
+  updLangUI();
+}
+function updLangUI() {
+  const s = selSnap || {};
+  const lang = s.lang || '';
+  const label = lang ? CL.langTag(lang) + (s.manual ? '' : (s.mixed ? ' 인용 감지' : ' 감지')) : '일반 글';
+  ['sb', 'sp'].forEach(p => {
+    const chip = document.getElementById(p + 'LangC'); if (!chip) return;
+    chip.classList.toggle('on', !!lang);
+    chip.querySelector('.lct').textContent = label;
+    document.getElementById(p + 'Lang').value = lang;
+    const b = document.getElementById(p + 'Tr');
+    b.classList.toggle('an', !!lang);
+    b.querySelector('span').textContent = lang ? '분석' : '번역';
+    b.title = lang ? `${CL.langName(lang)} 구조 분석 (분절·문법·직역·의역)` : '한국어로 직역';
+  });
+}
 function touchSelCheck() {
   if (G.tool !== 'cursor') return;
   const sel = window.getSelection();
   const tl = document.getElementById('tlayer');
   if (!sel || sel.isCollapsed || !sel.rangeCount || !tl.contains(sel.anchorNode)) {
+    // 작업 막대(언어 고르기 등)를 누르다가 선택이 풀린 경우엔 막대를 그대로 둠
+    if (Date.now() < selHoldUntil || document.activeElement === document.getElementById('sbLang')) return;
     hideSelBar(); return;
   }
   const txt = cleanText(sel.toString());
   if (txt.length < 2) { hideSelBar(); return; }
+  const keepLang = selSnap && selSnap.text === txt && selSnap.manual ? selSnap.lang : null;
   selSnap = { text: txt, range: sel.getRangeAt(0).cloneRange(), pg: G.pg };
+  detectSnap(selSnap);
+  if (keepLang != null) { selSnap.lang = keepLang; selSnap.manual = true; updLangUI(); }
   G.selTxt = txt; G.selPg = G.pg;
   document.getElementById('scS').disabled = false; syncScSel();
   document.getElementById('sbQ').textContent = txt;
@@ -1562,6 +1991,9 @@ function touchSelCheck() {
   document.body.classList.add('selbar-on');
   closeAnnPanel();
 }
+document.addEventListener('pointerdown', e => {
+  if (e.target.closest && e.target.closest('#selBar')) selHoldUntil = Date.now() + 1500;
+}, true);
 function hideSelBar() {
   document.getElementById('selBar').classList.remove('on');
   document.body.classList.remove('selbar-on');
@@ -1576,6 +2008,11 @@ async function selAct(kind) {
   const s = selSnap;
   if (!s) { hideSelBar(); return; }
   const docName = (G.fn || '').replace(/\.pdf$/i, '');
+  if (kind === 'tr' && s.lang) {                 // 고전어 → TranslateDu 구조 분석
+    dismissSel();
+    CL.start(s.seg || s.text, s.lang, { pg: s.pg, translit: s.translit });
+    return;
+  }
   if (kind === 'ask' || kind === 'tr' || kind === 'ex') {
     setQuote(s.text, s.pg);
     dismissSel();
@@ -1779,7 +2216,7 @@ async function doSend() {
 
   // ── 이미지 생성 요청 감지 ──
   const imgKeywords = /이미지|그림|사진|시각화|표현해|그려|일러스트|장면|풍경|묘사.*이미지|image|draw|paint|illustrat|generat.*image|picture/i;
-  const isImageReq = imgKeywords.test(q);
+  const isImageReq = IMAGE_GEN_ON && imgKeywords.test(q);
 
   showTy();
   try {
@@ -1843,7 +2280,11 @@ function pgTxt(n) {
    - hist는 이전 대화쌍 (user+model)
    - 현재 질문은 마지막 user turn
 */
-/* ── Gemini 이미지 생성 (gemini-2.5-flash-image) ── */
+/* ── Gemini 이미지 생성 (gemini-2.5-flash-image) ──
+   지금은 꺼 둠: '그림·사진·장면'이 들어간 일반 질문까지 그림 생성으로 빠지고,
+   그림 모델은 무료 키로 쓸 수 없기 때문. 다음에 다시 켤 때 true로 바꾸고
+   ① 만들어 달라는 요청에만 반응 ② gemini-3.1-flash-lite-image로 교체 ③ 실패 시 일반 답변으로 이어받기를 함께 손볼 것. */
+const IMAGE_GEN_ON = false;
 async function callGeminiImage(q, ctx) {
   // 이미지 생성용 프롬프트: 교재 내용 기반으로 시각화 지시
   const imgPrompt =
@@ -2608,6 +3049,11 @@ function annHighlightRange(range) {
 
 /* ── 단축키 ── */
 function annKey(e) {
+  // Ctrl+F: PDF 안에서 검색 (브라우저 찾기는 지금 보이는 쪽만 찾으므로 대신 열어 줌)
+  const k0 = (e.key || '').toLowerCase();
+  if ((e.ctrlKey || e.metaKey) && k0 === 'f' && G.pdf && !WB.open) { e.preventDefault(); openFind(); return; }
+  if (FIND.open && (e.key === 'F3' || ((e.ctrlKey || e.metaKey) && k0 === 'g'))) { e.preventDefault(); findStep(e.shiftKey ? -1 : 1); return; }
+  if (FIND.open && e.key === 'Escape' && !WB.open && document.getElementById('selPop').style.display !== 'flex') { closeFind(); return; }
   if (WB.open) return;          // 메모장이 열려 있으면 메모장 단축키가 우선
   const t = e.target;
   if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) return;
@@ -3064,6 +3510,7 @@ function wbCommitText() {
   const txt = ta.value.replace(/\s+$/, '');
   const ed = WB.editing;
   WB.editing = null;
+  if (document.activeElement === ta) ta.blur();   // 숨긴 입력란에 포커스가 남아 단축키(Ctrl+S 등)가 먹지 않던 문제
   ta.style.display = 'none';
 
   if (ed.obj) {
@@ -3611,6 +4058,1036 @@ function onViewport() {
     else setSheet(G.sheet);
   }
 }
+</script>
+
+<!-- ══ 고전어 분석: 전체 보기 ══ -->
+<div id="anView" role="dialog" aria-label="고전어 구조 분석 결과">
+  <div class="anv-w">
+    <div class="anv-h">
+      <div class="anv-ti"><b id="anvT"></b><span id="anvM"></span></div>
+      <button class="anv-hb" id="anvP" onclick="CL.viewRerun()">정밀 분석</button>
+      <button class="anv-hb" onclick="CL.viewDownload('html')">HTML</button>
+      <button class="anv-hb" onclick="CL.viewDownload('json')">JSON</button>
+      <button class="anv-x" onclick="CL.closeView()" aria-label="닫기"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    </div>
+    <div class="anv-b" id="anvB"></div>
+  </div>
+</div>
+
+<!-- ══ 고전어 분석: 원문 고치기 / 직접 입력 ══ -->
+<div id="anEdit" role="dialog" aria-label="고전어 원문 입력">
+  <div class="ane-w">
+    <div class="anv-h"><div class="anv-ti"><b>고전어 구조 분석</b><span>원문을 확인·수정한 뒤 분석합니다</span></div>
+      <button class="anv-x" onclick="CL.closeEdit()" aria-label="닫기"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div>
+    <div class="ane-b">
+      <div class="anc-warn" id="aneWarn" hidden>선택한 글에 깨진 글자가 있습니다. 옛 글꼴로 만든 PDF에서 흔한 일입니다. 원문을 바로잡은 뒤 분석해 주세요.</div>
+      <textarea id="aneText" rows="5" placeholder="예) 若依一乘此中即具十佛體德用。准以思攝。&#10;evaṃ me sutaṃ ekaṃ samayaṃ bhagavā …&#10;sangs rgyas thams cad …" spellcheck="false"></textarea>
+      <div class="ane-r">
+        <label>언어 <select id="aneLang">
+          <option value="lzh">漢文 · 한문</option><option value="lzh-ko">懸吐 · 현토 한문</option><option value="lzh-ja">訓讀 · 일본 훈독 한문</option>
+          <option value="pi">Pāli · 팔리어</option><option value="sa">Saṃskṛta · 산스크리트어</option><option value="bo">བོད་ཡིག · 티베트어</option></select></label>
+        <label class="ane-ck"><input type="checkbox" id="anePrec"> 정밀 분석 (자기 검증 포함 · API 2회)</label>
+      </div>
+      <div class="ane-f"><button class="mbtn sk" onclick="CL.closeEdit()">취소</button><button class="mbtn ok" onclick="CL.submitEdit()">분석</button></div>
+    </div>
+  </div>
+</div>
+<style id="anCss">
+/* ── 고전어 분석 (이 블록은 HTML 내보내기에도 그대로 들어갑니다) ── */
+.hz{font-family:'Noto Serif KR','Noto Serif CJK KR','Noto Serif TC','Apple SD Gothic Neo',serif;}
+.anc{background:var(--bg);border:1px solid var(--ln);border-radius:14px;padding:12px 12px 10px;display:flex;flex-direction:column;gap:9px;width:100%;max-width:100%;box-sizing:border-box;}
+.anc-h{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.anc-l{font-size:12px;font-weight:700;color:#7c2d12;background:#ffedd5;border-radius:6px;padding:2px 7px;}
+.anc-m{font-size:11.5px;color:var(--ink3);}
+.anc-warn{font-size:12.5px;color:var(--am);background:var(--aml);border-radius:8px;padding:7px 10px;line-height:1.55;}
+.anc-src{font-size:17px;line-height:1.75;color:var(--ink);word-break:break-word;}
+.anc-ig{display:flex;flex-wrap:wrap;gap:4px;}
+.ig{display:inline-flex;flex-direction:column;align-items:center;gap:1px;min-width:38px;padding:5px 6px 4px;border-radius:9px;border:1px solid var(--ln2);background:#fff;cursor:pointer;font-family:inherit;line-height:1.25;}
+.ig b{font-family:'Noto Serif KR','Noto Serif CJK KR','Noto Serif TC',serif;font-size:17px;font-weight:600;color:var(--ink);}
+.ig b i{font-style:normal;font-size:11px;color:#b45309;margin-left:1px;font-family:'Apple SD Gothic Neo','Noto Sans KR',sans-serif;}
+.ig u{text-decoration:none;font-size:11px;color:#7c3aed;}
+.ig small{font-size:11px;color:var(--ink2);max-width:110px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.ig em{font-style:normal;font-size:10px;color:var(--ink3);max-width:110px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.ig.bt{border-color:#f59e0b;background:#fffbeb;}
+.ig.lo{border-style:dashed;}
+.ig.on{outline:2px solid var(--bl);outline-offset:1px;}
+.anc-tip{font-size:12.5px;color:var(--ink2);background:#fff;border:1px solid var(--ln);border-radius:9px;padding:8px 10px;line-height:1.6;}
+.anc-tip b{font-size:15px;color:var(--ink);margin-right:4px;}
+.anc-tr{display:flex;gap:8px;align-items:flex-start;}
+.anc-tr span{flex-shrink:0;font-size:11px;font-weight:700;color:var(--bl);background:var(--bll);border-radius:6px;padding:2px 6px;margin-top:3px;}
+.anc-tr p{margin:0;font-size:14px;line-height:1.7;color:var(--ink);}
+.anc-st{font-size:12px;color:var(--ink3);}
+.anc-b{display:flex;gap:6px;flex-wrap:wrap;}
+.anc-btn{display:inline-flex;align-items:center;gap:5px;height:32px;padding:0 12px;border-radius:16px;border:1px solid var(--ln2);background:#fff;color:var(--ink2);font-size:12.5px;font-family:inherit;cursor:pointer;}
+.anc-btn svg{width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
+.anc-btn.pri{background:var(--bl);border-color:var(--bl);color:#fff;}
+html.touch .anc-btn{height:40px;padding:0 14px;font-size:13.5px;}
+html.touch .ig{min-width:44px;padding:6px 7px 5px;}
+.msg.ai .anc{max-width:96%;}
+.clps{font-size:12px;color:var(--ink3);margin-left:6px;}
+
+/* 전체 보기 */
+#anView,#anEdit{position:fixed;inset:0;z-index:950;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.45);padding:20px;}
+#anView.on,#anEdit.on{display:flex;}
+.anv-w,.ane-w{background:var(--sf);border-radius:16px;box-shadow:0 24px 64px rgba(0,0,0,.3);width:100%;max-width:960px;max-height:100%;display:flex;flex-direction:column;overflow:hidden;}
+.ane-w{max-width:620px;}
+.anv-h{display:flex;align-items:center;gap:6px;padding:10px 10px 10px 18px;border-bottom:1px solid var(--ln);flex-shrink:0;}
+.anv-ti{flex:1;min-width:0;display:flex;flex-direction:column;gap:1px;}
+.anv-ti b{font-size:15.5px;}
+.anv-ti span{font-size:12px;color:var(--ink3);}
+.anv-hb{height:32px;padding:0 11px;border-radius:9px;border:1px solid var(--ln2);background:#fff;color:var(--ink2);font-size:12.5px;font-family:inherit;cursor:pointer;}
+.anv-x{width:36px;height:36px;border:0;border-radius:10px;background:transparent;color:var(--ink2);display:flex;align-items:center;justify-content:center;cursor:pointer;}
+.anv-x svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;}
+html.touch .anv-hb{height:40px;}
+html.touch .anv-x{width:44px;height:44px;}
+.anv-b{overflow-y:auto;padding:18px 20px 26px;overscroll-behavior:contain;}
+.anv-b section{margin-top:20px;}
+.anv-b h3{font-size:13.5px;margin:0 0 9px;color:var(--ink);display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;}
+.anv-b h3 small{font-weight:500;color:var(--ink3);font-size:12.5px;}
+.anv-b ul{margin:0;padding-left:18px;}
+.anv-b li{font-size:14px;line-height:1.75;color:var(--ink2);margin-bottom:4px;}
+.anv-src{font-size:22px;line-height:1.8;color:var(--ink);word-break:break-word;}
+.anv-note{font-size:12px;color:#15803d;margin-top:4px;}
+.anv-disc{font-size:11.5px;color:var(--ink3);margin-top:26px;border-top:1px solid var(--ln);padding-top:10px;}
+.anv-b .anc-tr{margin-bottom:8px;}
+.anv-b .anc-tr p{font-size:15px;}
+.clzs{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;}
+.clz{font-size:13px;background:var(--bg);border:1px solid var(--ln);border-radius:8px;padding:3px 9px;}
+.cps{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:8px;}
+.cp{border:1px solid var(--ln);border-radius:10px;padding:8px 11px;background:#fff;}
+.cp span{font-size:11px;font-weight:700;color:var(--ink3);}
+.cp p{margin:2px 0 0;font-size:13.5px;line-height:1.6;}
+.tks{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:8px;}
+.tk{border:1px solid var(--ln);border-radius:11px;padding:9px 11px;background:#fff;}
+.tk.bt{border-color:#f59e0b;background:#fffbeb;}
+.tk-s{font-size:19px;font-weight:600;display:flex;align-items:center;justify-content:space-between;gap:6px;margin-bottom:5px;word-break:break-word;}
+.cf{font-size:10.5px;font-weight:600;border-radius:5px;padding:1px 5px;font-family:'Apple SD Gothic Neo','Noto Sans KR',sans-serif;flex-shrink:0;}
+.c-high{background:#dcfce7;color:#166534;}
+.c-medium{background:#fef9c3;color:#854d0e;}
+.c-low{background:#fee2e2;color:#991b1b;}
+.tk-r{display:flex;gap:6px;font-size:12.5px;line-height:1.55;}
+.tk-r span{flex-shrink:0;color:var(--ink3);width:56px;}
+.tk-r b{font-weight:500;color:var(--ink);word-break:break-word;}
+.al{display:flex;align-items:flex-start;gap:8px;padding:7px 0;border-bottom:1px solid var(--ln);}
+.al b{font-size:15px;font-weight:600;min-width:80px;}
+.al > span{color:var(--ink3);}
+.al p{margin:0;font-size:13.5px;line-height:1.6;}
+.al small{display:block;font-size:11.5px;color:var(--ink3);}
+/* 원문 고치기 창 */
+.ane-b{padding:14px 18px 18px;display:flex;flex-direction:column;gap:12px;overflow-y:auto;}
+#aneText{width:100%;border:1.5px solid var(--ln2);border-radius:12px;padding:10px 12px;font-size:16px;line-height:1.7;font-family:'Noto Serif KR','Noto Serif CJK KR',serif;resize:vertical;min-height:120px;background:#fff;color:var(--ink);outline:none;}
+#aneText:focus{border-color:var(--blm);}
+.ane-r{display:flex;flex-wrap:wrap;gap:12px;align-items:center;font-size:13px;color:var(--ink2);}
+.ane-r select{margin-left:6px;height:36px;border:1px solid var(--ln2);border-radius:9px;padding:0 8px;font-size:14px;font-family:inherit;background:#fff;}
+.ane-ck{display:flex;align-items:center;gap:6px;}
+.ane-ck input{width:18px;height:18px;}
+.ane-f{display:flex;justify-content:flex-end;gap:8px;}
+/* 휴대폰: 창을 화면 가득 */
+html.lay-sheet #anView,html.lay-sheet #anEdit{padding:0;align-items:stretch;}
+html.lay-sheet .anv-w,html.lay-sheet .ane-w{border-radius:0;max-width:none;height:100%;}
+html.lay-sheet .anv-h{padding-top:calc(10px + env(safe-area-inset-top));}
+html.lay-sheet .anv-b{padding:14px 14px calc(26px + env(safe-area-inset-bottom));}
+html.lay-sheet .anv-src{font-size:20px;}
+html.lay-sheet .anv-h{gap:4px;padding-left:14px;}
+html.lay-sheet .anv-ti b{font-size:14.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+html.lay-sheet .anv-hb{padding:0 8px;font-size:12px;}
+html.lay-sheet .tks{grid-template-columns:repeat(auto-fill,minmax(150px,1fr));}
+
+/* 선택 메뉴의 언어 표시 */
+.lchip{position:relative;display:inline-flex;align-items:center;gap:2px;margin-left:6px;padding:1px 4px 1px 7px;border-radius:7px;font-size:11px;font-weight:600;background:rgba(255,255,255,.1);color:#d6d3d1;cursor:pointer;vertical-align:middle;}
+.lchip svg{width:11px;height:11px;fill:none;stroke:currentColor;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round;}
+.lchip select{position:absolute;inset:0;opacity:0;width:100%;height:100%;cursor:pointer;font-size:16px;}
+.lchip.on{background:#f59e0b;color:#1c1917;}
+#selBar .lchip{font-size:11.5px;padding:2px 5px 2px 8px;}
+.trb.an{background:#b45309 !important;color:#fff !important;}
+
+</style>
+<script>
+/* ══════════════════════════════════════════════════════════
+   고전어 분석 엔진 데이터 — TranslateDu v2.1(서담 한민수)에서 옮김
+   한국어 출력용 시스템 프롬프트 · 사용자 프롬프트(few-shot 포함) · 검증 프롬프트 · 불교 용어 사전
+   ══════════════════════════════════════════════════════════ */
+const CL_DATA = {
+  SYS_LZH: "너는 고전 한문 불교 문헌 전문 분석기다.\n너의 임무는 입력된 한문 문장을 다음 순서대로 엄격하게 처리하는 것이다.\n\n반드시 지킬 규칙:\n1. 먼저 번역하지 말고, 먼저 분절과 문법 구조를 판정하라.\n2. 원문에 없는 내용을 보충해서 번역하지 마라.\n3. 불교 용어는 일반 한문 뜻과 교학적 뜻을 구분해서 검토하라.\n4. 확실하지 않은 경우 단정하지 말고 ambiguity에 후보를 남겨라.\n5. 설명문을 길게 쓰지 말고 지정된 JSON 스키마만 출력하라.\n6. 출력 전 마지막으로 원문 누락, 과잉 의역, 문장성분 충돌 여부를 자체 점검하라.\n\n현토(懸吐) 처리 규칙:\n- 원문에 한글 토씨(현토)가 붙어 있을 수 있다. 예: \"居卑而後에\", \"知登高之爲危하고\"\n- 현토는 조선·근대 학승이 한문 독해를 위해 붙인 한국어 조사·어미이다.\n- 현토가 있으면 반드시 input_text에 그대로 보존하고 삭제하지 마라.\n- 각 토큰의 surface에는 한자 부분만 넣되, 해당 토큰 뒤에 붙은 현토가 있다면 \"hyeonto\" 필드에 기록하라.\n- 현토 정보는 문법 구조 판정의 보조 단서로 활용하되, 현토 자체를 번역하지 마라.\n- 현토가 없는 순수 한문인 경우 hyeonto 필드는 빈 문자열(\"\")로 두라.\n\n분석 우선순위:\n1. 절(句) 단위 분리\n2. 어절 단위 분절 — 의미·문법적으로 하나의 단위를 이루는 어구는 하나의 토큰으로 묶어라.\n   예: 「十佛」「自性」「萬法」「真如」「一乘」은 각각 단일 토큰. 「准以」처럼 허사+동사 결합도 가능.\n   단, 두 글자 이상이라도 각각 독립 기능을 가질 때는 분리.\n3. 불교 용어 후보 태깅\n4. 허사와 연결어 기능 판정\n5. 문장 전체 구조 판정\n6. 직역 생성\n7. 의역 생성\n8. 원문-번역 대응 정렬\n9. 자기검토 후 수정본 생성\n\n한문 처리 원칙:\n- 若, 則, 即, 故, 謂, 亦, 但, 乃, 皆, 并, 准, 以 등은 문장 논리상 기능을 우선 판정하라.\n- 體, 德, 用, 性, 相, 理, 事 등은 불교 교학 용어 가능성을 우선 검토하라.\n- 주석서 문체일 경우 \"앞의 뜻에 준함\", \"예에 따라 포섭함\" 같은 메타 지시 표현 가능성을 점검하라.\n- 생략된 주어나 목적어를 함부로 확정하지 말고, 필요한 경우 omitted_elements에 후보로만 제시하라.\n\n번역 원칙:\n- literal_translation은 구조를 최대한 보존한 직역\n- idiomatic_translation은 한국어로 자연스럽게 다듬은 의역\n- 두 번역 모두 원문 정보를 누락하지 마라\n\n출력 언어 규칙 (매우 중요):\n- char_gloss: 한국어로만 작성. 예: [\"만약\", \"조건\"] — 중국어 병음 절대 금지.\n- pos_candidates: 한국어로만. 예: [\"동사\", \"명사\", \"접속사\"]\n- function_candidates: 한국어로만. 예: [\"주어\", \"서술어\", \"목적어\"]\n- sentence_type: 한국어로만. 예: \"조건문 + 진술문\"\n- components 내 설명: 한국어로만.\n- grammar_points: 한국어로만.\n- buddhist_notes: 한국어로만 작성하되, 발음 표기 규칙을 반드시 따를 것:\n  ① 표기 형식: 한자(한국 한자음)만 사용. 예: 一乘(일승), 真如(진여)\n  ② 중국어 병음·영어 번역어·산스크리트어 병기 절대 금지.\n  ③ 발음 병기는 문장당 최대 3개 주요 용어에만 사용. 모든 명사에 병기하지 말 것.\n  ④ buddhist_notes는 간결하게 작성하되, 해당 용어가 이 문맥에서 갖는 핵심 의미를 반드시 전달할 것.\n     불필요한 개설적 설명 나열 금지. 이 문장 이해에 꼭 필요한 내용만 기술.\n- alignment reason: 한국어로만.\n- final_notes, issues_found: 한국어로만.\n\ntoken.surface 및 alignment.source_span 규칙 (매우 중요):\n- surface 필드에는 반드시 원문 한자(漢字)만 넣어라.\n- alignment의 source_span 필드에도 반드시 원문 한자(漢字)만 넣어라. 한글 번역어를 넣지 마라.\n  예: source_span은 '즉지' ❌ → '即知' ✓, '即之' ✓\n- 한글, 영어, 일본어 등 다른 언어 문자를 surface나 source_span에 넣지 마라.\n- 구두점(。，、；：！？「」)은 그대로 유지한다.\n\n문헌 성격 판단 원칙:\n- 입력 문헌이 불교 문헌인지 먼저 판단하라.\n- 불교 문헌이 아닌 경우(유교·도교·사학·문학 등 일반 한문): is_buddhist_term을 남용하지 말고, buddhist_notes는 해당 문헌의 사상·문체 전통에 맞게 작성하라.\n- 일반 한문에서 불교 용어와 형태가 같은 글자라도 맥락이 불교적이지 않으면 불교식으로 풀이하지 마라.\n- 예: 유교 문헌의 「性」은 불교 自性이 아닌 性善·本性의 의미로 해석해야 한다.\n\n최종 출력은 반드시 JSON만 반환하라.",
+  USER_LZH: "다음 한문 불교 문헌 문장을 분석하라.\n\n원문:\n{{INPUT}}\n\n불교 용어 사전 후보:\n{{HINTS}}\n\n반드시 아래 JSON 스키마만 출력하라.\n\n{\n  \"input_text\": \"\",\n  \"segmentation\": {\n    \"clauses\": [],\n    \"tokens\": [\n      {\n        \"surface\": \"\",\n        \"hyeonto\": \"\",\n        \"char_gloss\": [],\n        \"pos_candidates\": [],\n        \"function_candidates\": [],\n        \"is_buddhist_term\": false,\n        \"term_id\": null,\n        \"confidence\": \"high|medium|low\",\n        \"ambiguity\": []\n      }\n    ]\n  },\n  \"parsing\": {\n    \"sentence_type\": \"\",\n    \"components\": {\n      \"condition\": \"\",\n      \"subject\": \"\",\n      \"adverbial\": [],\n      \"predicate\": \"\",\n      \"object\": [],\n      \"complement\": [],\n      \"omitted_elements\": [],\n      \"ambiguity\": []\n    },\n    \"literal_translation\": \"\",\n    \"idiomatic_translation\": \"\",\n    \"grammar_points\": [],\n    \"buddhist_notes\": [],\n    \"other_notes\": []\n  },\n  \"alignment\": [\n    {\n      \"source_span\": \"\",\n      \"target_span\": \"\",\n      \"relation\": \"1:1|1:N|N:1|omitted|expanded\",\n      \"confidence\": \"high|medium|low\",\n      \"reason\": \"\"\n    }\n  ],\n  \"verification\": {\n    \"issues_found\": [],\n    \"revised_literal_translation\": \"\",\n    \"revised_idiomatic_translation\": \"\",\n    \"revised_components\": {\n      \"condition\": \"\",\n      \"subject\": \"\",\n      \"adverbial\": [],\n      \"predicate\": \"\",\n      \"object\": [],\n      \"complement\": [],\n      \"omitted_elements\": [],\n      \"ambiguity\": []\n    },\n    \"final_notes\": []\n  }\n}\n\n출력 조건:\n- JSON 외의 다른 문장을 쓰지 말 것\n- 번역보다 먼저 구조를 판정할 것\n- 확실하지 않으면 ambiguity에 남길 것\n- 직역과 의역을 모두 포함할 것\n- 문장성분은 condition, subject, adverbial, predicate, object, complement 기준으로 분석할 것\n- buddhist_notes는 입력 문장을 이해하는 데 직접 필요한 범위 안에서 해당 용어의 교학적 의미를 간결하게 풀이할 것. 백과사전식 나열(관련 인물·저술·지명 목록 등) 금지. **산스크리트어·팔리어 로마나이즈(IAST 등) 병기 절대 금지**\n- other_notes는 입력 문장 이해에 필요한 범위 안에서 불교 교학 이외의 항목(지명·인물·왕조·시기 등 역사적·지리적 정보)을 간결하게 설명할 것. 해당 항목이 없으면 빈 배열([])로 둘 것\n\n참고 예시 (분석 품질 기준):\n\n--- 예시 1 ---\n입력: 若依一乘此中即具十佛體德用。准以思攝。\n기대 출력:\n{\n  \"input_text\": \"若依一乘此中即具十佛體德用。准以思攝。\",\n  \"segmentation\": {\n    \"clauses\": [\n      \"若依一乘\",\n      \"此中即具十佛體德用\",\n      \"准以思攝\"\n    ],\n    \"tokens\": [\n      {\n        \"surface\": \"若\",\n        \"char_gloss\": [\n          \"만약\"\n        ],\n        \"pos_candidates\": [\n          \"접속사\"\n        ],\n        \"function_candidates\": [\n          \"조건\"\n        ],\n        \"is_buddhist_term\": false,\n        \"term_id\": null,\n        \"confidence\": \"high\",\n        \"ambiguity\": []\n      },\n      {\n        \"surface\": \"依\",\n        \"char_gloss\": [\n          \"의거하다\"\n        ],\n        \"pos_candidates\": [\n          \"동사\",\n          \"전치사\"\n        ],\n        \"function_candidates\": [\n          \"전치사-대상도입\"\n        ],\n        \"is_buddhist_term\": false,\n        \"term_id\": null,\n        \"confidence\": \"high\",\n        \"ambiguity\": []\n      },\n      {\n        \"surface\": \"一乘\",\n        \"char_gloss\": [\n          \"하나의 수레\"\n        ],\n        \"pos_candidates\": [\n          \"명사\"\n        ],\n        \"function_candidates\": [\n          \"전치사 목적어\"\n        ],\n        \"is_buddhist_term\": true,\n        \"term_id\": \"one_vehicle\",\n        \"confidence\": \"high\",\n        \"ambiguity\": []\n      },\n      {\n        \"surface\": \"此中\",\n        \"char_gloss\": [\n          \"이 가운데\"\n        ],\n        \"pos_candidates\": [\n          \"대명사+위치사\"\n        ],\n        \"function_candidates\": [\n          \"부사어-범위\"\n        ],\n        \"is_buddhist_term\": false,\n        \"term_id\": null,\n        \"confidence\": \"high\",\n        \"ambiguity\": []\n      },\n      {\n        \"surface\": \"即\",\n        \"char_gloss\": [\n          \"곧\"\n        ],\n        \"pos_candidates\": [\n          \"부사\"\n        ],\n        \"function_candidates\": [\n          \"강조/즉시\"\n        ],\n        \"is_buddhist_term\": false,\n        \"term_id\": null,\n        \"confidence\": \"high\",\n        \"ambiguity\": []\n      },\n      {\n        \"surface\": \"具\",\n        \"char_gloss\": [\n          \"갖추다\"\n        ],\n        \"pos_candidates\": [\n          \"동사\"\n        ],\n        \"function_candidates\": [\n          \"서술어\"\n        ],\n        \"is_buddhist_term\": false,\n        \"term_id\": null,\n        \"confidence\": \"high\",\n        \"ambiguity\": []\n      },\n      {\n        \"surface\": \"十佛\",\n        \"char_gloss\": [\n          \"열 부처\"\n        ],\n        \"pos_candidates\": [\n          \"명사\"\n        ],\n        \"function_candidates\": [\n          \"목적어 수식\"\n        ],\n        \"is_buddhist_term\": true,\n        \"term_id\": \"ten_buddhas\",\n        \"confidence\": \"high\",\n        \"ambiguity\": []\n      },\n      {\n        \"surface\": \"體\",\n        \"char_gloss\": [\n          \"본체\"\n        ],\n        \"pos_candidates\": [\n          \"명사\"\n        ],\n        \"function_candidates\": [\n          \"목적어\"\n        ],\n        \"is_buddhist_term\": true,\n        \"term_id\": \"ti_essence\",\n        \"confidence\": \"high\",\n        \"ambiguity\": []\n      },\n      {\n        \"surface\": \"德\",\n        \"char_gloss\": [\n          \"공덕\"\n        ],\n        \"pos_candidates\": [\n          \"명사\"\n        ],\n        \"function_candidates\": [\n          \"목적어\"\n        ],\n        \"is_buddhist_term\": true,\n        \"term_id\": \"virtue\",\n        \"confidence\": \"high\",\n        \"ambiguity\": []\n      },\n      {\n        \"surface\": \"用\",\n        \"char_gloss\": [\n          \"작용\"\n        ],\n        \"pos_candidates\": [\n          \"명사\"\n        ],\n        \"function_candidates\": [\n          \"목적어\"\n        ],\n        \"is_buddhist_term\": true,\n        \"term_id\": \"function\",\n        \"confidence\": \"high\",\n        \"ambiguity\": []\n      },\n      {\n        \"surface\": \"准\",\n        \"char_gloss\": [\n          \"준하다\"\n        ],\n        \"pos_candidates\": [\n          \"동사\"\n        ],\n        \"function_candidates\": [\n          \"서술어\"\n        ],\n        \"is_buddhist_term\": false,\n        \"term_id\": null,\n        \"confidence\": \"high\",\n        \"ambiguity\": []\n      },\n      {\n        \"surface\": \"以\",\n        \"char_gloss\": [\n          \"~으로써\"\n        ],\n        \"pos_candidates\": [\n          \"전치사\",\n          \"접속사\"\n        ],\n        \"function_candidates\": [\n          \"수단/방법\"\n        ],\n        \"is_buddhist_term\": false,\n        \"term_id\": null,\n        \"confidence\": \"medium\",\n        \"ambiguity\": [\n          \"접속사 가능\"\n        ]\n      },\n      {\n        \"surface\": \"思\",\n        \"char_gloss\": [\n          \"생각하다\"\n        ],\n        \"pos_candidates\": [\n          \"동사\"\n        ],\n        \"function_candidates\": [\n          \"부사어적 동사\"\n        ],\n        \"is_buddhist_term\": false,\n        \"term_id\": null,\n        \"confidence\": \"high\",\n        \"ambiguity\": []\n      },\n      {\n        \"surface\": \"攝\",\n        \"char_gloss\": [\n          \"포섭하다\"\n        ],\n        \"pos_candidates\": [\n          \"동사\"\n        ],\n        \"function_candidates\": [\n          \"서술어\"\n        ],\n        \"is_buddhist_term\": false,\n        \"term_id\": null,\n        \"confidence\": \"high\",\n        \"ambiguity\": []\n      }\n    ]\n  },\n  \"parsing\": {\n    \"sentence_type\": \"조건문 + 진술문 + 메타지시문\",\n    \"components\": {\n      \"condition\": \"若依一乘 (만약 일승에 의거하면)\",\n      \"subject\": \"此中 (이 가운데) — 주어 겸 범위 부사어\",\n      \"adverbial\": [\n        \"即 (곧)\"\n      ],\n      \"predicate\": \"具 (갖추다)\",\n      \"object\": [\n        \"十佛體德用 (십불의 체·덕·용)\"\n      ],\n      \"complement\": [],\n      \"omitted_elements\": [\n        \"准以思攝의 주어: 독자/수행자(생략)\"\n      ],\n      \"ambiguity\": [\n        \"此中은 주어보다 범위 부사어에 가까울 수 있음\"\n      ]\n    },\n    \"literal_translation\": \"만약 일승에 의거하면, 이 가운데 곧 십불의 체·덕·용을 갖춘다. 앞의 예에 준하여 생각해 포섭하라.\",\n    \"idiomatic_translation\": \"일승의 관점에서 보면, 여기에는 곧 십불의 본체와 공덕과 작용이 모두 갖추어져 있으니, 앞서 설명한 방식에 따라 헤아려 정리해 이해하면 된다.\",\n    \"grammar_points\": [\n      \"若…即… 구문: 조건-결과를 나타내는 고전 한문의 전형적 구조\",\n      \"准以思攝: 주석서에서 흔히 보이는 메타 지시 표현\"\n    ],\n    \"buddhist_notes\": [\n      \"一乘(일승): 삼승(聲聞·緣覺·菩薩)을 넘어 모든 중생을 하나의 깨달음으로 이끄는 가르침. 이 문장에서는 일승의 관점을 전제로 십불의 체·덕·용이 갖추어진다는 논지를 여는 조건어이다.\",\n      \"十佛(십불): 화엄경에서 설하는 열 가지 부처의 양상. 이 문장에서 일승에 의거할 때 그 체·덕·용이 모두 갖추어진다는 서술의 주어이다.\",\n      \"體德用(체덕용): 존재를 본체(體)·공덕(德)·작용(用)의 세 측면으로 분析하는 화엄의 분析 틀. 이 문장의 목적어로서, 십불의 세 측면이 일승 안에 온전히 갖추어짐을 나타낸다.\"\n    ],\n    \"other_notes\": []\n  },\n  \"alignment\": [\n    {\n      \"source_span\": \"若依一乘\",\n      \"target_span\": \"만약 일승에 의거하면\",\n      \"relation\": \"1:1\",\n      \"confidence\": \"high\",\n      \"reason\": \"조건절 직역\"\n    },\n    {\n      \"source_span\": \"此中\",\n      \"target_span\": \"이 가운데\",\n      \"relation\": \"1:1\",\n      \"confidence\": \"high\",\n      \"reason\": \"범위 부사어\"\n    },\n    {\n      \"source_span\": \"即具\",\n      \"target_span\": \"곧 갖춘다\",\n      \"relation\": \"1:1\",\n      \"confidence\": \"high\",\n      \"reason\": \"서술어\"\n    },\n    {\n      \"source_span\": \"十佛體德用\",\n      \"target_span\": \"십불의 체·덕·용을\",\n      \"relation\": \"1:N\",\n      \"confidence\": \"high\",\n      \"reason\": \"목적어 확장\"\n    },\n    {\n      \"source_span\": \"准以思攝\",\n      \"target_span\": \"앞의 예에 준하여 생각해 포섭하라\",\n      \"relation\": \"1:N\",\n      \"confidence\": \"high\",\n      \"reason\": \"메타 지시문 풀어쓰기\"\n    }\n  ],\n  \"verification\": {\n    \"issues_found\": [],\n    \"revised_literal_translation\": \"\",\n    \"revised_idiomatic_translation\": \"\",\n    \"revised_components\": {\n      \"condition\": \"\",\n      \"subject\": \"\",\n      \"adverbial\": [],\n      \"predicate\": \"\",\n      \"object\": [],\n      \"complement\": [],\n      \"omitted_elements\": [],\n      \"ambiguity\": []\n    },\n    \"final_notes\": [\n      \"1차 분석에서 누락 또는 오류 없음\"\n    ]\n  }\n}\n\n--- 예시 2 ---\n입력: 以一攝多多即一。\n기대 출력:\n{\n  \"input_text\": \"以一攝多多即一。\",\n  \"segmentation\": {\n    \"clauses\": [\n      \"以一攝多\",\n      \"多即一\"\n    ],\n    \"tokens\": [\n      {\n        \"surface\": \"以\",\n        \"char_gloss\": [\n          \"~으로써\"\n        ],\n        \"pos_candidates\": [\n          \"전치사\"\n        ],\n        \"function_candidates\": [\n          \"수단/도구\"\n        ],\n        \"is_buddhist_term\": false,\n        \"term_id\": null,\n        \"confidence\": \"high\",\n        \"ambiguity\": []\n      },\n      {\n        \"surface\": \"一\",\n        \"char_gloss\": [\n          \"하나\"\n        ],\n        \"pos_candidates\": [\n          \"수사/명사\"\n        ],\n        \"function_candidates\": [\n          \"전치사 목적어\"\n        ],\n        \"is_buddhist_term\": false,\n        \"term_id\": null,\n        \"confidence\": \"high\",\n        \"ambiguity\": []\n      },\n      {\n        \"surface\": \"攝\",\n        \"char_gloss\": [\n          \"포섭하다\"\n        ],\n        \"pos_candidates\": [\n          \"동사\"\n        ],\n        \"function_candidates\": [\n          \"서술어\"\n        ],\n        \"is_buddhist_term\": false,\n        \"term_id\": null,\n        \"confidence\": \"high\",\n        \"ambiguity\": []\n      },\n      {\n        \"surface\": \"多\",\n        \"char_gloss\": [\n          \"많은 것\"\n        ],\n        \"pos_candidates\": [\n          \"명사\"\n        ],\n        \"function_candidates\": [\n          \"목적어\"\n        ],\n        \"is_buddhist_term\": false,\n        \"term_id\": null,\n        \"confidence\": \"high\",\n        \"ambiguity\": []\n      },\n      {\n        \"surface\": \"多\",\n        \"char_gloss\": [\n          \"많은 것\"\n        ],\n        \"pos_candidates\": [\n          \"명사\"\n        ],\n        \"function_candidates\": [\n          \"주어\"\n        ],\n        \"is_buddhist_term\": false,\n        \"term_id\": null,\n        \"confidence\": \"high\",\n        \"ambiguity\": []\n      },\n      {\n        \"surface\": \"即\",\n        \"char_gloss\": [\n          \"곧\"\n        ],\n        \"pos_candidates\": [\n          \"부사/판단사\"\n        ],\n        \"function_candidates\": [\n          \"판단/등치\"\n        ],\n        \"is_buddhist_term\": false,\n        \"term_id\": null,\n        \"confidence\": \"high\",\n        \"ambiguity\": []\n      },\n      {\n        \"surface\": \"一\",\n        \"char_gloss\": [\n          \"하나\"\n        ],\n        \"pos_candidates\": [\n          \"수사/명사\"\n        ],\n        \"function_candidates\": [\n          \"술어 보어\"\n        ],\n        \"is_buddhist_term\": false,\n        \"term_id\": null,\n        \"confidence\": \"high\",\n        \"ambiguity\": []\n      }\n    ]\n  },\n  \"parsing\": {\n    \"sentence_type\": \"진술문(병렬 구조)\",\n    \"components\": {\n      \"condition\": \"\",\n      \"subject\": \"一 (하나) / 多 (많은 것)\",\n      \"adverbial\": [\n        \"以一 (하나로써)\"\n      ],\n      \"predicate\": \"攝 (포섭하다) / 即 (곧 ~이다)\",\n      \"object\": [\n        \"多 (많은 것)\"\n      ],\n      \"complement\": [\n        \"一 (하나)\"\n      ],\n      \"omitted_elements\": [],\n      \"ambiguity\": []\n    },\n    \"literal_translation\": \"하나로써 많은 것을 포섭하니, 많은 것이 곧 하나이다.\",\n    \"idiomatic_translation\": \"하나가 많은 것을 거두어들이며, 그렇게 포섭된 많은 것은 결국 하나와 다르지 않다.\",\n    \"grammar_points\": [\n      \"以A攝B: A로써 B를 포섭하는 도구/수단 구문\",\n      \"A即B: A가 곧 B이다 — 화엄 특유의 등치/상즉(相即) 표현\"\n    ],\n    \"buddhist_notes\": [\n      \"일즉다(一即多)·다즉일(多即一): 하나가 곧 전체이고 전체가 곧 하나라는 화엄의 상즉상입(相即相入) 원리. 이 문장의 핵심 명제로, \\\"以一攝多\\\"와 \\\"以多攝一\\\"이 이 원리를 직접 표현한다.\",\n      \"攝(섭): 거두어 포섭하다. 이 문장에서 \\\"以一攝多(하나로 많은 것을 포섭함)\\\"와 \\\"以多攝一(많은 것으로 하나를 포섭함)\\\"에 반복 등장하며 상즉상입의 관계를 나타내는 핵심 동사이다.\"\n    ],\n    \"other_notes\": []\n  },\n  \"alignment\": [\n    {\n      \"source_span\": \"以一\",\n      \"target_span\": \"하나로써\",\n      \"relation\": \"1:1\",\n      \"confidence\": \"high\",\n      \"reason\": \"수단 구문\"\n    },\n    {\n      \"source_span\": \"攝多\",\n      \"target_span\": \"많은 것을 포섭하니\",\n      \"relation\": \"1:N\",\n      \"confidence\": \"high\",\n      \"reason\": \"서술어+목적어 확장\"\n    },\n    {\n      \"source_span\": \"多即一\",\n      \"target_span\": \"많은 것이 곧 하나이다\",\n      \"relation\": \"1:N\",\n      \"confidence\": \"high\",\n      \"reason\": \"판단문 확장\"\n    }\n  ],\n  \"verification\": {\n    \"issues_found\": [],\n    \"revised_literal_translation\": \"\",\n    \"revised_idiomatic_translation\": \"\",\n    \"revised_components\": {\n      \"condition\": \"\",\n      \"subject\": \"\",\n      \"adverbial\": [],\n      \"predicate\": \"\",\n      \"object\": [],\n      \"complement\": [],\n      \"omitted_elements\": [],\n      \"ambiguity\": []\n    },\n    \"final_notes\": [\n      \"1차 분석 결과 문제 없음\"\n    ]\n  }\n}\n\n--- 예시 3 ---\n입력: 真如不守自性隨緣成萬法。\n기대 출력:\n{\n  \"input_text\": \"真如不守自性隨緣成萬法。\",\n  \"segmentation\": {\n    \"clauses\": [\n      \"真如不守自性\",\n      \"隨緣成萬法\"\n    ],\n    \"tokens\": [\n      {\n        \"surface\": \"真如\",\n        \"char_gloss\": [\n          \"참다운 그러함\"\n        ],\n        \"pos_candidates\": [\n          \"명사\"\n        ],\n        \"function_candidates\": [\n          \"주어\"\n        ],\n        \"is_buddhist_term\": true,\n        \"term_id\": \"tathata\",\n        \"confidence\": \"high\",\n        \"ambiguity\": []\n      },\n      {\n        \"surface\": \"不\",\n        \"char_gloss\": [\n          \"아니\"\n        ],\n        \"pos_candidates\": [\n          \"부정부사\"\n        ],\n        \"function_candidates\": [\n          \"부정\"\n        ],\n        \"is_buddhist_term\": false,\n        \"term_id\": null,\n        \"confidence\": \"high\",\n        \"ambiguity\": []\n      },\n      {\n        \"surface\": \"守\",\n        \"char_gloss\": [\n          \"지키다\"\n        ],\n        \"pos_candidates\": [\n          \"동사\"\n        ],\n        \"function_candidates\": [\n          \"서술어\"\n        ],\n        \"is_buddhist_term\": false,\n        \"term_id\": null,\n        \"confidence\": \"high\",\n        \"ambiguity\": []\n      },\n      {\n        \"surface\": \"自性\",\n        \"char_gloss\": [\n          \"자기 성품\"\n        ],\n        \"pos_candidates\": [\n          \"명사\"\n        ],\n        \"function_candidates\": [\n          \"목적어\"\n        ],\n        \"is_buddhist_term\": true,\n        \"term_id\": \"svabhava\",\n        \"confidence\": \"high\",\n        \"ambiguity\": []\n      },\n      {\n        \"surface\": \"隨\",\n        \"char_gloss\": [\n          \"따르다\"\n        ],\n        \"pos_candidates\": [\n          \"동사\"\n        ],\n        \"function_candidates\": [\n          \"부사어적 동사\"\n        ],\n        \"is_buddhist_term\": false,\n        \"term_id\": null,\n        \"confidence\": \"high\",\n        \"ambiguity\": []\n      },\n      {\n        \"surface\": \"緣\",\n        \"char_gloss\": [\n          \"인연, 조건\"\n        ],\n        \"pos_candidates\": [\n          \"명사\"\n        ],\n        \"function_candidates\": [\n          \"목적어\"\n        ],\n        \"is_buddhist_term\": true,\n        \"term_id\": \"pratyaya\",\n        \"confidence\": \"high\",\n        \"ambiguity\": []\n      },\n      {\n        \"surface\": \"成\",\n        \"char_gloss\": [\n          \"이루다\"\n        ],\n        \"pos_candidates\": [\n          \"동사\"\n        ],\n        \"function_candidates\": [\n          \"서술어\"\n        ],\n        \"is_buddhist_term\": false,\n        \"term_id\": null,\n        \"confidence\": \"high\",\n        \"ambiguity\": []\n      },\n      {\n        \"surface\": \"萬法\",\n        \"char_gloss\": [\n          \"온갖 법\"\n        ],\n        \"pos_candidates\": [\n          \"명사\"\n        ],\n        \"function_candidates\": [\n          \"목적어\"\n        ],\n        \"is_buddhist_term\": true,\n        \"term_id\": \"all_dharmas\",\n        \"confidence\": \"high\",\n        \"ambiguity\": []\n      }\n    ]\n  },\n  \"parsing\": {\n    \"sentence_type\": \"진술문(연쇄 서술)\",\n    \"components\": {\n      \"condition\": \"\",\n      \"subject\": \"真如 (진여)\",\n      \"adverbial\": [\n        \"隨緣 (인연을 따라)\"\n      ],\n      \"predicate\": \"不守 (지키지 않다) → 成 (이루다)\",\n      \"object\": [\n        \"自性 (자기 성품)\",\n        \"萬法 (만법)\"\n      ],\n      \"complement\": [],\n      \"omitted_elements\": [],\n      \"ambiguity\": [\n        \"隨緣을 부사어로 볼지 별도 서술부로 볼지 해석 여지 있음\"\n      ]\n    },\n    \"literal_translation\": \"진여는 자기 성품에 머물지 않고, 인연을 따라 만법을 이룬다.\",\n    \"idiomatic_translation\": \"진여는 고정된 자성에 갇혀 있지 않으며, 인연에 따라 온갖 현상으로 전개된다.\",\n    \"grammar_points\": [\n      \"不守自性: 부정부사+동사+목적어 구조\",\n      \"隨緣成萬法: 연쇄 동사 구조 — 緣을 따라(隨) 萬法을 이룸(成)\"\n    ],\n    \"buddhist_notes\": [\n      \"真如(진여): 있는 그대로의 궁극적 실재. 이 문장의 주어로, 고정된 자성에 머물지 않고 인연을 따라 만법을 이룬다는 서술의 주체이다.\",\n      \"不守自性(부수자성): 진여가 고정된 자기 성품에 머물지 않는다는 뜻. 이 문장에서 진여가 수연(隨緣)하여 만법을 이루는 이유를 설명하는 전제 구절이다.\",\n      \"隨緣(수연): 인연을 따른다는 뜻. 이 문장에서 진여가 만법을 이루는 방식을 서술하는 핵심 동사로, 不守自性과 짝을 이루어 진여의 동태적 측면을 나타낸다.\",\n      \"萬法(만법): 모든 존재와 현상의 총칭. 이 문장에서 진여가 수연하여 이루어내는 결과, 즉 현상계 전체를 가리키는 목적어이다.\"\n    ],\n    \"other_notes\": []\n  },\n  \"alignment\": [\n    {\n      \"source_span\": \"真如\",\n      \"target_span\": \"진여는\",\n      \"relation\": \"1:1\",\n      \"confidence\": \"high\",\n      \"reason\": \"주어\"\n    },\n    {\n      \"source_span\": \"不守自性\",\n      \"target_span\": \"자기 성품에 머물지 않고\",\n      \"relation\": \"1:N\",\n      \"confidence\": \"high\",\n      \"reason\": \"서술부 확장\"\n    },\n    {\n      \"source_span\": \"隨緣\",\n      \"target_span\": \"인연을 따라\",\n      \"relation\": \"1:N\",\n      \"confidence\": \"high\",\n      \"reason\": \"부사어 확장\"\n    },\n    {\n      \"source_span\": \"成萬法\",\n      \"target_span\": \"만법을 이룬다\",\n      \"relation\": \"1:N\",\n      \"confidence\": \"high\",\n      \"reason\": \"서술어+목적어\"\n    }\n  ],\n  \"verification\": {\n    \"issues_found\": [],\n    \"revised_literal_translation\": \"\",\n    \"revised_idiomatic_translation\": \"\",\n    \"revised_components\": {\n      \"condition\": \"\",\n      \"subject\": \"\",\n      \"adverbial\": [],\n      \"predicate\": \"\",\n      \"object\": [],\n      \"complement\": [],\n      \"omitted_elements\": [],\n      \"ambiguity\": []\n    },\n    \"final_notes\": [\n      \"隨緣의 문장성분 분류에 대해 ambiguity 표기 완료\"\n    ]\n  }\n}\n",
+  VERIFY_LZH: "너는 한문 불교 문장 분석 JSON을 정밀 검증하는 전문 검증기다.\n\n원문:\n{{INPUT}}\n\n1차 분석 JSON:\n{{JSON}}\n\n【검증 항목 — 모두 점검할 것】\n\n1. 원문 완전성\n   - 원문의 모든 글자(한자)가 token으로 분절되었는가\n   - 원문의 모든 절(句)이 clauses에 포함되었는가\n   - 번역(직역·의역)에서 원문 성분이 누락되지 않았는가\n   - alignment에서 원문의 모든 span이 커버되는가\n\n2. 문장성분 정합성\n   - condition/subject/predicate/object/complement가 서로 충돌하지 않는가\n   - 동일 어구가 두 개 이상의 성분으로 중복 분류되지 않았는가\n   - 문장 유형(sentence_type)이 실제 성분 구조와 일치하는가\n\n3. 불교 용어 정확성\n   - 교학 용어(體·德·用·性·相·理·事·一乘·真如·法界 등)가 일반어로 처리되지 않았는가\n   - is_buddhist_term=true인 용어의 term_id가 적절한가\n   - buddhist_notes가 해당 용어의 의미를 입력 문장 맥락에서 간결하게 설명하는가\n   - 백과사전식 나열(인물·저술·지명 목록)이 포함되어 있으면 삭제하고 문장 이해에 필요한 핵심만 남길 것\n   - 산스크리트어·팔리어 로마나이즈(Skt. …, Pāli …, IAST 등)가 포함되어 있으면 즉시 삭제할 것\n   - other_notes에 지명·인물·왕조·시기 등 역사적·지리적 항목이 누락되지 않았는가. buddhist_notes에 섞여 있으면 other_notes로 이동할 것\n   - 단순 사전적 풀이만 제시하고 원문 문맥에서의 역할 설명이 누락되지 않았는가\n   - 고유명사(인물·지명)에 대한 해설이 충실한가\n\n4. 번역 품질\n   - literal_translation이 원문 구조를 충실히 반영하는가\n   - idiomatic_translation이 자연스러운 한국어인가\n   - 두 번역이 서로 모순되지 않는가\n   - 과잉 의역(원문에 없는 내용 추가) 여부\n\n5. confidence·ambiguity 타당성\n   - 실제로 불확실한 항목에 적절히 ambiguity가 표시되었는가\n   - confidence 수준이 분석의 실제 확실성과 일치하는가\n\n6. token.surface 필드 검증\n   - surface에 한자 이외의 문자(한글·영어 등)가 混入되지 않았는가\n   - 이상 발견 시 반드시 수정하라\n\n수정 규칙:\n- 오류가 있는 부분만 최소한으로 수정\n- 확실하지 않으면 삭제하지 말고 confidence를 낮추거나 ambiguity에 추가\n- revised_literal_translation / revised_idiomatic_translation에 수정된 번역을 반드시 기재\n- issues_found에 발견한 문제를 구체적으로 기술\n- final_notes에 종합 평가 및 주요 수정 사항 요약\n- 수정된 JSON만 반환하라",
+  // [표제어, 독음, 뜻, 불교학적 뜻, 품사, 분류]
+  TERMS: [["不守自性","부수자성","자기 성품에 머물지 않음","진여가 고정된 자성에 머무르지 않고 연기적으로 전개됨을 나타내는 표현","동사구","교리"],["准以思攝","준이사섭","앞의 예에 준하여 생각해 포섭하라","주석서에서 사용하는 메타 지시 구문. 독자에게 앞선 분석 방식을 적용해 이해하라는 뜻","구문","주석용어"],["阿賴耶識","아뢰야식","저장하는 의식","제8식(ālayavijñāna). 모든 종자를 저장하는 근본 의식","명사","교리"],["體德用","체덕용","본체·공덕·작용","존재를 체(본질)·덕(속성/공덕)·용(기능/작용) 세 측면으로 분석하는 틀","명사구","교리"],["波羅蜜","바라밀","피안에 이름","완성·도달(pāramitā). 보살 수행의 완성 단계","명사","수행"],["隨緣","수연","인연을 따름","진여가 조건(연)에 따라 현상 세계로 전개되는 것. 수연진여(隨緣眞如)의 핵심 개념","동사","교리"],["一乘","일승","하나의 수레(가르침)","모든 중생을 성불에 이르게 하는 유일한 가르침. 화엄·법화에서 핵심 개념","명사","교리"],["十佛","십불","열 부처","화엄경에서 설하는 열 가지 불(佛)의 양상. 성불(成佛)·원불(願佛)·업보불(業報佛) 등","명사","불보살"],["真如","진여","참다운 그러함","있는 그대로의 궁극적 실재. 여실(如實)한 존재 양태. 대승기신론의 핵심 개념","명사","교리"],["緣起","연기","인연에 의해 일어남","모든 존재와 현상은 원인(因)과 조건(緣)의 화합으로 생겨남. 불교의 핵심 원리","명사","교리"],["法界","법계","법의 세계","존재의 총체적 영역. 화엄에서는 사사무애법계(事事無礙法界) 등 네 법계 설정","명사","교리"],["菩薩","보살","깨달음의 존재","보리살타(bodhisattva)의 약칭. 자리이타(自利利他)를 실천하여 성불을 구하는 수행자","명사","불보살"],["如來","여래","이와 같이 온 자","부처의 십호(十號) 중 하나. 진여에서 와서 진여로 간다는 뜻(tathāgata)","명사","불보살"],["萬法","만법","온갖 현상/법","세간과 출세간의 모든 존재·현상을 총칭","명사","교리"],["自性","자성","자기의 성품","스스로의 본성. 고유한 실체. 중관학에서는 공(空)으로 부정되는 대상","명사","교리"],["攝多","섭다","많은 것을 포섭함","하나가 다수를 거두어 포함함. 화엄의 일즉다(一即多) 사상과 관련","동사구","교리"],["涅槃","열반","불어 끔, 적멸","번뇌의 불이 꺼진 궁극적 평화(nirvāṇa)","명사","교리"],["般若","반야","지혜","제법의 실상을 꿰뚫는 최고의 지혜(prajñā). 바라밀의 핵심","명사","교리"],["三昧","삼매","선정, 삼매","마음이 한곳에 안정된 상태(samādhi)","명사","수행"],["無明","무명","밝지 못함","근본적 무지(avidyā). 십이연기의 첫째","명사","교리"],["煩惱","번뇌","번거롭고 괴로움","마음을 혼란스럽게 하는 정신적 오염(kleśa)","명사","교리"],["解脫","해탈","벗어남","속박에서 벗어남(vimokṣa/mukti). 열반과 관련","명사","교리"],["輪迴","윤회","돌고 돎","생사의 순환(saṃsāra). 육도(六道)를 돌아다님","명사","교리"],["中道","중도","중간의 길","양극단을 떠난 바른 입장. 용수의 중관학 핵심","명사","교리"],["唯識","유식","오직 의식","모든 존재는 식(識)의 변현이라는 유식학의 핵심 주장","명사","교리"],["圓融","원융","둥글게 융합함","화엄·천태에서 모든 법이 서로 걸림 없이 융합하는 것","명사","교리"],["無礙","무애","걸림 없음","화엄의 핵심 용어. 이사무애(理事無礙)·사사무애(事事無礙)","형용사","교리"],["體","체","몸, 본체","존재의 본질·본체. 체상용(體相用) 삼대(三大)에서 근본 실체를 가리킴","명사","교리"],["德","덕","덕, 공덕","부처나 법의 공덕·속성. 체(體)에 갖추어진 수승한 성질","명사","교리"],["用","용","작용, 쓰임","기능과 작용. 체(體)로부터 드러나는 실제적 활동","명사","교리"],["性","성","성품, 본성","사물의 본성·본질. 불성(佛性)·법성(法性) 등에서 핵심 요소","명사","교리"],["相","상","모양, 양상","현상적 측면·모습. 체(體)의 드러남. 성(性)과 대비되는 개념","명사","교리"],["理","리","이치, 원리","궁극적 원리·진리. 사(事)와 대비. 화엄의 이사무애(理事無礙) 개념","명사","교리"],["事","사","일, 현상","현상적 사태·구체적 존재. 이(理)와 대비. 사사무애(事事無礙)의 핵심","명사","교리"],["佛","불","부처","깨달은 자(Buddha). 자각(自覺)·각타(覺他)·각행원만(覺行圓滿)의 존재","명사","불보살"],["法","법","법, 가르침","진리·가르침(dharma). 또한 모든 존재·현상을 가리키기도 함","명사","교리"],["空","공","비어 있음","자성이 없음(śūnyatā). 실체가 없다는 중관학의 핵심 개념","명사","교리"],["心","심","마음","정신 작용의 총체. 유식학에서는 제8 아뢰야식을 특히 심(心)이라 함","명사","교리"],["道","도","길, 도리","수행의 길·깨달음에 이르는 방법. 팔정도(八正道) 등","명사","교리"],["因","인","원인","결과를 일으키는 직접적 원인. 연(緣)과 함께 인연(因緣)을 구성","명사","교리"],["果","과","결과","인(因)과 연(緣)에 의해 생기는 결과","명사","교리"],["業","업","행위","의도적 행위(karma)와 그 잠재적 영향력","명사","교리"],["定","정","안정, 선정","마음을 한곳에 집중하는 수행(samādhi). 삼학(三學)의 하나","명사","수행"],["慧","혜","지혜","사물의 참된 모습을 꿰뚫어 아는 힘(prajñā). 삼학의 하나","명사","수행"],["戒","계","계율","행위의 규범(śīla). 삼학의 하나","명사","수행"],["觀","관","관찰","지혜로운 관찰(vipaśyanā). 지관(止觀) 수행에서 핵심","명사","수행"],["識","식","의식, 인식","인식 작용(vijñāna). 유식학에서 8식 체계의 핵심","명사","교리"],["苦","고","괴로움","존재의 근본적 괴로움(duḥkha). 사성제의 첫째","명사","교리"],["滅","멸","소멸","괴로움의 소멸(nirodha). 사성제의 셋째. 열반을 가리킴","명사","교리"]],
+  FUNC_WORDS: [["若","약","만약 ~라면","","접속사/조건","허사"],["則","즉","곧, ~이면","","접속사/결과","허사"],["即","즉","곧, 바로","","부사/접속사","허사"],["故","고","그러므로","","접속사/인과","허사"],["謂","위","이르다, 말하다","","동사","허사"],["亦","역","또한","","부사","허사"],["但","단","다만","","부사","허사"],["乃","내","이에, 곧","","부사/접속사","허사"],["皆","개","모두","","부사","허사"],["并","병","아울러, 함께","","부사/접속사","허사"],["准","준","준하다, 따르다","","동사","허사"],["以","이","~으로써, ~을","","전치사/접속사","허사"],["依","의","~에 의거하다","","동사/전치사","허사"],["於","어","~에, ~에서","","전치사","허사"],["而","이","그리하여, ~하고","","접속사","허사"],["之","지","~의, 그것","","대명사/조사","허사"],["者","자","~하는 것/자","","조사","허사"],["也","야","~이다(판단)","","어기사","허사"],["不","불","~아니다","","부정부사","허사"],["無","무","없다","","부정/형용사","허사"],["有","유","있다","","동사","허사"],["非","비","~이 아니다","","부정부사","허사"],["所","소","~하는 바","","조사","허사"],["為","위","~을 위하다, ~이 되다","","동사/전치사","허사"],["能","능","능히 ~하다","","조동사","허사"],["可","가","~할 수 있다","","조동사","허사"],["當","당","마땅히 ~해야 한다","","조동사","허사"],["此","차","이, 이것","","대명사","허사"],["其","기","그, 그것","","대명사","허사"],["是","시","이, ~이다","","대명사/판단사","허사"],["中","중","가운데","","명사/위치사","허사"],["具","구","갖추다","","동사","허사"],["成","성","이루다","","동사","허사"],["攝","섭","포섭하다, 거두다","","동사","허사"],["思","사","생각하다","","동사","허사"],["多","다","많다, 많은 것","","형용사/명사","허사"],["一","일","하나","","수사","허사"]],
+};
+const CLU = (() => {
+const _BROKEN_SYMBOLS = '[\\u25A0-\\u25FF\\u2580-\\u259F\\u3013●◆■□▲▽◇◈◉◊]';
+const _BROKEN_RE = new RegExp(_BROKEN_SYMBOLS, 'g');
+const _BROKEN_MULTI_RE = new RegExp(_BROKEN_SYMBOLS + '{2,}', 'g');
+// 한자·한글·일본어 문자 클래스
+const _CJK_CHAR = '[\\u4E00-\\u9FFF\\u3400-\\u4DBF\\uAC00-\\uD7AF\\u3040-\\u30FF]';
+const _BROKEN_BETWEEN_CJK_RE = new RegExp(
+  `(${_CJK_CHAR})${_BROKEN_SYMBOLS}+(${_CJK_CHAR})`, 'g'
+);
+
+function safeParseJson(rawText) {
+  if (!rawText || typeof rawText !== 'string') return null;
+
+  /**
+   * JSON 문자열 내부의 문제를 정리하고 파싱 시도.
+   * - 문자열 값 안의 실제 줄바꿈을 \\n으로 치환
+   * - 제어문자 제거
+   */
+  function cleanAndParse(text) {
+    // 1차: 그대로 시도
+    try {
+      return JSON.parse(text);
+    } catch (e) {
+      // 실패하면 정리 후 재시도
+    }
+
+    // 2차: JSON 문자열 내부의 줄바꿈/탭을 이스케이프
+    let cleaned = text;
+    // 문자열 값 안의 실제 개행을 \\n으로 치환
+    cleaned = cleaned.replace(/"((?:[^"\\]|\\.)*)"/g, (match) => {
+      return match
+        .replace(/\n/g, '\\n')
+        .replace(/\r/g, '\\r')
+        .replace(/\t/g, '\\t');
+    });
+    try {
+      return JSON.parse(cleaned);
+    } catch (e) {
+      // 계속 시도
+    }
+
+    // 3차: 제어문자 전부 제거 (문자열 외부)
+    cleaned = text.replace(/[\x00-\x1F\x7F]/g, ' ');
+    try {
+      return JSON.parse(cleaned);
+    } catch (e) {
+      // 실패
+    }
+
+    return null;
+  }
+
+  /**
+   * 잘린 JSON을 닫는 괄호로 복구 시도.
+   */
+  function tryRepairTruncated(text) {
+    let repaired = text.trim();
+    // 열린 중괄호/대괄호 수 세기
+    let braces = 0, brackets = 0;
+    let inString = false, escaped = false;
+    for (const ch of repaired) {
+      if (escaped) { escaped = false; continue; }
+      if (ch === '\\') { escaped = true; continue; }
+      if (ch === '"') { inString = !inString; continue; }
+      if (inString) continue;
+      if (ch === '{') braces++;
+      else if (ch === '}') braces--;
+      else if (ch === '[') brackets++;
+      else if (ch === ']') brackets--;
+    }
+    // 닫는 괄호 부족분 추가
+    while (brackets > 0) { repaired += ']'; brackets--; }
+    while (braces > 0) { repaired += '}'; braces--; }
+    return cleanAndParse(repaired);
+  }
+
+  // 1) 코드 펜스 안의 JSON 추출
+  const fenceMatch = rawText.match(/```(?:json)?\s*([\s\S]*?)```/);
+  if (fenceMatch) {
+    const result = cleanAndParse(fenceMatch[1].trim());
+    if (result) return result;
+    debugLog('코드 펜스 JSON 파싱 실패');
+  }
+
+  // 2) 첫 번째 { ~ 마지막 } 블록 추출
+  const startIdx = rawText.indexOf('{');
+  const endIdx = rawText.lastIndexOf('}');
+  if (startIdx !== -1 && endIdx > startIdx) {
+    const block = rawText.substring(startIdx, endIdx + 1);
+    const result = cleanAndParse(block);
+    if (result) return result;
+    debugLog('중괄호 블록 JSON 파싱 실패');
+  }
+
+  // 3) 전체 문자열 시도
+  const result = cleanAndParse(rawText.trim());
+  if (result) return result;
+
+  // 4) 잘린 JSON 복구 시도 (모델이 maxOutputTokens에 걸려 중간에 끊긴 경우)
+  if (startIdx !== -1) {
+    const truncated = rawText.substring(startIdx);
+    const repaired = tryRepairTruncated(truncated);
+    if (repaired) {
+      debugLog('잘린 JSON 복구 성공');
+      return repaired;
+    }
+  }
+
+  debugLog('모든 JSON 파싱 시도 실패');
+  return null;
+}
+
+function fixBrokenUnicode(text) {
+  if (!text) return '';
+  return text
+    // [A] U+FFFD replacement character
+    .replace(/\uFFFD+/g, '')
+    // [F] Zero-width / invisible 문자
+    .replace(/[\u200B\u200C\u200D\uFEFF\u00AD]+/g, '')
+    // [G] 제어 문자 (탭·줄바꿈·CR 제외)
+    .replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F-\u009F]+/g, '')
+    // [D] CJK 구미표 〓
+    .replace(/\u3013+/g, '')
+    // [B][C] 기하학적 도형·블록 원소 연속 2개 이상 → 제거
+    .replace(_BROKEN_MULTI_RE, '')
+    // [B][C] 한자·한글·일본어 사이에 낀 단독 깨짐 기호 → 제거
+    .replace(_BROKEN_BETWEEN_CJK_RE, '$1$2')
+    // [E] 연속 물음표(3개 이상) → 제거
+    .replace(/\?{3,}/g, '')
+    // [E] 연속 별표(3개 이상) → 제거
+    .replace(/\*{3,}/g, '')
+    // 텍스트 앞뒤 남은 단독 깨짐 기호 정리
+    .replace(new RegExp(`^${_BROKEN_SYMBOLS}+|${_BROKEN_SYMBOLS}+$`, 'g'), '')
+    .trim();
+}
+
+function sanitizeSurface(surface) {
+  if (!surface) return '';
+
+  // 먼저 fixBrokenUnicode로 공통 깨짐 처리
+  let s = fixBrokenUnicode(surface);
+
+  // 한글 음절·자모 제거 (U+AC00–D7AF, U+1100–11FF, U+3130–318F)
+  s = s.replace(/[\uAC00-\uD7AF\u1100-\u11FF\u3130-\u318F]+/g, '');
+
+  // 라틴 문자 제거 (A-Z, a-z) — 단, 한자 독음 괄호 안 내용은 이미 char_gloss에 있으므로 불필요
+  s = s.replace(/[A-Za-z]+/g, '');
+
+  // 히라가나·가타카나 제거 (U+3040–30FF)
+  s = s.replace(/[\u3040-\u30FF]+/g, '');
+
+  // 남은 앞뒤 공백 정리
+  s = s.trim();
+
+  // 정제 후 한자·구두점이 전혀 없으면 원본 반환 (의도치 않은 완전 삭제 방지)
+  const hasCJK = /[\u4E00-\u9FFF\u3400-\u4DBF\uF900-\uFAFF\u3000-\u303F\uFF00-\uFFEF]/.test(s);
+  const hasPunct = /[。，、；：！？「」『』（）【】〔〕《》〈〉・…—～·]/.test(s);
+  if (!hasCJK && !hasPunct) return surface.trim();
+
+  return s;
+}
+return { safeParseJson, fixBrokenUnicode, sanitizeSurface };
+})();
+
+</script>
+<script>
+/* ══════════════════════════════════════════════════════════
+   고전어 구조 분석 (TranslateDu 엔진 통합)
+   · 언어 자동 감지: 한문 · 현토 한문 · 일본 훈독 한문 · 팔리어 · 산스크리트어 · 티베트어
+   · 한문: TranslateDu 3단계 파이프라인 (분절·구문 → 번역 → 자기 검증) + 불교 용어 사전 힌트
+   · 팔리어·산스크리트어·티베트어: 연성 해체 · 원형 · 형태 · 복합어 · 대응어(산스크리트·한역)
+   · 빠른 분석(API 1회) / 정밀 분석(검증 포함 2회)
+   ══════════════════════════════════════════════════════════ */
+const CL = (() => {
+  const LANG = {
+    'lzh':    { tag: '漢文',      name: '한문' },
+    'lzh-ko': { tag: '懸吐 漢文', name: '현토 한문' },
+    'lzh-ja': { tag: '訓讀 漢文', name: '일본 훈독 한문' },
+    'pi':     { tag: 'Pāli',      name: '팔리어' },
+    'sa':     { tag: 'Saṃskṛta',  name: '산스크리트어' },
+    'bo':     { tag: 'བོད་ཡིག',   name: '티베트어' },
+  };
+  const isLzh = l => !!l && l.startsWith('lzh');
+  const langName = l => (LANG[l] || {}).name || '';
+  const langTag  = l => (LANG[l] || {}).tag || '';
+
+  /* ───────── 1. 언어 감지 (브라우저 안에서, API 없이) ───────── */
+  const R = {
+    han: /[㐀-䶿一-鿿豈-﫿⺀-⿟]|[\ud840-\ud87f][\udc00-\udfff]/,
+    hangul: /[가-힣ㄱ-ㆎ]/,
+    kana: /[぀-ヿ]/,
+    deva: /[ऀ-ॿ꣠-ꣿ]/,
+    tib: /[ༀ-࿿]/,
+    sea: /[඀-෿က-႟฀-๿]/,     // 싱할라·미얀마·태국 문자 (팔리 경전 표기)
+    latin: /[A-Za-zÀ-ɏḀ-ỿ]/,
+  };
+  const IAST = /[āīūṛṝḷḹṃṁṅñṭḍṇśṣḥĀĪŪṚṜḶṂṀṄÑṬḌṆŚṢḤ]/;
+  const SA_ONLY = /[śṣṛṝḥŚṢṚ]/;                          // 팔리어에 없는 부호
+  const PALI_W = /\b(bhikkhave|bhikkh\w*|dhamm\w*|nibbān\w*|kamm\w*|paññ\w*|sacc\w*|dukkh\w*|anicc\w*|anatt\w*|sutaṃ|ekaṃ|samayaṃ|viharati|hoti|honti|evaṃ|bhagavā|tathāgato|seyyathidaṃ|āvuso|bhante)\b/gi;
+  const SA_W = /\b(dharm\w*|nirvāṇ\w*|karm\w*|prajñ\w*|śūny\w*|bodhisattv\w*|duḥkh\w*|mayā|śrutam|ekasmin|samaye|bhagavān|tathāgataḥ|bhavati|asti|iti|sarva\w*|ātman|svabhāv\w*)\b/gi;
+  const WYLIE = new Set(("kyi gyi gi 'i yi kyis gyis gis 'is yis dang la nas las pa po ba bo ma mo 'di de ni yin yod med ste te " +
+    "cing zhing shing sangs rgyas byang chub sems dpa' 'phags chos bcom ldan 'das rnam par thams cad gyur bya byed dag rnams " +
+    "tu du su ru na kyang yang gang mi rab 'byor bdag stong nyid shes rgyud lam 'bras bu dge slong bla med").split(' '));
+  const SEP = /[\s　-〿＀-￯·,.;:!?'"“”‘’「」『』()（）\[\]《》〈〉\-—–།་༎॥।0-9]/;
+
+  // 특정 문자가 가장 길게 이어진 덩어리 (구두점·공백은 이어진 것으로 봄)
+  function longestRun(s, re) {
+    let best = '', bestN = 0, cur = '', n = 0;
+    for (const ch of s) {
+      if (re.test(ch)) { cur += ch; n++; }
+      else if (SEP.test(ch) && cur) { cur += ch; }
+      else { if (n > bestN) { best = cur; bestN = n; } cur = ''; n = 0; }
+    }
+    if (n > bestN) { best = cur; bestN = n; }
+    let t = best.replace(/^[\s,.;:·\-—–」』）)]+|[\s,;:·\-—–(（「『]+$/g, '').trim();
+    // 짝이 맞지 않는 닫는 괄호는 떼어 냄 (「…」 인용 안쪽만)
+    const opens = (t.match(/[「『（(《〈]/g) || []).length, closes = (t.match(/[」』）)》〉]/g) || []).length;
+    if (closes > opens) t = t.replace(/[」』）)》〉]+$/, '');
+    return { text: t, n: bestN };
+  }
+  function count(s) {
+    const c = { han: 0, hangul: 0, kana: 0, deva: 0, tib: 0, sea: 0, latin: 0, iast: 0 };
+    for (const ch of s) {
+      if (R.han.test(ch)) c.han++;
+      else if (R.hangul.test(ch)) c.hangul++;
+      else if (R.kana.test(ch)) c.kana++;
+      else if (R.deva.test(ch)) c.deva++;
+      else if (R.tib.test(ch)) c.tib++;
+      else if (R.sea.test(ch)) c.sea++;
+      else if (R.latin.test(ch)) { c.latin++; if (IAST.test(ch)) c.iast++; }
+    }
+    c.total = c.han + c.hangul + c.kana + c.deva + c.tib + c.sea + c.latin;
+    return c;
+  }
+  // 한자 바로 뒤에 짧은 한글 토씨가 붙는 형태 → 현토
+  const HYEONTO = /[㐀-鿿豈-﫿][가-힣]{1,3}(?=[㐀-鿿豈-﫿\s,.。，、；：]|$)/g;
+
+  function detect(text) {
+    const s = String(text || '').trim();
+    if (s.length < 2) return null;
+    const c = count(s);
+    if (!c.total) return null;
+    const r = k => c[k] / c.total;
+    if (r('tib') >= 0.3) return { lang: 'bo', conf: 'high', segment: longestRun(s, R.tib).text || s, script: '티베트 문자' };
+    if (c.tib >= 6) return { lang: 'bo', conf: 'mid', segment: longestRun(s, R.tib).text, mixed: true, script: '티베트 문자' };
+    if (r('deva') >= 0.3) return { lang: 'sa', conf: 'mid', segment: longestRun(s, R.deva).text || s, script: '데바나가리' };
+    if (c.deva >= 6) return { lang: 'sa', conf: 'mid', segment: longestRun(s, R.deva).text, mixed: true, script: '데바나가리' };
+    if (r('sea') >= 0.3) return { lang: 'pi', conf: 'low', segment: longestRun(s, R.sea).text || s, script: '싱할라·미얀마·태국 문자' };
+
+    // 한자 중심
+    if (c.han >= 2 && (r('han') >= 0.5 || (c.han >= 4 && c.han >= c.hangul * 1.5))) {
+      if (c.kana > 0 && c.kana < c.han) return { lang: 'lzh-ja', conf: 'mid', segment: s };
+      const hy = (s.match(HYEONTO) || []).length;
+      if (c.hangul > 0 && hy >= 1 && c.hangul <= c.han) return { lang: 'lzh-ko', conf: 'high', segment: s };
+      return { lang: 'lzh', conf: c.han >= 4 ? 'high' : 'mid', segment: s };
+    }
+    // 한국어 문장 속 한문 인용
+    if (c.han >= 4) {
+      const run = longestRun(s, R.han);
+      if (run.n >= 4) return { lang: 'lzh', conf: 'mid', segment: run.text, mixed: true };
+    }
+    // 로마자 표기 (팔리·산스크리트 IAST, 티베트 와일리)
+    if (c.latin >= 6) {
+      const words = s.toLowerCase().match(/[a-zÀ-ɏḀ-ỿ']+/g) || [];
+      const wy = words.filter(w => WYLIE.has(w)).length;
+      const latinRun = () => {
+        const run = longestRun(s, R.latin).text;
+        return c.hangul > 0 ? run : s;
+      };
+      if (c.iast === 0 && words.length >= 3 && wy / words.length >= 0.25)
+        return { lang: 'bo', conf: 'mid', segment: latinRun(), translit: 'wylie', mixed: c.hangul > 0 };
+      if (c.iast >= 2 || (c.iast >= 1 && words.length <= 6)) {
+        const p = (s.match(PALI_W) || []).length, q = (s.match(SA_W) || []).length;
+        let lang = SA_ONLY.test(s) ? 'sa' : 'pi';
+        if (lang === 'pi' && q > p + 1) lang = 'sa';
+        return { lang, conf: (p || q) ? 'mid' : 'low', segment: latinRun(), translit: 'iast', mixed: c.hangul > 0 };
+      }
+    }
+    return null;
+  }
+  // 옛 글꼴(CSX·Norman·Sambhota 등)로 만든 PDF에서 흔한 깨짐
+  function looksGarbled(s) { return /[-�]/.test(s); }
+
+  /* ───────── 2. 한문 전처리 · 용어 사전 ───────── */
+  const toEntry = a => ({ surface: a[0], reading: a[1], meaning: a[2], buddhist_meaning: a[3], pos: a[4], category: a[5] });
+  const TERMS = CL_DATA.TERMS.map(toEntry).sort((a, b) => b.surface.length - a.surface.length);
+  const ALLW = [...CL_DATA.TERMS, ...CL_DATA.FUNC_WORDS].map(toEntry).sort((a, b) => b.surface.length - a.surface.length);
+  function normalizeLzh(t) {
+    return String(t || '')
+      .replace(/[⺀-⿟豈-﫿]/g, c => c.normalize('NFKC'))      // 강희부수·호환 한자 → 표준 한자
+      .replace(/[！-～]/g, ch => String.fromCharCode(ch.charCodeAt(0) - 0xFEE0))   // TranslateDu와 같은 전각 정규화
+      .replace(/\s+/g, ' ').trim();
+  }
+  function matchGlossary(text, list) {
+    const out = [], used = new Set();
+    for (const e of list) {
+      let from = 0, idx;
+      while ((idx = text.indexOf(e.surface, from)) !== -1) {
+        let ov = false;
+        for (let i = idx; i < idx + e.surface.length; i++) if (used.has(i)) { ov = true; break; }
+        if (!ov) { out.push({ ...e, position: idx, length: e.surface.length }); for (let i = idx; i < idx + e.surface.length; i++) used.add(i); }
+        from = idx + 1;
+      }
+    }
+    return out.sort((a, b) => a.position - b.position);
+  }
+  function glossaryHints(m) {
+    if (!m.length) return '(해당 없음)';
+    return m.map(x => `- ${x.surface}(${x.reading}): ${x.meaning}` + (x.buddhist_meaning ? ` / 불교학적: ${x.buddhist_meaning}` : '') + ` [${x.pos}]`).join('\n');
+  }
+  const fill = (tpl, map) => tpl.replace(/\{\{(\w+)\}\}/g, (_, k) => (k in map ? map[k] : _));
+
+  /* ───────── 3. 팔리어·산스크리트어·티베트어 프롬프트 ───────── */
+  const SYS_IND = `너는 팔리어·산스크리트어·티베트어 불교 문헌을 분석하는 전문 문헌학자다.
+입력 문장을 다음 순서로 엄격하게 처리하라.
+
+반드시 지킬 규칙:
+1. 번역하기 전에 먼저 낱말 분절과 문법 구조를 판정하라.
+2. 원문에 없는 내용을 보충해서 번역하지 마라.
+3. 불교 용어는 일반 뜻과 교학적 뜻을 구분해서 검토하라.
+4. 확실하지 않으면 단정하지 말고 ambiguity에 후보를 남기고 confidence를 낮춰라.
+5. 지정된 JSON 스키마만 출력하라. 설명문·코드 펜스 금지.
+6. 모든 설명(뜻·품사·형태·기능·문법·주석·번역)은 한국어로 쓰라. 불교 용어는 한자를 병기할 수 있다. 예: 연기(緣起)
+
+산스크리트어·팔리어 처리:
+- 연성(sandhi)으로 붙은 낱말은 sandhi_split에 해체형을 적어라. 예: "tathāgatenāpi" → "tathāgatena + api"
+- lemma: 명사·형용사는 어간형(예: dharma, dhamma), 동사는 어근(√bhū, √gam)과 동사 어간을 함께.
+- morphology: 한국어 약호로. 명사 "남성·단수·구격", 동사 "현재·3인칭·단수·능동태", 분사 "과거수동분사·남성·단수·주격", 절대분사·부정사도 명시.
+- compound: 복합어면 구성과 종류(tatpuruṣa·karmadhāraya·bahuvrīhi·dvandva·avyayībhāva 등)와 풀이.
+- 팔리어 원문이면 sanskrit 칸에 대응 산스크리트형을 적어라. 산스크리트어 원문이면 sanskrit 칸은 비워라.
+- 데바나가리 등 인도 문자 원문이면 translit에 IAST 전사를 적어라.
+
+티베트어 처리:
+- 음절(tsheg)을 낱말 단위로 묶어 토큰으로 만들어라.
+- 격조사·접속사의 기능을 정확히 판정하라: 속격(gi/kyi/gyi/'i/yi), 구격·능격(gis/kyis/gyis/'is/yis), la don(la/su/ru/tu/du/r/na), 탈격(nas/las), 접속(dang, ste/te/de, cing/zhing/shing) 등.
+- 동사는 시제형(현재·과거·미래·명령)과 원형을 lemma·morphology에 밝혀라.
+- 티베트 문자 원문이면 translit에 와일리(Wylie) 전사를 적어라.
+- sanskrit 칸에는 확인 가능한 경우 대응 산스크리트어(번역명의대집 등 표준 대응)를 적어라.
+
+대응어:
+- chinese_equiv: 표준 한역어가 분명할 때만 적어라 (예: pratītyasamutpāda → 緣起, śūnyatā → 空性). 확실하지 않으면 빈 문자열.
+- parsing.parallels: 문장 단위로 알려진 한역·티베트역·산스크리트 대응 구절이 확실히 알려져 있으면 출처와 함께 적고, 모르면 빈 배열로 두라. 꾸며내지 마라.
+
+번역:
+- literal_translation: 구조를 최대한 보존한 한국어 직역
+- idiomatic_translation: 자연스러운 한국어 의역
+- 두 번역 모두 원문 정보를 누락하지 마라.
+
+입력이 옛 글꼴 때문에 깨진 문자로 보이면 language.note에 그 사실을 적고, 추정 복원형을 input_text_restored에 적은 뒤 그것을 기준으로 분석하라.
+
+최종 출력은 반드시 JSON만 반환하라.`;
+
+  const USER_IND = `다음 {{LANGNAME}} 불교 문헌 문장을 분석하라.
+
+원문:
+{{INPUT}}
+{{TRANSLIT}}
+반드시 아래 JSON 스키마만 출력하라.
+
+{
+  "input_text": "",
+  "input_text_restored": "",
+  "language": { "code": "pi|sa|bo", "name": "", "script": "", "confidence": "high|medium|low", "note": "" },
+  "segmentation": {
+    "clauses": [],
+    "tokens": [
+      {
+        "surface": "",
+        "translit": "",
+        "sandhi_split": "",
+        "lemma": "",
+        "gloss": [],
+        "pos": "",
+        "morphology": "",
+        "function": "",
+        "compound": "",
+        "sanskrit": "",
+        "chinese_equiv": "",
+        "is_buddhist_term": false,
+        "confidence": "high|medium|low",
+        "ambiguity": []
+      }
+    ]
+  },
+  "parsing": {
+    "sentence_type": "",
+    "components": { "condition": "", "subject": "", "adverbial": [], "predicate": "", "object": [], "complement": [], "omitted_elements": [], "ambiguity": [] },
+    "literal_translation": "",
+    "idiomatic_translation": "",
+    "grammar_points": [],
+    "buddhist_notes": [],
+    "parallels": [],
+    "other_notes": []
+  },
+  "alignment": [ { "source_span": "", "target_span": "", "relation": "1:1|1:N|N:1|omitted|expanded", "confidence": "high|medium|low", "reason": "" } ],
+  "verification": { "issues_found": [], "revised_literal_translation": "", "revised_idiomatic_translation": "", "final_notes": [] }
+}
+
+출력 조건:
+- 원문의 모든 낱말이 tokens에 빠짐없이 들어가야 한다.
+- 직역과 의역을 모두 포함할 것.
+- 확실하지 않으면 ambiguity에 남길 것.`;
+
+  const VERIFY_IND = `너는 {{LANGNAME}} 불교 문장 분석 JSON을 정밀 검증하는 전문 검증기다.
+
+원문:
+{{INPUT}}
+
+1차 분석 JSON:
+{{JSON}}
+
+검증 항목:
+1. 원문 완전성 — 모든 낱말이 tokens에 있는가, 번역에서 빠진 성분이 없는가
+2. 연성 해체·원형·형태 분석이 문법적으로 정확한가 (격·수·성·시제·인칭·태의 일치)
+3. 복합어 분석의 종류와 풀이가 타당한가
+4. 티베트어라면 격조사·접속사 기능 판정이 맞는가
+5. 대응 산스크리트어·한역어가 확실한 경우만 들어갔는가 (불확실하면 지우고 ambiguity로)
+6. 직역이 구조를 보존하는가, 의역이 자연스러운 한국어인가, 둘이 모순되지 않는가
+7. confidence·ambiguity 표시가 실제 확실성과 맞는가
+
+수정 규칙:
+- 오류가 있는 부분만 최소한으로 고쳐라.
+- 수정된 번역은 verification.revised_literal_translation / revised_idiomatic_translation에 적어라.
+- issues_found에 발견한 문제를 구체적으로, final_notes에 종합 평가를 적어라.
+- 전체 스키마를 갖춘 수정된 JSON만 반환하라.`;
+
+  const SYS_VERIFY_LZH = '너는 한문 불교 문장 분석 JSON을 정밀 검증하는 전문 검증기다. 원문 완전성·성분 정합성·불교 용어 정확성·번역 품질·surface 오염 여부를 모두 점검하고 수정하라. 반드시 JSON만 출력하라.';
+  const SYS_VERIFY_IND = '너는 팔리어·산스크리트어·티베트어 불교 문장 분석 JSON을 정밀 검증하는 문헌학자다. 모든 설명은 한국어로 쓰고, 반드시 JSON만 출력하라.';
+  const RETRY = '\n\n중요: 반드시 유효한 JSON만 출력하라. 설명문, 코드 펜스, 기타 텍스트를 절대 포함하지 마라. 응답이 잘리지 않도록 각 필드를 간결하게 작성하라.';
+
+  /* ───────── 4. Gemini 호출 ───────── */
+  const sleep = ms => new Promise(r => setTimeout(r, ms));
+  async function gem(sys, user, onStatus) {
+    const body = {
+      contents: [{ role: 'user', parts: [{ text: user }] }],
+      systemInstruction: { parts: [{ text: sys }] },
+      generationConfig: { temperature: 0.1, topP: 0.8, maxOutputTokens: 16384, responseMimeType: 'application/json' },
+    };
+    const waits = [5000, 10000, 20000];
+    for (let i = 0; ; i++) {
+      const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${G.model}:generateContent?key=${G.key}`,
+        { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+      if (r.ok) {
+        const d = await r.json();
+        const c = d.candidates && d.candidates[0];
+        if (!c) throw new Error('응답이 비어 있습니다.');
+        if (c.finishReason === 'SAFETY') throw new Error('안전 필터에 의해 차단된 응답입니다.');
+        const t = (c.content && c.content.parts || []).filter(p => !p.thought).map(p => p.text || '').join('');
+        if (!t) throw new Error('응답에 내용이 없습니다.');
+        return t;
+      }
+      const raw = await r.text().catch(() => '');
+      if (r.status === 429 && i < waits.length) {
+        onStatus(`API 할당량 초과 — ${waits[i] / 1000}초 뒤 다시 시도합니다 (${i + 1}/${waits.length})`);
+        await sleep(waits[i]); continue;
+      }
+      let msg = ''; try { msg = JSON.parse(raw).error.message; } catch (_) { msg = raw.slice(0, 200); }
+      const e = new Error(msg || `HTTP ${r.status}`); e.status = r.status; throw e;
+    }
+  }
+  async function gemJSON(sys, user, onStatus, validate) {
+    for (let a = 0; a <= 2; a++) {
+      try {
+        const txt = await gem(a ? sys + RETRY : sys, user, onStatus);
+        const j = CLU.safeParseJson(txt);
+        if (!j) throw new Error('결과(JSON)를 읽지 못했습니다.');
+        const bad = validate ? validate(j) : '';
+        if (bad) throw new Error(bad);
+        return j;
+      } catch (e) {
+        if (e.status && ![500, 503].includes(e.status)) throw e;     // 키·할당량 오류는 바로 알림
+        if (a === 2) throw e;
+        onStatus(`결과 형식이 맞지 않아 다시 요청합니다 (${a + 1}/2)`);
+        await sleep(800);
+      }
+    }
+  }
+  function validate(j) {
+    if (!j.segmentation || !Array.isArray(j.segmentation.tokens)) return '낱말 분석(tokens)이 빠졌습니다.';
+    if (!j.parsing) return '구문 분석(parsing)이 빠졌습니다.';
+    if (!j.parsing.literal_translation && !j.parsing.idiomatic_translation) return '번역이 비어 있습니다.';
+    return '';
+  }
+  // 검증 결과 병합 (TranslateDu mergeVerification과 같은 규칙)
+  function merge(first, ver) {
+    if (ver && ver.segmentation && ver.parsing) {
+      if (!ver.verification) ver.verification = first.verification || {};
+      return ver;
+    }
+    const r = JSON.parse(JSON.stringify(first));
+    if (ver && ver.verification) {
+      r.verification = ver.verification;
+      const v = ver.verification;
+      if (v.revised_literal_translation) r.parsing.literal_translation = v.revised_literal_translation;
+      if (v.revised_idiomatic_translation) r.parsing.idiomatic_translation = v.revised_idiomatic_translation;
+      if (v.revised_components && (v.revised_components.subject || v.revised_components.predicate))
+        r.parsing.components = { ...r.parsing.components, ...v.revised_components };
+    }
+    if (ver && Array.isArray(ver.alignment) && ver.alignment.length) r.alignment = ver.alignment;
+    return r;
+  }
+  function sanitize(d, lzh) {
+    const clean = (v, k) => {
+      if (v == null) return v;
+      if (Array.isArray(v)) return v.map(x => clean(x, k));
+      if (typeof v === 'object') { const o = {}; for (const kk of Object.keys(v)) o[kk] = clean(v[kk], kk); return o; }
+      if (typeof v !== 'string') return v;
+      if (lzh && (k === 'surface' || k === 'source_span')) return CLU.sanitizeSurface(v);
+      return CLU.fixBrokenUnicode(v);
+    };
+    return clean(d, '');
+  }
+
+  /* 로컬 사전 분석 (API를 쓸 수 없을 때, 한문만) */
+  function localFallback(input) {
+    const m = matchGlossary(input, ALLW);
+    const used = new Set(); const toks = [];
+    for (const x of m) {
+      for (let i = x.position; i < x.position + x.length; i++) used.add(i);
+      toks.push({ surface: x.surface, char_gloss: [x.meaning], pos_candidates: [x.pos], function_candidates: [], is_buddhist_term: x.category !== '허사', confidence: x.category === '허사' ? 'medium' : 'high', ambiguity: [], _p: x.position, reading: x.reading, bm: x.buddhist_meaning });
+    }
+    [...input].forEach((ch, i) => {
+      if (used.has(i) || /[。，；：、.;,\s가-힣]/.test(ch)) return;
+      toks.push({ surface: ch, char_gloss: ['(사전 미등재)'], pos_candidates: ['미분류'], function_candidates: [], is_buddhist_term: false, confidence: 'low', ambiguity: ['로컬 사전에 없는 글자'], _p: i });
+    });
+    toks.sort((a, b) => a._p - b._p).forEach(t => delete t._p);
+    const clauses = input.split(/(?<=[。，；：、.;,])/).map(s => s.trim()).filter(Boolean);
+    return {
+      _is_fallback: true, input_text: input,
+      segmentation: { clauses, tokens: toks },
+      parsing: {
+        sentence_type: '(로컬 분석 — 문장 유형 미판정)', components: {},
+        literal_translation: '[로컬 축자역 보조] ' + toks.map(t => `${t.surface}(${t.char_gloss[0]})`).join(' '),
+        idiomatic_translation: '(API 분석 필요)', grammar_points: [],
+        buddhist_notes: toks.filter(t => t.is_buddhist_term).map(t => `${t.surface}(${t.reading || ''}): ${t.bm || t.char_gloss[0]}`),
+      },
+      alignment: [],
+      verification: { issues_found: ['로컬 사전 분석 결과입니다. API 키를 확인하면 더 정확한 분석을 받을 수 있습니다.'], final_notes: [] },
+    };
+  }
+
+  /* ───────── 5. 분석 실행 ───────── */
+  async function analyze(text, lang, opt) {
+    const onStatus = opt.onStatus || (() => {});
+    const ctx = opt.context ? `\n\n[문맥 참고 — 분석 대상 아님. 이 문장이 실린 자료: ${opt.context}]` : '';
+    if (isLzh(lang)) {
+      const input = normalizeLzh(text);
+      const hints = glossaryHints(matchGlossary(input, TERMS));
+      let user = fill(CL_DATA.USER_LZH, { INPUT: input, HINTS: hints });
+      if (lang === 'lzh-ja') user += '\n\n참고: 입력은 일본식 훈독 표기(送り仮名·返り点 등 가나)가 섞인 한문일 수 있다. 가나는 surface에서 빼고 hyeonto 필드에 기록하라.';
+      user += ctx;
+      onStatus(opt.precise ? '1단계: 분절·구문 분석과 번역 중…' : '분절·구문 분석과 번역 중…');
+      let res;
+      try {
+        res = await gemJSON(CL_DATA.SYS_LZH, user, onStatus, validate);
+      } catch (e) {
+        if (e.status === 400 || e.status === 403 || /api.?key/i.test(e.message)) throw e;
+        const fb = localFallback(input); fb._error = e.message; return fb;
+      }
+      if (opt.precise) {
+        onStatus('2단계: 자기 검증(누락·오역·성분 충돌 점검) 중…');
+        try {
+          const ver = await gemJSON(SYS_VERIFY_LZH, fill(CL_DATA.VERIFY_LZH, { INPUT: input, JSON: JSON.stringify(res, null, 2) }), onStatus, null);
+          res = merge(res, ver);
+        } catch (e) { res._verify_error = e.message; }
+      }
+      res.input_text = res.input_text || input;
+      return sanitize(res, true);
+    }
+    // 팔리어·산스크리트어·티베트어
+    const name = langName(lang);
+    const translit = opt.translit === 'wylie' ? '\n(입력은 와일리 전사로 된 티베트어다.)\n'
+                   : opt.translit === 'iast' ? '\n(입력은 IAST 로마자 전사다.)\n' : '\n';
+    const user = fill(USER_IND, { LANGNAME: name, INPUT: String(text).trim(), TRANSLIT: translit }) + ctx;
+    onStatus(opt.precise ? '1단계: 연성 해체·형태 분석과 번역 중…' : '연성 해체·형태 분석과 번역 중…');
+    let res = await gemJSON(SYS_IND, user, onStatus, validate);
+    if (opt.precise) {
+      onStatus('2단계: 문법·대응어 검증 중…');
+      try {
+        const ver = await gemJSON(SYS_VERIFY_IND, fill(VERIFY_IND, { LANGNAME: name, INPUT: String(text).trim(), JSON: JSON.stringify(res, null, 2) }), onStatus, null);
+        res = merge(res, ver);
+      } catch (e) { res._verify_error = e.message; }
+    }
+    res.input_text = res.input_text || String(text).trim();
+    return sanitize(res, false);
+  }
+
+  /* ───────── 6. 결과 저장소 · 캐시 ───────── */
+  const store = {};            // id → { text, lang, precise, pg, res, translit }
+  let seq = 0;
+  const CACHE_KEY = 'clCache';
+  const hash = s => { let h = 0; for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) | 0; return (h >>> 0).toString(36); };
+  function cacheGet(k) { try { const c = JSON.parse(localStorage.getItem(CACHE_KEY) || '{}'); return c[k] ? c[k].r : null; } catch (_) { return null; } }
+  function cachePut(k, r) {
+    try {
+      const c = JSON.parse(localStorage.getItem(CACHE_KEY) || '{}');
+      c[k] = { r, t: Date.now() };
+      const keys = Object.keys(c).sort((a, b) => c[b].t - c[a].t);
+      keys.slice(40).forEach(x => delete c[x]);             // 최근 40건만 보관
+      localStorage.setItem(CACHE_KEY, JSON.stringify(c));
+    } catch (_) {}
+  }
+
+  /* ───────── 7. 화면 ───────── */
+  const E = s => String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  const T = v => v == null ? '' : Array.isArray(v) ? v.map(T).filter(Boolean).join(' / ')
+             : typeof v === 'object' ? Object.values(v).map(T).filter(Boolean).join(' · ') : String(v);
+  const arr = v => Array.isArray(v) ? v.filter(x => T(x)) : (v ? [v] : []);
+  const CONF = { high: '높음', medium: '보통', low: '낮음' };
+  const icoAnalyze = '<svg viewBox="0 0 24 24"><rect x="3" y="4" width="7" height="7" rx="1.5"/><rect x="14" y="4" width="7" height="7" rx="1.5"/><rect x="3" y="15" width="7" height="5" rx="1.5"/><path d="M14 17.5h7M17.5 14v7"/></svg>';
+
+  function tokGloss(t, lzh) {
+    if (lzh) return T((t.char_gloss || [])[0]);
+    return T((t.gloss || [])[0]);
+  }
+  function tokTag(t, lzh) {
+    if (lzh) return T((t.pos_candidates || [])[0]);
+    return T(t.morphology) || T(t.pos);
+  }
+  // 대화창 카드용 행간 대역 칩
+  function chips(res, lzh) {
+    const toks = (res.segmentation && res.segmentation.tokens) || [];
+    return toks.map((t, i) => `<button class="ig${t.is_buddhist_term ? ' bt' : ''}${t.confidence === 'low' ? ' lo' : ''}" data-i="${i}" title="${E(tokTip(t, lzh))}">` +
+      `<b>${E(t.surface)}${t.hyeonto ? `<i>${E(t.hyeonto)}</i>` : ''}</b>` +
+      (!lzh && t.lemma ? `<u>${E(t.lemma)}</u>` : '') +
+      `<small>${E(tokGloss(t, lzh))}</small><em>${E(tokTag(t, lzh))}</em></button>`).join('');
+  }
+  function tokTip(t, lzh) {
+    const parts = lzh
+      ? [T(t.char_gloss), T(t.pos_candidates), T(t.function_candidates), t.ambiguity && t.ambiguity.length ? '모호: ' + T(t.ambiguity) : '']
+      : [t.sandhi_split && '연성: ' + t.sandhi_split, t.lemma && '원형: ' + t.lemma, T(t.gloss), T(t.pos), T(t.morphology), T(t.function), t.compound && '복합어: ' + T(t.compound),
+         t.sanskrit && 'Skt. ' + t.sanskrit, t.chinese_equiv && '한역 ' + t.chinese_equiv];
+    return parts.filter(Boolean).join('\n');
+  }
+
+  function card(id) {
+    const s = store[id], res = s.res, lzh = isLzh(s.lang), p = res.parsing || {};
+    const ver = res.verification || {};
+    const fixes = arr(ver.issues_found).length;
+    const src = res.input_text_restored || res.input_text || s.text;
+    return `<div class="anc" data-id="${id}">
+      <div class="anc-h"><span class="anc-l">${E(langTag(s.lang))}</span><span class="anc-m">${E(langName(s.lang))} · ${s.precise ? '정밀 분석' : '빠른 분석'}${s.pg ? ` · ${s.pg}쪽` : ''}${res._cached ? ' · 저장된 결과' : ''}</span></div>
+      ${res._is_fallback ? `<div class="anc-warn">API 분석에 실패해 내장 사전만으로 기초 분석했습니다.${res._error ? ' (' + E(res._error) + ')' : ''}</div>` : ''}
+      ${res.language && res.language.note ? `<div class="anc-warn">${E(res.language.note)}</div>` : ''}
+      <div class="anc-src${lzh ? ' hz' : ''}">${E(src)}</div>
+      <div class="anc-ig">${chips(res, lzh)}</div>
+      <div class="anc-tip" hidden></div>
+      <div class="anc-tr"><span>직역</span><p>${E(T(p.literal_translation))}</p></div>
+      <div class="anc-tr"><span>의역</span><p>${E(T(p.idiomatic_translation))}</p></div>
+      ${p.sentence_type ? `<div class="anc-st">문장 유형 · ${E(T(p.sentence_type))}${s.precise ? ` · 검증 지적 ${fixes}건` : ''}</div>` : ''}
+      <div class="anc-b">
+        <button class="anc-btn pri" onclick="CL.view(${id})">${icoAnalyze}전체 보기</button>
+        ${s.precise ? '' : `<button class="anc-btn" onclick="CL.rerun(${id},true)">정밀 분석</button>`}
+        <button class="anc-btn" onclick="CL.edit(${id})">원문 고치기</button>
+      </div>
+    </div>`;
+  }
+
+  // 전체 보기 — 문장 구조 · 낱말 · 번역 · 대응 · 문법 · 주석 · 검증
+  function full(id) {
+    const s = store[id], res = s.res, lzh = isLzh(s.lang);
+    const seg = res.segmentation || {}, p = res.parsing || {}, c = p.components || {}, ver = res.verification || {};
+    const sec = (title, html) => html ? `<section><h3>${title}</h3>${html}</section>` : '';
+    const list = v => { const a = arr(v); return a.length ? `<ul>${a.map(x => `<li>${E(T(x))}</li>`).join('')}</ul>` : ''; };
+    const clauses = arr(seg.clauses).map((x, i) => `<span class="clz">${i + 1}. ${E(T(x))}</span>`).join('');
+    const toks = (seg.tokens || []).map(t => {
+      const rows = lzh ? [
+        ['뜻', T(t.char_gloss)], ['품사', T(t.pos_candidates)], ['기능', T(t.function_candidates)],
+        t.hyeonto ? ['현토', t.hyeonto] : null, t.ambiguity && arr(t.ambiguity).length ? ['모호', T(t.ambiguity)] : null,
+      ] : [
+        t.translit ? ['전사', t.translit] : null, t.sandhi_split ? ['연성 해체', t.sandhi_split] : null, t.lemma ? ['원형', t.lemma] : null,
+        ['뜻', T(t.gloss)], ['품사', T(t.pos)], t.morphology ? ['형태', T(t.morphology)] : null, t.function ? ['기능', T(t.function)] : null,
+        t.compound ? ['복합어', T(t.compound)] : null, t.sanskrit ? ['산스크리트', t.sanskrit] : null, t.chinese_equiv ? ['한역', t.chinese_equiv] : null,
+        t.ambiguity && arr(t.ambiguity).length ? ['모호', T(t.ambiguity)] : null,
+      ];
+      return `<div class="tk${t.is_buddhist_term ? ' bt' : ''}"><div class="tk-s${lzh ? ' hz' : ''}">${E(t.surface)}<span class="cf c-${E(t.confidence || 'medium')}">${CONF[t.confidence] || '보통'}</span></div>` +
+        rows.filter(Boolean).filter(r => r[1]).map(r => `<div class="tk-r"><span>${r[0]}</span><b>${E(r[1])}</b></div>`).join('') + '</div>';
+    }).join('');
+    const comp = [['조건', c.condition], ['주어', c.subject], ['부사어', c.adverbial], ['서술어', c.predicate], ['목적어', c.object],
+      ['보어', c.complement], ['생략 성분', c.omitted_elements], ['모호한 점', c.ambiguity]]
+      .filter(x => T(x[1])).map(x => `<div class="cp"><span>${x[0]}</span><p>${E(T(x[1]))}</p></div>`).join('');
+    const al = (res.alignment || []).filter(a => a && (a.source_span || a.target_span)).map(a =>
+      `<div class="al"><b class="${lzh ? 'hz' : ''}">${E(T(a.source_span))}</b><span>→</span><p>${E(T(a.target_span))}<small>${E([a.relation, a.reason].filter(Boolean).map(T).join(' · '))}</small></p></div>`).join('');
+    const revised = ver.revised_literal_translation || ver.revised_idiomatic_translation;
+    const src = res.input_text_restored || res.input_text || s.text;
+    return `
+      <div class="anv-src${lzh ? ' hz' : ''}">${E(src)}</div>
+      ${res.input_text_restored && res.input_text_restored !== res.input_text ? `<div class="anc-warn">원문 글자가 깨져 보여 복원형으로 분석했습니다. 원래 선택: ${E(res.input_text)}</div>` : ''}
+      ${clauses ? `<div class="clzs">${clauses}</div>` : ''}
+      ${sec('번역', `<div class="anc-tr"><span>직역</span><p>${E(T(p.literal_translation))}</p></div><div class="anc-tr"><span>의역</span><p>${E(T(p.idiomatic_translation))}</p></div>${revised ? '<div class="anv-note">검증 단계에서 번역을 수정했습니다.</div>' : ''}`)}
+      ${sec('문장 구조' + (p.sentence_type ? ` <small>${E(T(p.sentence_type))}</small>` : ''), comp ? `<div class="cps">${comp}</div>` : '')}
+      ${sec(lzh ? '낱말 분석' : '낱말 분석 (연성 해체 · 원형 · 형태)', toks ? `<div class="tks">${toks}</div>` : '')}
+      ${sec('원문 ↔ 번역 대응', al)}
+      ${sec('문법 포인트', list(p.grammar_points))}
+      ${sec('불교학 참고', list(p.buddhist_notes))}
+      ${sec('대응 구절', list(p.parallels))}
+      ${sec('기타 참고', list(p.other_notes))}
+      ${sec('검증', list([...arr(ver.issues_found), ...arr(ver.final_notes)]) + (res._verify_error ? `<div class="anc-warn">검증 단계 실패: ${E(res._verify_error)} — 1차 결과를 보여 줍니다.</div>` : ''))}
+      <p class="anv-disc">분석 결과는 학술적 참고용이며, 최종 판단은 연구자의 몫입니다. — TranslateDu 엔진</p>`;
+  }
+
+  function summary(id) {
+    const s = store[id], p = s.res.parsing || {};
+    const doc = (G.fn || '').replace(/\.pdf$/i, '');
+    return `${s.res.input_text_restored || s.res.input_text || s.text}\n` +
+      `직역: ${T(p.literal_translation)}\n의역: ${T(p.idiomatic_translation)}` +
+      (doc ? `\n— ${doc}${s.pg ? ', ' + s.pg + '쪽' : ''} (${langName(s.lang)} 구조 분석)` : '');
+  }
+
+  /* ── 대화창에 진행 표시 → 결과 카드 ── */
+  function progress(lang) {
+    const d = document.createElement('div');
+    d.className = 'msg ai'; d.id = 'clProg';
+    d.innerHTML = `<span class="sndr">고전어 분석 · ${E(langName(lang))}</span><div class="tyw"><div class="td"></div><div class="td"></div><div class="td"></div><span class="clps" id="clProgT">준비 중…</span></div>`;
+    const m = document.getElementById('msgs'); m.appendChild(d); m.scrollTop = m.scrollHeight;
+    return t => { const el = document.getElementById('clProgT'); if (el) el.textContent = t; };
+  }
+  function showCard(id) {
+    const d = document.createElement('div');
+    d.className = 'msg ai';
+    d.innerHTML = `<span class="sndr">고전어 분석 · Gemini</span>${card(id)}<span class="mts">${ts()}</span>`;
+    const acts = mkActs('');                         // 공통 작업 줄을 고전어용으로 바꿔 끼움
+    acts.innerHTML = '';
+    const add = (ico, label, fn) => { const b = document.createElement('button'); b.className = 'act'; b.innerHTML = ico + label; b.onclick = fn; acts.appendChild(b); };
+    add(ICO.copy, '복사', async () => toast(await copyText(summary(id)) ? '분석 요약을 복사했습니다' : '복사하지 못했습니다'));
+    add(ICO.memo, '메모장', () => { wbAddText(summary(id)); toast('메모장에 붙였습니다'); });
+    add('<svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>', 'HTML', () => download(id, 'html'));
+    add('<svg viewBox="0 0 24 24"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>', 'JSON', () => download(id, 'json'));
+    d.insertBefore(acts, d.querySelector('.mts'));
+    const m = document.getElementById('msgs');
+    m.appendChild(d);
+    // 낱말 칩을 누르면 그 낱말의 자세한 분석
+    d.querySelectorAll('.ig').forEach(b => b.addEventListener('click', () => {
+      const tip = d.querySelector('.anc-tip');
+      const t = store[id].res.segmentation.tokens[+b.dataset.i];
+      const same = tip.dataset.i === b.dataset.i && !tip.hidden;
+      d.querySelectorAll('.ig.on').forEach(x => x.classList.remove('on'));
+      if (same) { tip.hidden = true; return; }
+      b.classList.add('on');
+      tip.dataset.i = b.dataset.i; tip.hidden = false;
+      tip.innerHTML = `<b class="${isLzh(store[id].lang) ? 'hz' : ''}">${E(t.surface)}</b> ` + E(tokTip(t, isLzh(store[id].lang))).replace(/\n/g, ' · ');
+    }));
+    if (isTouch() && d.offsetHeight > m.clientHeight * 0.6) m.scrollTop += d.getBoundingClientRect().top - m.getBoundingClientRect().top - 8;
+    else m.scrollTop = m.scrollHeight;
+  }
+
+  // 대화 흐름에도 남겨 이어지는 질문("여기서 則은?")이 문맥을 알게
+  function pushHist(id) {
+    const s = store[id], p = s.res.parsing || {};
+    G.hist.push({ role: 'user', parts: [{ text: `[${langName(s.lang)} 구조 분석 요청] ${s.text}` }] });
+    G.hist.push({ role: 'model', parts: [{ text: `문장 유형: ${T(p.sentence_type)}\n직역: ${T(p.literal_translation)}\n의역: ${T(p.idiomatic_translation)}\n문법: ${T(p.grammar_points)}\n불교학 참고: ${T(p.buddhist_notes)}` }] });
+    if (G.hist.length > 20) G.hist = G.hist.slice(-20);
+  }
+
+  async function start(text, lang, opt) {
+    opt = opt || {};
+    text = String(text || '').trim();
+    if (!text) return;
+    if (!lang) { const d = detect(text); lang = d ? d.lang : 'lzh'; opt.translit = opt.translit || (d && d.translit); }
+    if (!G.key) { toast('먼저 API 키를 설정해 주세요'); document.getElementById('apiM').style.display = 'flex'; return; }
+    if (G.busy) { toast('앞의 질문에 대한 답을 기다리는 중입니다'); return; }
+    if (!opt.skipGarbleCheck && looksGarbled(text)) { edit(null, { text, lang, pg: opt.pg, warn: true }); return; }
+    const precise = opt.precise != null ? opt.precise : localStorage.getItem('clPrecise') === '1';
+    openChat(2);
+    const key = hash([lang, precise ? 1 : 0, opt.translit || '', text].join('|'));
+    const id = ++seq;
+    const cached = !opt.noCache && cacheGet(key);
+    if (cached) {
+      store[id] = { text, lang, precise, pg: opt.pg, res: { ...cached, _cached: true }, translit: opt.translit };
+      showCard(id); pushHist(id); return;
+    }
+    G.busy = true; document.getElementById('sb').disabled = true;
+    const setStatus = progress(lang);
+    const doc = (G.fn || '').replace(/\.pdf$/i, '');
+    try {
+      const res = await analyze(text, lang, { precise, onStatus: setStatus, translit: opt.translit, context: doc ? `『${doc}』${opt.pg ? ' ' + opt.pg + '쪽' : ''}` : '' });
+      document.getElementById('clProg')?.remove();
+      store[id] = { text, lang, precise, pg: opt.pg, res, translit: opt.translit };
+      if (!res._is_fallback) cachePut(key, res);
+      showCard(id); pushHist(id); noteUnread();
+    } catch (e) {
+      document.getElementById('clProg')?.remove();
+      const m = (e.message || '').toLowerCase();
+      if (m.includes('quota') || m.includes('resource_exhausted') || e.status === 429) addWrn('⚡ <strong>API 사용량 초과</strong><br>잠시 후 다시 시도하거나 모델을 Flash Lite로 바꿔 보세요.');
+      else if (e.status === 403 || m.includes('api key') || m.includes('api_key')) { addErr('🔑 API 키 오류: 키 설정을 확인해 주세요.'); setDot(false); }
+      else addErr('⚠️ 고전어 분석 실패: ' + (e.message || '알 수 없는 오류'));
+    } finally {
+      G.busy = false; document.getElementById('sb').disabled = false;
+    }
+  }
+
+  /* ── 전체 보기 창 ── */
+  let viewId = null;
+  function view(id) {
+    viewId = id;
+    const s = store[id];
+    document.getElementById('anvT').textContent = `${langName(s.lang)} 구조 분석`;
+    document.getElementById('anvM').textContent = `${langTag(s.lang)} · ${s.precise ? '정밀 분석' : '빠른 분석'}${s.pg ? ' · ' + s.pg + '쪽' : ''}`;
+    document.getElementById('anvP').hidden = !!s.precise;
+    document.getElementById('anvB').innerHTML = full(id);
+    document.getElementById('anView').classList.add('on');
+    document.getElementById('anvB').scrollTop = 0;
+  }
+  function closeView() { document.getElementById('anView').classList.remove('on'); }
+
+  /* ── 원문 고치기 / 직접 입력 창 ── */
+  let editCtx = null;
+  function edit(id, preset) {
+    const s = id ? store[id] : (preset || {});
+    editCtx = { pg: s.pg, translit: s.translit };
+    document.getElementById('aneText').value = s.text || '';
+    const det = detect(s.text || '');
+    document.getElementById('aneLang').value = s.lang || (det ? det.lang : 'lzh');
+    document.getElementById('anePrec').checked = id ? true : localStorage.getItem('clPrecise') === '1';
+    document.getElementById('aneWarn').hidden = !(preset && preset.warn);
+    document.getElementById('anEdit').classList.add('on');
+    setTimeout(() => document.getElementById('aneText').focus(), 50);
+  }
+  function closeEdit() { document.getElementById('anEdit').classList.remove('on'); }
+  function submitEdit() {
+    const text = document.getElementById('aneText').value.trim();
+    if (!text) { toast('분석할 원문을 넣어 주세요'); return; }
+    const lang = document.getElementById('aneLang').value;
+    const precise = document.getElementById('anePrec').checked;
+    try { localStorage.setItem('clPrecise', precise ? '1' : '0'); } catch (_) {}
+    closeEdit();
+    const d = detect(text);
+    start(text, lang, { precise, pg: editCtx && editCtx.pg, translit: d && d.lang === lang ? d.translit : (editCtx && editCtx.translit), skipGarbleCheck: true, noCache: true });
+  }
+  function rerun(id, precise) {
+    const s = store[id];
+    closeView();
+    start(s.text, s.lang, { precise, pg: s.pg, translit: s.translit, skipGarbleCheck: true });
+  }
+
+  /* ── 내보내기 ── */
+  function download(id, kind) {
+    const s = store[id];
+    const doc = (G.fn || 'aitutor').replace(/\.pdf$/i, '');
+    const base = `${doc}_${s.pg ? s.pg + '쪽_' : ''}${langName(s.lang)}분석`;
+    let blob;
+    if (kind === 'json') {
+      blob = new Blob([JSON.stringify({ source: G.fn, page: s.pg, language: s.lang, mode: s.precise ? 'precise' : 'quick', result: s.res }, null, 2)], { type: 'application/json' });
+    } else {
+      const css = document.getElementById('anCss').textContent;
+      const html = `<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${E(base)}</title>
+<style>body{font-family:'Apple SD Gothic Neo','Noto Sans KR',system-ui,sans-serif;margin:0;background:#f5f5f4;color:#1c1917;--ink:#1c1917;--ink2:#57534e;--ink3:#78716c;--bg:#f5f5f4;--sf:#fafaf9;--ln:#e7e5e4;--ln2:#d6d3d1;--bl:#1d4ed8;--bll:#dbeafe;--am:#92400e;--aml:#fef3c7}
+.wrap{max-width:920px;margin:0 auto;padding:28px 20px;background:#fff;min-height:100vh}h1{font-size:20px;margin:0 0 4px}.meta{color:#78716c;font-size:13px;margin-bottom:16px}
+${css}</style></head><body><div class="wrap"><h1>${E(langName(s.lang))} 구조 분석</h1><div class="meta">${E(G.fn || '')}${s.pg ? ' · ' + s.pg + '쪽' : ''} · ${s.precise ? '정밀 분석' : '빠른 분석'} · ${new Date().toLocaleString('ko-KR')}</div><div class="anv-b">${full(id)}</div></div></body></html>`;
+      blob = new Blob([html], { type: 'text/html' });
+    }
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `${base}.${kind}`;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+  }
+
+  return {
+    LANG, detect, looksGarbled, isLzh, langName, langTag, start, view, closeView, edit, closeEdit, submitEdit, rerun, download,
+    viewRerun: () => viewId && rerun(viewId, true),
+    viewDownload: k => viewId && download(viewId, k),
+    _analyze: analyze, _store: store,
+  };
+})();
+
+// Esc로 분석 창 닫기
+document.addEventListener('keydown', e => {
+  if (e.key !== 'Escape') return;
+  if (document.getElementById('anEdit').classList.contains('on')) { CL.closeEdit(); e.stopPropagation(); }
+  else if (document.getElementById('anView').classList.contains('on')) { CL.closeView(); e.stopPropagation(); }
+}, true);
+
 </script>
 </body>
 </html>
