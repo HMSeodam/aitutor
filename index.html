@@ -1296,8 +1296,8 @@ async function loadPDF(inp) {
     document.getElementById('ci').placeholder = '교재 내용에 대해 질문하세요...';
     const wm = document.getElementById('wm'); if (wm) wm.remove();
     addAI(isTouch()
-      ? `**${f.name}** 업로드 완료! 총 **${G.tot}페이지**입니다.\n\n글자를 **길게 눌러 선택**하면 아래에 질문 · 번역 · 풀이 · 형광펜 · 인용 복사 메뉴가 나타납니다. 두 손가락으로 벌려 확대할 수 있습니다.`
-      : `**${f.name}** 업로드 완료! 총 **${G.tot}페이지**입니다.\n\n텍스트를 마우스로 드래그하면 해당 부분에 대해 집중 질문할 수 있습니다.`, { noActs: true });
+      ? `**${f.name}** 업로드 완료! 총 **${G.tot}페이지**입니다.\n\n글자를 **길게 눌러 선택**하면 아래에 질문 · 번역 · 풀이 · 형광펜 · 인용 복사 메뉴가 나타납니다.`
+      : `**${f.name}** 업로드 완료! 총 **${G.tot}페이지**입니다.\n\n텍스트를 마우스로 드래그하면 질문 · 번역 · 풀이 · 형광펜 · 인용 복사 · 메모장 메뉴가 나타납니다.`, { noActs: true });
     if (G.layout === 'sheet') setSheet(0);
   } catch (e) { alert('PDF 로드 오류: ' + e.message); }
 }
