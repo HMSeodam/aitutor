@@ -99,11 +99,21 @@ body{font-family:'Apple SD Gothic Neo','Noto Sans KR',system-ui,sans-serif;color
 #selPop{
   position:fixed;z-index:700;background:#18181b;border-radius:12px;
   padding:10px 12px;display:none;flex-direction:column;gap:7px;
-  box-shadow:var(--shl);width:230px;pointer-events:auto;
+  box-shadow:var(--shl);width:260px;pointer-events:auto;
 }
 .sp-l{font-size:11px;color:#71717a;font-weight:600;}
 .sp-p{font-size:12px;color:#d4d4d8;max-height:52px;overflow:hidden;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;line-height:1.5;}
 .sp-bs{display:flex;gap:6px;}
+.sp-h{display:flex;align-items:center;justify-content:space-between;margin:-2px -4px -2px 0;}
+#spMeta{font-weight:400;color:#a1a1aa;margin-left:4px;}
+.sp-x{width:26px;height:26px;border:0;border-radius:7px;background:transparent;color:#a1a1aa;display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0;}
+.sp-x svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;}
+@media(hover:hover) and (pointer:fine){.sp-x:hover{background:rgba(255,255,255,.1);color:#fff;}}
+.sp-g{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px;}
+.spa{height:52px;border:0;border-radius:9px;background:rgba(255,255,255,.06);color:#e4e4e7;font-size:11.5px;font-family:inherit;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;padding:0;white-space:nowrap;}
+.spa svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
+.spa.pri{background:#2563eb;color:#fff;font-weight:600;}
+@media(hover:hover) and (pointer:fine){.spa:hover{background:rgba(255,255,255,.14);}.spa.pri:hover{background:#1d4ed8;}}
 .spb{flex:1;padding:7px;border:none;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;}
 .spb.ask{background:#2563eb;color:#fff;}@media(hover:hover) and (pointer:fine){.spb.ask:hover{background:#1d4ed8;}}
 .spb.cl{background:rgba(255,255,255,.08);color:#a1a1aa;}@media(hover:hover) and (pointer:fine){.spb.cl:hover{background:rgba(255,255,255,.14);}}
@@ -632,12 +642,19 @@ body.sheet-up #toast.on{transform:translate(-50%,0);}
 </div>
 
 <!-- 선택 팝업 -->
-<div id="selPop">
-  <div class="sp-l">선택된 텍스트</div>
+<div id="selPop" onmousedown="event.preventDefault()">
+  <div class="sp-h">
+    <div class="sp-l">선택된 텍스트 <span id="spMeta"></span></div>
+    <button class="sp-x" id="clsBtn" title="닫기 (Esc)" aria-label="닫기"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+  </div>
   <div class="sp-p" id="spPv"></div>
-  <div class="sp-bs">
-    <button class="spb ask" id="askBtn">이 부분 질문하기</button>
-    <button class="spb cl"  id="clsBtn">닫기</button>
+  <div class="sp-g">
+    <button class="spa pri" onclick="popAct('ask')" title="입력창에 인용해 두고 직접 질문"><svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>질문</button>
+    <button class="spa" onclick="popAct('tr')" title="한국어로 직역"><svg viewBox="0 0 24 24"><path d="M5 8l6 6"/><path d="M4 14l6-6 2-3"/><path d="M2 5h12"/><path d="M7 2h1"/><path d="M22 22l-5-10-5 10"/><path d="M14 18h6"/></svg>번역</button>
+    <button class="spa" onclick="popAct('ex')" title="자세히 풀이"><svg viewBox="0 0 24 24"><path d="M2 4h6a4 4 0 014 4v13a3 3 0 00-3-3H2z"/><path d="M22 4h-6a4 4 0 00-4 4v13a3 3 0 013-3h7z"/></svg>풀이</button>
+    <button class="spa" onclick="popAct('hl')" title="선택한 글에 형광펜"><svg viewBox="0 0 24 24"><path d="M15 3l6 6-9 9H6v-6z"/><line x1="3" y1="21" x2="21" y2="21" stroke="#ffe600" stroke-width="3"/></svg>형광펜</button>
+    <button class="spa" onclick="popAct('cp')" title="출처(파일명·쪽)를 붙여 복사"><svg viewBox="0 0 24 24"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>인용 복사</button>
+    <button class="spa" onclick="popAct('memo')" title="메모장에 붙이기"><svg viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 013 3L7 19l-4 1 1-4z"/></svg>메모장</button>
   </div>
 </div>
 
@@ -1048,7 +1065,6 @@ let popupJustClosed = false;
 
   document.getElementById('fcSmall').addEventListener('click', () => adjFont(-1));
   document.getElementById('fcLarge').addEventListener('click', () => adjFont(1));
-  document.getElementById('askBtn').addEventListener('click', e => { e.stopPropagation(); askSel(); });
   document.getElementById('clsBtn').addEventListener('click', e => {
     e.stopPropagation();
     popupJustClosed = true;
@@ -1491,6 +1507,7 @@ function chkSel(cx, cy) {
   const tl = document.getElementById('tlayer');
   if (!tl || !sel.anchorNode || !tl.contains(sel.anchorNode)) return;
   G.selTxt = txt; G.selPg = G.pg;
+  selSnap = { text: txt, range: sel.getRangeAt(0).cloneRange(), pg: G.pg };
   document.getElementById('scS').disabled = false; syncScSel();
   showP(cx, cy, txt);
 }
@@ -1532,7 +1549,11 @@ async function selAct(kind) {
   if (kind === 'ask' || kind === 'tr' || kind === 'ex') {
     setQuote(s.text, s.pg);
     dismissSel();
-    if (kind === 'ask') { openChat(1); return; }
+    if (kind === 'ask') {
+      openChat(1);
+      if (!isTouch()) document.getElementById('ci').focus();   // PC: 바로 질문을 입력할 수 있게
+      return;
+    }
     const ci = document.getElementById('ci');
     ci.value = kind === 'tr' ? '이 구절을 한국어로 직역해 줘.' : '이 구절을 자세히 풀이해 줘.';
     grow(ci);
@@ -1614,14 +1635,26 @@ function toast(msg, ms) {
 function showP(cx, cy, txt) {
   const p = document.getElementById('selPop');
   document.getElementById('spPv').textContent = txt.length > 100 ? txt.slice(0, 100) + '…' : txt;
+  document.getElementById('spMeta').textContent = `· ${G.pg}쪽 · ${txt.replace(/\s/g, '').length}자`;
   p.style.display = 'flex';
   const vw = window.innerWidth, vh = window.innerHeight;
+  const pw = p.offsetWidth, ph = p.offsetHeight;
   let l = cx + 12, t = cy + 12;
-  if (l + 240 > vw - 8) l = cx - 240 - 8;
-  if (t + 130 > vh - 8) t = cy - 130 - 8;
+  if (l + pw > vw - 8) l = cx - pw - 8;
+  if (t + ph > vh - 8) t = cy - ph - 8;
   p.style.left = Math.max(8, l) + 'px'; p.style.top = Math.max(8, t) + 'px';
 }
 function hideP() { document.getElementById('selPop').style.display = 'none'; }
+// PC 팝업 버튼 — 휴대폰 작업 막대와 같은 동작
+function popAct(kind) {
+  popupJustClosed = true;
+  hideP();
+  setTimeout(() => { popupJustClosed = false; }, 300);
+  selAct(kind);
+}
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape' && document.getElementById('selPop').style.display === 'flex') { hideP(); }
+});
 
 function clrSel() {
   if (G.quote) {            // 인용해 둔 구절이 있으면 쪽을 넘겨도 질문 범위는 유지
