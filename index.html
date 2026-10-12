@@ -456,7 +456,7 @@ html.lay-sheet #pdfTb{justify-content:center;flex-wrap:nowrap;gap:4px;padding:4p
 html.lay-sheet .pb .ptx{display:none;}
 html.lay-sheet .pb{padding:0;}
 html.lay-sheet #pdfP{background:#2b2a29;}
-html.lay-sheet #pdfSc{padding:8px 8px calc(var(--peek-h,96px) + 96px);}
+html.lay-sheet #pdfSc{padding:8px 8px calc(84px + env(safe-area-inset-bottom));}
 html.lay-sheet #pdfV{box-shadow:0 2px 14px rgba(0,0,0,.4);}
 
 /* ── 휴대폰: 3단계 하단 시트 (접힘 · 절반 · 전체) ── */
@@ -496,26 +496,51 @@ html.lay-sheet #chatP.peek .cin{border-top:0;}
 html.lay-sheet body.has-pdf #annTb{display:none !important;}
 html.lay-sheet body.has-pdf #annPill{display:flex;}
 #annPill{
-  position:fixed;left:50%;bottom:calc(var(--peek-h,96px) + 14px);z-index:85;
+  position:fixed;left:50%;bottom:calc(80px + env(safe-area-inset-bottom));z-index:85;
   transform:translateX(-50%);align-items:center;gap:1px;
   background:rgba(28,25,23,.95);border-radius:30px;padding:5px;
   box-shadow:0 8px 28px rgba(0,0,0,.35);
   transition:transform .3s cubic-bezier(.2,.8,.2,1),opacity .2s;
 }
 body.sheet-up #annPill,body.selbar-on #annPill{transform:translate(-50%,180%);opacity:0;pointer-events:none;}
-.pl{width:46px;height:46px;border-radius:23px;border:0;background:transparent;color:#e7e5e4;display:flex;align-items:center;justify-content:center;padding:0;cursor:pointer;}
+
+/* ── 평소엔 접어 두기: 오른쪽 아래 작은 버튼 두 개 (AI · 필기 도구) ── */
+#toolFab,#aiFab,#annTog{display:none;}
+.fab2{position:fixed;right:14px;z-index:84;border:0;border-radius:50%;align-items:center;justify-content:center;
+  padding:0;cursor:pointer;box-shadow:0 6px 20px rgba(0,0,0,.3);
+  transition:transform .25s cubic-bezier(.2,.8,.2,1),opacity .2s;}
+.fab2 svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
+#aiFab{bottom:calc(16px + env(safe-area-inset-bottom));width:52px;height:52px;background:var(--bl);color:#fff;}
+#toolFab{bottom:calc(80px + env(safe-area-inset-bottom));width:46px;height:46px;background:rgba(28,25,23,.9);color:#e7e5e4;}
+#toolFab.on{background:#f5f5f4;color:#1c1917;box-shadow:0 0 0 2px var(--bl),0 6px 20px rgba(0,0,0,.3);}  /* 펜·형광펜 등을 쓰는 중 */
+.fbdg{position:absolute;top:-2px;right:-2px;min-width:18px;height:18px;border-radius:9px;background:#ef4444;color:#fff;font-size:11px;font-weight:700;display:none;align-items:center;justify-content:center;border:2px solid #fff;padding:0 3px;}
+html.lay-sheet #aiFab{display:flex;}
+html.lay-sheet body.has-pdf #toolFab{display:flex;}
+html.lay-sheet body.pill-open #toolFab{display:none;}
+html.lay-sheet body.has-pdf #annPill{display:none;}
+html.lay-sheet body.has-pdf.pill-open #annPill{display:flex;}
+body.sheet-up .fab2,body.selbar-on .fab2{transform:scale(.5);opacity:0;pointer-events:none;}
+/* 접힌 시트는 화면 밖으로 완전히 내려 둡니다 */
+html.lay-sheet #chatP.hid{transform:translateY(calc(100% + 24px));box-shadow:none;}
+html.lay-sheet #chatP{transition:height .36s cubic-bezier(.2,.8,.2,1),transform .32s cubic-bezier(.2,.8,.2,1);}
+/* 태블릿: 필기 도구 줄은 펜 버튼으로 펼치고 접기 */
+html.touch:not(.lay-sheet) body.has-pdf #annTog{display:flex;}
+html.touch:not(.lay-sheet) body.has-pdf:not(.ann-open) #annTb{display:none !important;}
+#annTog.on{background:var(--bl);color:#fff;}
+.pl{width:42px;height:42px;border-radius:21px;border:0;background:transparent;color:#e7e5e4;display:flex;align-items:center;justify-content:center;padding:0;cursor:pointer;}
 .pl svg{width:21px;height:21px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
 .pl.on{background:#f5f5f4;color:#1c1917;}
 .pl:disabled{opacity:.3;}
 .pl .dot2{width:22px;height:22px;border-radius:50%;box-shadow:0 0 0 2px #1c1917,0 0 0 3.5px rgba(255,255,255,.7);}
 .plsep{width:1px;height:24px;background:rgba(255,255,255,.16);margin:0 3px;}
+@media(max-width:380px){.pl{width:38px;height:38px;}.pl svg{width:19px;height:19px;}}   /* 폭 360px 휴대폰 */
 #annPanel{
-  position:fixed;left:12px;right:12px;bottom:calc(var(--peek-h,96px) + 84px);z-index:86;
+  position:fixed;left:12px;right:12px;bottom:calc(146px + env(safe-area-inset-bottom));z-index:86;
   max-width:420px;margin:0 auto;background:#1c1917;color:#e7e5e4;border-radius:22px;
   padding:14px;box-shadow:0 10px 30px rgba(0,0,0,.4);flex-direction:column;gap:12px;
 }
 html.lay-sheet #annPanel.on{display:flex;}
-#annPanel{max-height:calc(100% - var(--peek-h,96px) - 150px);overflow-y:auto;}
+#annPanel{max-height:calc(100% - 210px);overflow-y:auto;}
 body.sheet-up #annPanel,body.selbar-on #annPanel{display:none !important;}
 .apr{display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
 .apl{font-size:12.5px;color:#a8a29e;width:34px;flex-shrink:0;}
@@ -597,7 +622,7 @@ html.touch .act svg{width:17px;height:17px;}
 
 /* ── 알림 토스트 ── */
 #toast{
-  position:fixed;left:50%;bottom:calc(var(--peek-h,0px) + 28px + env(safe-area-inset-bottom));z-index:1200;
+  position:fixed;left:50%;bottom:calc(84px + env(safe-area-inset-bottom));z-index:1200;
   transform:translate(-50%,16px);opacity:0;pointer-events:none;
   background:#1c1917;color:#fafaf9;font-size:13.5px;padding:10px 16px;border-radius:999px;
   box-shadow:0 6px 18px rgba(0,0,0,.25);transition:opacity .2s,transform .2s;
@@ -695,6 +720,7 @@ body.sheet-up #toast.on{transform:translate(-50%,0);}
       <button class="pb" onclick="doZ(-0.2)" aria-label="축소"><svg viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/></svg></button>
       <span class="zmi" id="zmL">120%</span>
       <button class="pb" onclick="doZ(0.2)" aria-label="확대"><svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></button>
+      <button class="pb" id="annTog" onclick="togAnnTb()" aria-label="필기 도구 보이기·숨기기" title="필기 도구"><svg viewBox="0 0 24 24"><path d="M17 3a2.83 2.83 0 114 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg></button>
       <button class="pb" id="fitBtn" onclick="fitWidth()" aria-label="폭 맞춤" title="폭 맞춤"><svg viewBox="0 0 24 24"><polyline points="7 8 3 12 7 16"/><polyline points="17 8 21 12 17 16"/><line x1="3" y1="12" x2="21" y2="12"/></svg></button>
       <div class="tsep"></div>
       <span class="htxt">텍스트를 드래그하여 선택 → AI 질문</span>
@@ -747,7 +773,7 @@ body.sheet-up #toast.on{transform:translate(-50%,0);}
 
     <!-- ══ 휴대폰용 필기 도구 알약 + 색·굵기 패널 ══ -->
     <div id="annPill" role="toolbar" aria-label="필기 도구">
-      <button class="pl on" data-tool="cursor" onclick="setTool('cursor')" aria-label="읽기·선택"><svg viewBox="0 0 24 24"><path d="M5 3l6 15 2.2-6.3L19.5 9.5z"/></svg></button>
+      <button class="pl on" data-tool="cursor" onclick="setTool('cursor'); collapsePill()" aria-label="읽기·선택 (도구 접기)"><svg viewBox="0 0 24 24"><path d="M5 3l6 15 2.2-6.3L19.5 9.5z"/></svg></button>
       <button class="pl" data-tool="pen" onclick="pillTool('pen')" aria-label="펜"><svg viewBox="0 0 24 24"><path d="M17 3a2.83 2.83 0 114 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg></button>
       <button class="pl" data-tool="hl" onclick="pillTool('hl')" aria-label="형광펜"><svg viewBox="0 0 24 24"><path d="M15 3l6 6-9 9H6v-6z"/><line x1="3" y1="21" x2="21" y2="21"/></svg></button>
       <button class="pl" data-tool="eraser" onclick="setTool('eraser')" aria-label="지우개"><svg viewBox="0 0 24 24"><path d="M20 20H8.5L3 14.5a1.5 1.5 0 010-2.1L13 2.4a1.5 1.5 0 012.1 0l6.5 6.5a1.5 1.5 0 010 2.1L11.5 20"/></svg></button>
@@ -755,7 +781,10 @@ body.sheet-up #toast.on{transform:translate(-50%,0);}
       <span class="plsep"></span>
       <button class="pl" data-undo onclick="annUndo()" aria-label="되돌리기" disabled><svg viewBox="0 0 24 24"><polyline points="9 14 4 9 9 4"/><path d="M20 20v-7a4 4 0 00-4-4H4"/></svg></button>
       <button class="pl" id="pMore" onclick="togAnnPanel()" aria-label="색·굵기·옵션"><span class="dot2" id="pDot"></span></button>
+      <button class="pl" onclick="collapsePill()" aria-label="도구 접기"><svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg></button>
     </div>
+    <!-- 접어 둔 상태: 오른쪽 아래 작은 버튼 -->
+    <button id="toolFab" class="fab2" onclick="expandPill()" aria-label="필기 도구 열기"><svg viewBox="0 0 24 24"><path d="M17 3a2.83 2.83 0 114 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg></button>
     <div id="annPanel" role="dialog" aria-label="필기 색과 굵기">
       <div class="apr"><span class="apl">색</span><div class="apr" id="pSwRow" style="gap:2px"></div></div>
       <div class="apr"><span class="apl">굵기</span><div class="apr" id="pWRow" style="gap:6px"></div></div>
@@ -978,6 +1007,7 @@ body.sheet-up #toast.on{transform:translate(-50%,0);}
 </div>
 
 <div id="toast" role="status" aria-live="polite"></div>
+<button id="aiFab" class="fab2" onclick="openChat(1)" aria-label="AI 질문 열기"><svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg><span class="fbdg" id="fabBdg"></span></button>
 
 <input type="file" id="fi" accept=".pdf" style="display:none;" onchange="loadPDF(this)">
 
@@ -2041,7 +2071,33 @@ function noteUnread() {
   const visible = G.layout === 'split' || (G.layout === 'sheet' && G.sheet > 0) || (G.layout === 'overlay' && G.chatOpen);
   if (visible) return;
   G.unread++;
-  const b = document.getElementById('bdg'); b.textContent = G.unread; b.style.display = 'flex';
+  ['bdg', 'fabBdg'].forEach(id => { const b = document.getElementById(id); b.textContent = G.unread; b.style.display = 'flex'; });
+}
+function clearUnread() {
+  G.unread = 0;
+  ['bdg', 'fabBdg'].forEach(id => document.getElementById(id).style.display = 'none');
+}
+
+/* ── 필기 도구 펼치기·접기 ── */
+function expandPill() { document.body.classList.add('pill-open'); }
+function collapsePill() { document.body.classList.remove('pill-open'); closeAnnPanel(); }
+function togAnnTb() {                 // 태블릿: 필기 도구 줄 보이기·숨기기
+  document.body.classList.toggle('ann-open');
+  syncToolBtns();
+}
+// 접어 둔 버튼에 지금 쓰는 도구를 표시 (펜·형광펜·지우개면 강조)
+const TOOL_ICO = {
+  cursor: '<path d="M17 3a2.83 2.83 0 114 4L7.5 20.5 2 22l1.5-5.5L17 3z"/>',
+  pen:    '<path d="M17 3a2.83 2.83 0 114 4L7.5 20.5 2 22l1.5-5.5L17 3z"/>',
+  hl:     '<path d="M15 3l6 6-9 9H6v-6z"/><line x1="3" y1="21" x2="21" y2="21"/>',
+  eraser: '<path d="M20 20H8.5L3 14.5a1.5 1.5 0 010-2.1L13 2.4a1.5 1.5 0 012.1 0l6.5 6.5a1.5 1.5 0 010 2.1L11.5 20"/>',
+};
+function syncToolBtns() {
+  const drawing = G.tool !== 'cursor';
+  const f = document.getElementById('toolFab');
+  f.classList.toggle('on', drawing);
+  f.querySelector('svg').innerHTML = TOOL_ICO[G.tool] || TOOL_ICO.pen;
+  document.getElementById('annTog').classList.toggle('on', drawing || document.body.classList.contains('ann-open'));
 }
 function addCtx(t) {
   const d = mk('div msg ai');
@@ -2189,6 +2245,7 @@ function setTool(t) {
   document.getElementById(map[t]).classList.add('on');
   document.querySelectorAll('#annPill [data-tool]').forEach(b => b.classList.toggle('on', b.dataset.tool === t));
   if (t !== 'cursor') dismissSel();
+  syncToolBtns();
 
   const cv = annEl(), viewer = document.getElementById('pdfV');
   const drawMode = (t !== 'cursor');
@@ -3356,19 +3413,19 @@ function checkMob() {
 
   const cp = document.getElementById('chatP');
   if (lay === 'split') {
-    cp.classList.remove('open', 'peek', 'dragging');
+    cp.classList.remove('open', 'peek', 'dragging', 'hid');
     cp.style.height = ''; cp.style.bottom = ''; cp.style.transform = '';
     cp.style.width = G.splitW ? G.splitW + 'px' : '';
     document.body.classList.remove('sheet-up');
     G.chatOpen = true;
-    G.unread = 0; document.getElementById('bdg').style.display = 'none';
+    clearUnread();
   } else if (lay === 'sheet') {
     cp.style.width = ''; cp.style.transform = '';
     cp.classList.remove('open');
     setSheet(prev === 'sheet' ? G.sheet : 0);
   } else {   // overlay
     cp.style.width = ''; cp.style.height = ''; cp.style.transform = '';
-    cp.classList.remove('peek');
+    cp.classList.remove('peek', 'hid');
     document.body.classList.remove('sheet-up');
     if (prev !== 'overlay') { G.chatOpen = false; cp.classList.remove('open'); }
     document.getElementById('aiBtn').classList.toggle('on', G.chatOpen);
@@ -3400,16 +3457,27 @@ function sheetHeights() {
 function setSheet(d) {
   if (G.layout !== 'sheet') return;
   const cp = document.getElementById('chatP');
+  const wasHidden = cp.classList.contains('hid');
   G.sheet = d;
-  cp.classList.toggle('peek', d === 0);       // 먼저 클래스를 바꿔야 접힘 높이를 잴 수 있음
   G.chatOpen = d > 0;
   document.body.classList.toggle('sheet-up', d > 0);
-  const hs = sheetHeights();
-  cp.style.height = hs[d] + 'px';
-  document.documentElement.style.setProperty('--peek-h', hs[0] + 'px');
+  if (d === 0) {                       // 0단계: 화면 밖으로 내리고 오른쪽 아래 AI 버튼만 남김
+    cp.classList.add('hid');
+  } else {
+    const hs = sheetHeights();
+    if (wasHidden) {                   // 숨김에서 열 때는 높이를 먼저 맞춘 뒤 아래에서 밀어 올림
+      cp.classList.add('dragging');
+      cp.style.height = hs[d] + 'px';
+      void cp.offsetHeight;
+      cp.classList.remove('dragging');
+    } else {
+      cp.style.height = hs[d] + 'px';
+    }
+    cp.classList.remove('hid');
+  }
   if (d > 0) {
-    closeAnnPanel();
-    G.unread = 0; document.getElementById('bdg').style.display = 'none';
+    closeAnnPanel(); collapsePill();
+    clearUnread();
   } else {
     const ci = document.getElementById('ci');
     if (document.activeElement === ci) ci.blur();
@@ -3420,8 +3488,7 @@ function openChat(d) {
   if (G.layout === 'sheet') { setSheet(d == null ? 1 : d); return; }
   if (G.layout === 'overlay') {
     document.getElementById('chatP').classList.add('open');
-    G.chatOpen = true; G.unread = 0;
-    document.getElementById('bdg').style.display = 'none';
+    G.chatOpen = true; clearUnread();
     document.getElementById('aiBtn').classList.add('on');
   }
 }
