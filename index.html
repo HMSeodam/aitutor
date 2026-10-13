@@ -490,6 +490,18 @@ html.lay-sheet #msgs{order:1;position:relative;}
 html.lay-sheet #chpRow{order:2;flex-wrap:nowrap;overflow-x:auto;border-bottom:0;border-top:1px solid var(--ln);padding:8px 12px;scrollbar-width:none;}
 html.lay-sheet #chpRow::-webkit-scrollbar{display:none;}
 html.lay-sheet .chip{flex-shrink:0;}
+.chip .cs{display:none;}
+/* 휴대폰: 빠른 질문 네 개를 짧은 이름으로 한 줄에 고르게 (옆으로 밀어야 보이던 문제) */
+html.lay-sheet #chpRow{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;overflow:visible;}
+html.lay-sheet #chpRow .chip{padding:0 4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;}
+html.lay-sheet .chip .cl{display:none;}
+html.lay-sheet .chip .cs{display:inline;}
+/* 휴대폰: 아래 줄(웹 검색 · 범위 · 모델)이 화면 폭 안에 들어가게 — 모델 이름이 길어도 칸 안에서 줄임 */
+html.lay-sheet .cin-opts{min-width:0;}
+html.lay-sheet .cin-opts > *{min-width:0;}
+html.lay-sheet .web-toggle{flex-shrink:0;}
+html.lay-sheet #scSel{flex:0 1 auto;max-width:34%;}
+html.lay-sheet #modelSel{flex:0 1 auto;max-width:40%;text-overflow:ellipsis;}
 html.lay-sheet .cin{order:3;padding:6px 12px 12px;}
 html.lay-sheet .bbl,html.lay-sheet .ctxb,html.lay-sheet .errb,html.lay-sheet .wrnb,html.lay-sheet .cont-btn{max-width:92%;}
 html.lay-sheet .chs{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%;}
@@ -930,10 +942,10 @@ html.touch .fr .fs{font-size:14px;}
     </div>
 
     <div class="chips" id="chpRow" style="display:none;">
-      <button class="chip" onclick="qk(this)">핵심 내용 요약</button>
-      <button class="chip" onclick="qk(this)">중요 개념 설명</button>
-      <button class="chip" onclick="qk(this)">어려운 용어 풀이</button>
-      <button class="chip" onclick="qk(this)">예상 시험 문제</button>
+      <button class="chip" data-q="핵심 내용 요약" onclick="qk(this)"><span class="cl">핵심 내용 요약</span><span class="cs">핵심 요약</span></button>
+      <button class="chip" data-q="중요 개념 설명" onclick="qk(this)"><span class="cl">중요 개념 설명</span><span class="cs">개념 설명</span></button>
+      <button class="chip" data-q="어려운 용어 풀이" onclick="qk(this)"><span class="cl">어려운 용어 풀이</span><span class="cs">용어 풀이</span></button>
+      <button class="chip" data-q="예상 시험 문제" onclick="qk(this)"><span class="cl">예상 시험 문제</span><span class="cs">시험 문제</span></button>
     </div>
 
     <div id="msgs">
@@ -1432,7 +1444,7 @@ async function loadPDF(inp) {
     bgEx();  // 백그라운드 텍스트 추출
     document.getElementById('plbl').textContent     = f.name;
     document.getElementById('scRow').style.display  = 'flex';
-    document.getElementById('chpRow').style.display = 'flex';
+    document.getElementById('chpRow').style.display = '';
     document.getElementById('chs').textContent      = `📄 ${f.name} · ${G.tot}페이지`;
     document.getElementById('ci').disabled   = false;
     document.getElementById('sb').disabled   = false;
@@ -2256,15 +2268,17 @@ function clearQuote(resetScope) {
   renderChips();
   if (G.layout === 'sheet') setSheet(G.sheet);
 }
-const CHIPS_DEFAULT = ['핵심 내용 요약', '중요 개념 설명', '어려운 용어 풀이', '예상 시험 문제'];
-const CHIPS_QUOTE   = ['자세히 풀이해 줘', '한국어로 직역해 줘', '핵심 용어 정리', '교재 속 관련 구절 찾아 줘'];
+// [보내는 질문, 휴대폰에서 보이는 짧은 이름] — 휴대폰은 네 개가 한 줄에 다 보이도록 짧게
+const CHIPS_DEFAULT = [['핵심 내용 요약', '핵심 요약'], ['중요 개념 설명', '개념 설명'], ['어려운 용어 풀이', '용어 풀이'], ['예상 시험 문제', '시험 문제']];
+const CHIPS_QUOTE   = [['자세히 풀이해 줘', '자세히 풀이'], ['한국어로 직역해 줘', '직역'], ['핵심 용어 정리', '용어 정리'], ['교재 속 관련 구절 찾아 줘', '관련 구절']];
 function renderChips() {
   const row = document.getElementById('chpRow');
   const list = G.quote ? CHIPS_QUOTE : CHIPS_DEFAULT;
   row.innerHTML = '';
-  list.forEach(t => {
+  list.forEach(([q, short]) => {
     const b = document.createElement('button');
-    b.className = 'chip'; b.textContent = t;
+    b.className = 'chip'; b.dataset.q = q; b.title = q;
+    b.innerHTML = `<span class="cl">${q}</span><span class="cs">${short}</span>`;
     b.onclick = () => qk(b);
     row.appendChild(b);
   });
@@ -2367,7 +2381,7 @@ function grow(el) { el.style.height = 'auto'; el.style.height = Math.min(el.scro
 function qk(btn) {
   if (!G.selTxt) setSc('all');
   const ci = document.getElementById('ci');
-  ci.value = btn.textContent; grow(ci);
+  ci.value = btn.dataset.q || btn.textContent; grow(ci);
   doSend();
 }
 
