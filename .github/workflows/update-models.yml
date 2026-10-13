@@ -1,0 +1,46 @@
+# Gemini 모델 목록 자동 점검 (매주 월요일 오전 9시 17분, 한국 시간)
+# - 새 안정판 모델은 추가하고, 종료됐거나 종료가 가까운 모델·자동 전달되는 옛 이름은 뺍니다.
+# - 결과는 models.json에 커밋되고, 앱은 열릴 때 이 파일을 읽어 모델 목록을 만듭니다.
+# 준비: 저장소 Settings → Secrets and variables → Actions → New repository secret
+#       이름 GEMINI_API_KEY, 값은 무료 Gemini API 키
+# 손으로 돌리기: Actions 탭 → "Gemini 모델 목록 점검" → Run workflow
+
+name: Gemini 모델 목록 점검
+
+on:
+  schedule:
+    - cron: '17 0 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: update-models
+  cancel-in-progress: false
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: 모델 점검
+        id: chk
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        run: node .github/scripts/update-models.mjs models.json
+
+      - name: 바뀌었으면 커밋
+        if: steps.chk.outputs.changed == 'true'
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add models.json
+          git commit -F .models-commit-msg
+          git push
