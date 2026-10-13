@@ -405,6 +405,26 @@ html.touch #dv::before{content:'';position:absolute;left:50%;top:50%;width:4px;h
 .mbtn.sk{background:var(--bg);color:var(--ink2);border:1px solid var(--ln2);}@media(hover:hover) and (pointer:fine){.mbtn.sk:hover{background:var(--ln);}}
 
 /* FAB */
+/* 대화창 아래 조작부 글자 통일 — 빠른 질문 · 웹 검색 · 범위 · 모델 선택이 같은 크기·굵기 */
+.chip,.web-toggle,.model-sel,.sc{font-size:12px;font-weight:500;}
+html.touch .chip,html.touch .web-toggle,html.touch .model-sel,html.touch .sc{font-size:13px;font-weight:500;}
+.sc.on,html.touch .sc.on{font-weight:600;}   /* 고른 범위만 굵게 */
+/* 고전어 분석 버튼 (대화창 머리) */
+.anb{display:inline-flex;align-items:center;gap:5px;height:26px;padding:0 10px 0 3px;border:1px solid var(--ln2);border-radius:999px;
+  background:var(--bg);color:var(--ink2);font-size:12px;font-weight:500;line-height:1;font-family:inherit;cursor:pointer;white-space:nowrap;transition:all var(--tr);}
+/* 실담 阿字(𑖀): 모든 글자·소리의 근원인 「아」 — 한문·범어·팔리어·티베트어를 아우르는 표시. 글꼴 없이도 같은 모양이 되도록 도형으로 그림 */
+.anb-k{display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;color:var(--bl);
+  flex-shrink:0;}
+.anb-k svg{width:100%;height:100%;display:block;}
+.anb-ts{display:none;}
+@media(hover:hover) and (pointer:fine){.anb:hover{border-color:var(--blm);color:var(--bl);}}
+html.touch .anb{height:36px;padding:0 12px 0 5px;font-size:13px;}
+html.touch .anb-k{width:24px;height:24px;}
+
+html.lay-sheet .anb-tl{display:none;}            /* 휴대폰: 짧게 '고전어' */
+html.lay-sheet .anb-ts{display:inline;}
+html.lay-sheet .fcb{min-width:36px;}
+@media (max-width:350px){html.lay-sheet .anb-ts{display:none;} html.lay-sheet .anb{padding:0 5px;}}
 .bdg{position:absolute;top:-2px;right:-2px;width:18px;height:18px;border-radius:50%;background:#ef4444;color:#fff;font-size:11px;font-weight:700;display:none;align-items:center;justify-content:center;border:2px solid var(--sf);}
 
 /* ══════════════════════════════════════════════════════════
@@ -439,7 +459,7 @@ html.touch .fcb{min-width:40px;min-height:36px;}
 html.touch .sc{min-height:38px;font-size:13px;}
 html.touch .chip{min-height:36px;padding:0 14px;font-size:13px;}
 html.touch .web-toggle{min-height:36px;padding:0 12px;font-size:13px;}
-html.touch .model-sel{min-height:36px;font-size:16px;}
+html.touch .model-sel{min-height:36px;font-size:13px;}   /* 확대 방지는 viewport의 maximum-scale=1이 맡음 */
 html.touch #sb{width:44px;height:44px;border-radius:22px;}
 html.touch .wbb{width:40px;height:40px;}
 html.touch .wbsw{width:28px;height:28px;}
@@ -913,8 +933,8 @@ html.touch .fr .fs{font-size:14px;}
             <button class="fcb sm" id="fcSmall" title="글자 작게">A-</button>
             <button class="fcb lg" id="fcLarge" title="글자 크게">A+</button>
           </div>
-          <button class="ib" onclick="CL.edit(null,{})" title="고전어 구조 분석 (원문 직접 입력)" aria-label="고전어 구조 분석">
-            <svg viewBox="0 0 24 24"><rect x="3" y="4" width="7" height="7" rx="1.5"/><rect x="14" y="4" width="7" height="7" rx="1.5"/><rect x="3" y="15" width="7" height="5" rx="1.5"/><path d="M14 17.5h7M17.5 14v7"/></svg>
+          <button class="anb" id="anBtn" onclick="CL.edit(null,{})" title="고전어 구조 분석 — 한문·팔리어·산스크리트어·티베트어 원문을 넣어 분석 (경전 문장을 드래그해도 언어를 알아서 감지)" aria-label="고전어 구조 분석">
+            <span class="anb-k" aria-hidden="true"><svg viewBox="0 0 1000 1000"><circle cx="500" cy="500" r="455" fill="none" stroke="currentColor" stroke-width="80"/><path transform="translate(240,700) scale(0.7026,-0.7026)" d="M111 638Q111 652 123 659Q144 646 168 637Q186 666 221 666Q245 666 266 656Q287 645 315 645Q361 645 394 683L484 619L304 411Q369 404 435 368Q501 331 558 274V586Q558 622 566 642Q573 663 589 680L679 616Q661 596 654 576Q648 557 648 525V62Q648 8 622 -9L710 -88L687 -114L580 -18Q559 -16 540 -6Q521 4 496 27Q474 47 465 62Q456 78 456 88Q456 107 475 107Q483 107 492 104Q501 100 511 91L541 64Q550 68 554 78Q558 87 558 107V232Q522 265 476 286Q431 307 383 313Q410 288 424 258Q439 227 439 189Q439 138 415 95Q391 52 348 26Q306 0 249 0Q214 0 181 12Q148 25 111 54Q67 89 48 126Q30 164 30 197Q30 251 75 290L165 226Q142 202 132 180Q123 159 123 137Q123 76 189 76Q237 76 273 102Q309 129 329 169Q349 209 349 248Q349 289 331 310Q313 331 286 331Q249 331 216 299L126 363L251 507Q192 546 162 570Q132 595 122 610Q111 626 111 638Z" fill="currentColor"/></svg></span><span class="anb-tl">고전어 분석</span><span class="anb-ts">고전어</span>
           </button>
           <button class="ib" onclick="clearC()" title="대화 초기화">
             <svg viewBox="0 0 24 24"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 101.85-4.36L1 10"/></svg>
