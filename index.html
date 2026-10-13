@@ -414,6 +414,38 @@ html.touch .chip,html.touch .web-toggle,html.touch .model-sel,html.touch .sc{fon
 /* 실담 阿字 버튼 — 초기화 버튼처럼 테두리 없이, 크기는 A-(10px)와 A+(14px)의 중간 */
 .anb-k{display:block;width:14px;height:14px;color:var(--ink);}
 .anb-k svg{width:100%;height:100%;display:block;}
+/* 학습 기록 */
+#stRecent{width:100%;margin-top:6px;text-align:left;cursor:default;}
+#stRecent .str-h{font-size:12px;color:#9a9a9a;margin:0 0 6px 2px;font-weight:600;}
+#stRecent .str-i{display:block;width:100%;text-align:left;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:10px;
+  padding:9px 12px;margin-bottom:6px;color:#ddd;cursor:pointer;font-family:inherit;}
+@media(hover:hover) and (pointer:fine){#stRecent .str-i:hover{background:rgba(59,130,246,.12);border-color:rgba(59,130,246,.5);}}
+#stRecent .str-n{display:block;font-size:13.5px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+#stRecent .str-m{display:block;font-size:11.5px;color:#8a8a8a;margin-top:2px;}
+.stn .ctxb{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;}
+.stnew{border:1px solid var(--ln2);background:var(--sf);color:var(--ink2);border-radius:999px;padding:3px 10px;font-size:12px;font-family:inherit;cursor:pointer;}
+.stm{max-width:520px;max-height:86vh;overflow:auto;}
+.stm-h{display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;}
+.stm-h h2{margin:0;}
+.stm-s{font-size:12px;font-weight:700;color:var(--ink3);margin:16px 0 6px;}
+.stc-n{font-weight:700;font-size:14px;word-break:break-all;}
+.stc-m{font-size:12.5px;color:var(--ink2);margin:3px 0 10px;}
+.stc-e{font-size:13px;color:var(--ink3);}
+.stc-b{display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px;}
+.stc-c{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;color:var(--ink2);cursor:pointer;font-weight:500;margin:0;}
+.modal .stc-c{display:inline-flex;font-weight:500;margin:0;font-size:12.5px;}
+.modal .stc-c input{width:auto;margin:0;}
+.stk{margin-top:14px !important;}
+.stl-i{display:flex;align-items:center;gap:10px;padding:9px 0;border-top:1px solid var(--ln);}
+.stl-i.cur .stl-t b{color:var(--bl);}
+.stl-t{flex:1;min-width:0;}
+.stl-t b{display:block;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.stl-t span{display:block;font-size:11.5px;color:var(--ink3);margin-top:2px;}
+.stl-b{display:flex;gap:4px;flex-shrink:0;}
+.stl-b button{border:1px solid var(--ln2);background:var(--bg);color:var(--ink2);border-radius:7px;padding:4px 8px;font-size:12px;font-family:inherit;cursor:pointer;}
+.stl-b button.dl{color:#b91c1c;}
+.stu{font-size:11.5px;color:var(--ink3);margin-top:8px;}
+html.touch .stl-b button{min-height:34px;padding:0 10px;}
 .bdg{position:absolute;top:-2px;right:-2px;width:18px;height:18px;border-radius:50%;background:#ef4444;color:#fff;font-size:11px;font-weight:700;display:none;align-items:center;justify-content:center;border:2px solid var(--sf);}
 
 /* ══════════════════════════════════════════════════════════
@@ -781,6 +813,10 @@ html.touch .fr .fs{font-size:14px;}
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="20" y1="20" x2="16.2" y2="16.2"/></svg>
       <span class="hbt">검색</span>
     </button>
+    <button class="hb" id="stBtn" onclick="stPanel()" aria-label="학습 기록 — 자동 저장 · 내보내기 · 불러오기" title="학습 기록 — 자동 저장 · 내보내기 · 불러오기">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z"/></svg>
+      <span class="hbt">학습 기록</span>
+    </button>
     <button class="hb" onclick="document.getElementById('apiM').style.display='flex'" aria-label="API 키 설정">
       <svg class="hbi" width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="7.5" cy="15.5" r="4.5"/><path d="M10.7 12.3L20 3"/><path d="M16 7l3 3"/><path d="M14 9l2 2"/></svg>
       <span class="hbt">키 설정</span>
@@ -897,6 +933,7 @@ html.touch .fr .fs{font-size:14px;}
         <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
         <div class="dt">PDF 파일을 드래그하거나 클릭하여 업로드</div>
         <div class="ds">강의 교재 PDF를 올리면 AI가 내용을 분석합니다<br>텍스트를 드래그 선택 후 바로 질문 가능</div>
+        <div id="stRecent" hidden></div>
       </div>
       <div id="pdfV">
         <canvas id="pdfCv"></canvas>
@@ -1139,6 +1176,22 @@ html.touch .fr .fs{font-size:14px;}
 <button id="aiFab" class="fab2" onclick="openChat(1)" aria-label="AI 질문 열기"><svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg><span class="fbdg" id="fabBdg"></span></button>
 
 <input type="file" id="fi" accept=".pdf" style="display:none;" onchange="loadPDF(this)">
+<input type="file" id="stFi" style="display:none;" onchange="stImport(this)">
+<!-- ══ 학습 기록 창 ══ -->
+<div class="mbg" id="stM" style="display:none;" onclick="if(event.target===this)stClosePanel()">
+  <div class="modal stm" role="dialog" aria-label="학습 기록">
+    <div class="stm-h"><h2>학습 기록</h2><button class="anv-x" type="button" onclick="stClosePanel()" aria-label="닫기"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div>
+    <p>필기·형광펜, AI 대화, 고전어 분석, 보던 쪽이 PDF마다 <b>이 기기에 저절로 저장</b>되고, 같은 PDF를 다시 열면 이어집니다. 다른 기기에서 이어 하려면 학습 파일로 내보내 그 기기에서 불러오세요.</p>
+    <div class="stm-s">지금 문서</div>
+    <div id="stCur"></div>
+    <div class="stm-s">학습 파일 불러오기</div>
+    <div class="stc-b"><button class="mbtn sk" type="button" onclick="stPickImport()">학습 파일(.aitutor) 불러오기</button></div>
+    <div class="stm-s">이 기기에 저장된 학습</div>
+    <div id="stList"></div>
+    <label class="stc-c stk"><input type="checkbox" id="stKeep" onchange="stSetKeep(this.checked)"> PDF 원본도 저장 (다시 올리지 않고 바로 열기 · 최근 15개)</label>
+    <div class="stu" id="stUse"></div>
+  </div>
+</div>
 
 <script>
 pdfjsLib.GlobalWorkerOptions.workerSrc =
@@ -1426,15 +1479,353 @@ function adjFont(d) {
   });
 }
 
+/* ══════════ 학습 기록 — 자동 저장 · 이어하기 · 학습 파일 내보내기/불러오기 ══════════
+   · PDF마다(파일 이름이 아니라 PDF 고유 지문으로 구분) 필기·형광펜, AI 대화, 고전어 분석, 보던 쪽, 인용 구절을
+     이 기기의 브라우저 저장소(IndexedDB)에 저절로 저장합니다. 서버로는 아무것도 보내지 않습니다.
+   · 같은 PDF를 다시 열면 지난 학습을 이어서 불러옵니다. (처음부터 새로 시작할 수도 있음)
+   · PDF 원본도 함께 저장해 두면 다시 올리지 않고 '최근 학습'에서 바로 엽니다.
+   · 학습 파일(.aitutor)로 내보내 다른 기기에서 불러오면 그대로 이어집니다. */
+const ST = { db: null, fp: '', file: null, log: [], replaying: false, sig: '', saved: 0, created: 0, ok: true, persistAsked: false };
+const ST_LOG_MAX = 400;                        // 대화 기록은 최근 400개까지
+const ST_PDF_MAX = 150 * 1024 * 1024;          // 150MB 넘는 PDF는 원본 저장 안 함
+const ST_PDF_KEEP = 15;                        // PDF 원본은 최근 15개까지만 (오래된 것부터 지움, 학습 기록은 남음)
+function stKeepPdf() { try { return localStorage.getItem('stKeepPdf') !== '0'; } catch (_) { return true; } }
+
+function stOpen() {
+  if (ST.db) return Promise.resolve(ST.db);
+  return new Promise((res, rej) => {
+    let r;
+    try { r = indexedDB.open('aitutor-study', 1); } catch (e) { rej(e); return; }
+    r.onupgradeneeded = () => {
+      const db = r.result;
+      if (!db.objectStoreNames.contains('docs')) db.createObjectStore('docs', { keyPath: 'fp' });
+      if (!db.objectStoreNames.contains('pdfs')) db.createObjectStore('pdfs', { keyPath: 'fp' });
+    };
+    r.onsuccess = () => { ST.db = r.result; res(ST.db); };
+    r.onerror = () => rej(r.error);
+  });
+}
+async function stTx(store, mode, fn) {
+  const db = await stOpen();
+  return new Promise((res, rej) => {
+    const tx = db.transaction(store, mode);
+    const q = fn(tx.objectStore(store));
+    let out;
+    if (q) q.onsuccess = () => { out = q.result; };
+    tx.oncomplete = () => res(out);
+    tx.onerror = () => rej(tx.error); tx.onabort = () => rej(tx.error);
+  });
+}
+const stGet  = (s, k) => stTx(s, 'readonly', os => os.get(k));
+const stPut  = (s, v) => stTx(s, 'readwrite', os => os.put(v));
+const stDel  = (s, k) => stTx(s, 'readwrite', os => os.delete(k));
+const stAll  = s => stTx(s, 'readonly', os => os.getAll());
+const stKeys = s => stTx(s, 'readonly', os => os.getAllKeys());
+
+// 대화창에 무언가 나올 때마다 기록 (이어하기 때 그대로 다시 보이기 위해)
+function stLog(e) {
+  if (ST.replaying || !ST.fp) return;
+  e.time = e.time || ts();
+  ST.log.push(e);
+  if (ST.log.length > ST_LOG_MAX) ST.log.splice(0, ST.log.length - ST_LOG_MAX);
+}
+function stAnnCount(ann) {
+  let pages = 0, strokes = 0;
+  for (const k in ann || {}) { const n = (ann[k] || []).length; if (n) { pages++; strokes += n; } }
+  return { pages, strokes };
+}
+function stRecord() {
+  const a = stAnnCount(G.ann);
+  return {
+    fp: ST.fp, name: G.fn, pages: G.tot, size: ST.file ? ST.file.size : 0,
+    created: ST.created || Date.now(), updated: Date.now(),
+    lastPage: G.pg, log: ST.log, hist: G.hist, ann: G.ann,
+    quote: G.quote ? { text: G.quote.text, pg: G.quote.pg } : null,
+    annPages: a.pages, chats: ST.log.filter(e => e.t === 'u' || e.t === 'cl').length,
+  };
+}
+// 바뀐 것이 있는지 가볍게 확인하는 지문 (쪽 · 대화 수 · 필기 획/점 수 · 인용)
+function stSig() {
+  let a = 0, p = 0;
+  for (const k in G.ann) { const l = G.ann[k] || []; a += l.length; for (const s of l) p += s.pts ? s.pts.length : 0; }
+  return [ST.fp, G.pg, ST.log.length, G.hist.length, a, p, G.quote ? G.quote.pg + ':' + G.quote.text.length : ''].join('|');
+}
+async function stSave(force) {
+  if (!ST.fp || !ST.ok) return;
+  const sig = stSig();
+  if (!force && sig === ST.sig) return;
+  ST.sig = sig;
+  try {
+    await stPut('docs', stRecord());
+    ST.saved = Date.now();
+    stAskPersist(); stPanelStatus();
+  } catch (e) { console.warn('학습 기록 저장 실패', e); }
+}
+setInterval(() => stSave(false), 2500);
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') stSave(false); });
+window.addEventListener('pagehide', () => stSave(false));
+// 브라우저가 저장 공간이 모자랄 때 지우지 않도록 요청 (아이폰 사파리 대비)
+function stAskPersist() {
+  if (ST.persistAsked) return; ST.persistAsked = true;
+  try { navigator.storage && navigator.storage.persist && navigator.storage.persist(); } catch (_) {}
+}
+
+// PDF를 열 때: 지문 정하기
+function stBegin(f) {
+  const fpA = G.pdf.fingerprints && G.pdf.fingerprints[0];
+  ST.fp = fpA || ('n:' + f.name + ':' + f.size + ':' + G.tot);
+  ST.file = f; ST.log = []; ST.created = Date.now(); ST.sig = '';
+}
+// PDF를 연 뒤: 지난 학습이 있으면 이어서 불러오기
+async function stResume(f) {
+  let rec = null;
+  try { rec = await stGet('docs', ST.fp); ST.ok = true; }
+  catch (e) { ST.ok = false; console.warn('학습 기록을 쓸 수 없습니다', e); }
+  if (ST.ok && stKeepPdf()) stStorePdf(f);
+  if (rec && ((rec.log && rec.log.length) || rec.annPages || rec.lastPage > 1)) {
+    await stApply(rec);
+    stResumeNote(rec);
+  }
+  ST.sig = stSig();
+  stRenderRecent();
+}
+async function stApply(rec) {
+  ST.created = rec.created || Date.now();
+  ST.log = Array.isArray(rec.log) ? rec.log : [];
+  ST.replaying = true;
+  try {
+    for (const e of ST.log) {
+      try {
+        if (e.t === 'u') addUser(e.text, e.quote, e.time);
+        else if (e.t === 'ai') addAI(e.text, { time: e.time, label: e.model, noActs: e.noActs });
+        else if (e.t === 'ctx') addCtx(e.text);
+        else if (e.t === 'err') addErr(e.text);
+        else if (e.t === 'wrn') addWrn(e.html);
+        else if (e.t === 'cl') CL.restore(e);
+      } catch (_) {}
+    }
+  } finally { ST.replaying = false; }
+  G.hist = Array.isArray(rec.hist) ? rec.hist : [];
+  G.ann = rec.ann && typeof rec.ann === 'object' ? rec.ann : {};
+  G.uStack = {}; G.rStack = {};
+  if (rec.quote && rec.quote.text) setQuote(rec.quote.text, rec.quote.pg);
+  const pg = Math.min(Math.max(1, rec.lastPage | 0), G.tot);
+  if (pg !== G.pg) { G.pg = pg; await render(pg); } else { annRedraw(); }
+  updAnnBtns && updAnnBtns();
+}
+function stDate(t) {
+  const d = new Date(t), now = new Date();
+  const same = d.toDateString() === now.toDateString();
+  return same ? `오늘 ${d.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })}`
+              : d.toLocaleDateString('ko-KR', { month: 'long', day: 'numeric' });
+}
+function stSummary(rec) {
+  const parts = [`${rec.lastPage || 1}쪽까지`];
+  if (rec.chats) parts.push(`대화 ${rec.chats}개`);
+  if (rec.annPages) parts.push(`필기 ${rec.annPages}쪽`);
+  return parts.join(' · ');
+}
+// "지난 학습을 이어서 불러왔습니다" 안내 (대화 기록에는 남기지 않음)
+function stResumeNote(rec) {
+  const d = mk('div msg ai stn');
+  d.innerHTML = `<div class="ctxb">📚 지난 학습을 이어서 불러왔습니다 — ${esc(stDate(rec.updated))} · ${esc(stSummary(rec))}
+    <button class="stnew" type="button">처음부터 새로</button></div>`;
+  d.querySelector('.stnew').onclick = stRestart;
+  app(d);
+}
+async function stRestart() {
+  if (!confirm('이 PDF에 저장된 필기·대화·분석을 모두 지우고 처음부터 시작할까요?\n(지우기 전에 학습 기록 창에서 파일로 내보내 둘 수 있습니다)')) return;
+  try { await stDel('docs', ST.fp); } catch (_) {}
+  ST.log = []; ST.created = Date.now(); ST.saved = 0;
+  G.hist = []; G.ann = {}; G.uStack = {}; G.rStack = {};
+  clearQuote(true);
+  document.getElementById('msgs').innerHTML = '';
+  addAI(welcomeText(G.fn), { noActs: true, noLog: true });
+  G.pg = 1; await render(1);
+  ST.sig = stSig();
+  updAnnBtns && updAnnBtns();
+  toast('처음부터 새로 시작합니다');
+}
+// PDF 원본 저장 (다시 올리지 않고 바로 열기용)
+async function stStorePdf(f) {
+  if (!f || f.size > ST_PDF_MAX) return;
+  try {
+    const have = await stGet('pdfs', ST.fp);
+    if (!have) await stPut('pdfs', { fp: ST.fp, blob: f, name: f.name, size: f.size, saved: Date.now() });
+    // 오래된 원본 정리
+    const docs = (await stAll('docs')).sort((a, b) => b.updated - a.updated).map(d => d.fp);
+    const keys = await stKeys('pdfs');
+    const keep = new Set([ST.fp, ...docs.slice(0, ST_PDF_KEEP)]);
+    const extra = keys.filter(k => !keep.has(k));
+    // 학습 기록이 없는 원본(그냥 열어만 본 PDF)은 최근 것만 조금 남김
+    for (const k of extra.slice(0, Math.max(0, keys.length - ST_PDF_KEEP))) await stDel('pdfs', k);
+  } catch (e) { console.warn('PDF 원본 저장 실패', e); }
+}
+async function stOpenStored(fp) {
+  try {
+    const p = await stGet('pdfs', fp);
+    if (!p) { toast('저장된 PDF 원본이 없습니다. PDF 파일을 직접 열어 주세요'); document.getElementById('fi').click(); return; }
+    stClosePanel();
+    await loadPDFFile(new File([p.blob], p.name, { type: 'application/pdf' }));
+  } catch (e) { toast('PDF를 열지 못했습니다'); }
+}
+async function stDelete(fp, name) {
+  if (!confirm(`「${name}」의 학습 기록${fp === ST.fp ? '' : '과 저장된 PDF 원본'}을 이 기기에서 지울까요?`)) return;
+  try { await stDel('docs', fp); if (fp !== ST.fp) await stDel('pdfs', fp); } catch (_) {}
+  if (fp === ST.fp) { ST.log = []; ST.sig = ''; ST.created = Date.now(); ST.saved = 0; }
+  toast('지웠습니다'); stRenderRecent(); stPanelList();
+}
+
+/* ── 학습 파일 내보내기 / 불러오기 (.aitutor — 내용은 JSON) ── */
+function stBlobToB64(blob) {
+  return new Promise((res, rej) => {
+    const r = new FileReader();
+    r.onload = () => res(String(r.result).replace(/^data:[^,]*,/, ''));
+    r.onerror = () => rej(r.error);
+    r.readAsDataURL(blob);
+  });
+}
+async function stExport(fp, withPdf) {
+  try {
+    if (fp === ST.fp) await stSave(true);
+    const rec = fp === ST.fp ? stRecord() : await stGet('docs', fp);
+    if (!rec) { toast('저장된 학습 기록이 없습니다'); return; }
+    let pdfBlob = null, pdfName = rec.name;
+    if (withPdf) {
+      if (fp === ST.fp && ST.file) pdfBlob = ST.file;
+      else { const p = await stGet('pdfs', fp); if (p) { pdfBlob = p.blob; pdfName = p.name; } }
+      if (!pdfBlob) toast('PDF 원본이 저장되어 있지 않아 학습 기록만 내보냅니다');
+    }
+    const head = { format: 'aitutor-study', version: 1, exported: new Date().toISOString(), app: 'https://hmseodam.github.io/aitutor/' };
+    const parts = [JSON.stringify(head).slice(0, -1), ',"doc":', JSON.stringify(rec)];
+    if (pdfBlob) parts.push(',"pdf":{"name":', JSON.stringify(pdfName), ',"type":"application/pdf","data":"', await stBlobToB64(pdfBlob), '"}');
+    parts.push('}');
+    const blob = new Blob(parts, { type: 'application/json' });
+    const base = (rec.name || 'aitutor').replace(/\.pdf$/i, '');
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `${base}_학습기록.aitutor`;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+    toast(`학습 파일을 내보냈습니다 (${(blob.size / 1048576).toFixed(1)}MB)`);
+  } catch (e) { toast('내보내지 못했습니다: ' + (e.message || e)); }
+}
+function stPickImport() { document.getElementById('stFi').click(); }
+async function stImport(inp) {
+  const f = inp.files && inp.files[0]; inp.value = '';
+  if (!f) return;
+  let obj;
+  try { obj = JSON.parse(await f.text()); } catch (_) { toast('학습 파일을 읽지 못했습니다'); return; }
+  if (!obj || obj.format !== 'aitutor-study' || !obj.doc || !obj.doc.fp) { toast('aitutor 학습 파일이 아닙니다'); return; }
+  const rec = obj.doc;
+  try {
+    const old = await stGet('docs', rec.fp);
+    if (old && old.updated > rec.updated &&
+        !confirm(`이 기기에 더 최근(${stDate(old.updated)}) 학습 기록이 있습니다.\n불러온 기록(${stDate(rec.updated)})으로 바꿀까요?`)) return;
+    if (ST.fp === rec.fp) ST.fp = '';            // 지금 열린 같은 문서가 불러온 기록을 덮어쓰지 않게
+    await stPut('docs', rec);
+    let pdfFile = null;
+    if (obj.pdf && obj.pdf.data) {
+      const blob = await (await fetch('data:application/pdf;base64,' + obj.pdf.data)).blob();
+      pdfFile = new File([blob], obj.pdf.name || rec.name || 'document.pdf', { type: 'application/pdf' });
+      await stPut('pdfs', { fp: rec.fp, blob: pdfFile, name: pdfFile.name, size: pdfFile.size, saved: Date.now() });
+    } else if (!ST.fp && ST.file && G.pdf && (G.pdf.fingerprints || [])[0] === rec.fp) {
+      pdfFile = ST.file;                         // 지금 열린 PDF가 바로 그 문서
+    }
+    stClosePanel();
+    if (pdfFile) { await loadPDFFile(pdfFile); toast('학습 기록을 불러와 이어서 엽니다'); }
+    else { toast(`불러왔습니다. 「${rec.name}」 PDF를 열면 이어집니다`); stRenderRecent(); }
+  } catch (e) { toast('불러오지 못했습니다: ' + (e.message || e)); }
+}
+
+/* ── 화면: 첫 화면의 '최근 학습' · 머리줄의 '학습 기록' 창 ── */
+async function stRenderRecent() {
+  const box = document.getElementById('stRecent');
+  if (!box) return;
+  let docs = [], pdfKeys = [];
+  try { docs = (await stAll('docs')).sort((a, b) => b.updated - a.updated).slice(0, 6); pdfKeys = await stKeys('pdfs'); } catch (_) {}
+  if (!docs.length) { box.innerHTML = ''; box.hidden = true; return; }
+  box.hidden = false;
+  box.innerHTML = `<div class="str-h">최근 학습</div>` + docs.map(d => {
+    const has = pdfKeys.includes(d.fp);
+    return `<button class="str-i" data-fp="${esc(d.fp)}" data-has="${has ? 1 : 0}" type="button">
+      <span class="str-n">${esc(d.name || '이름 없음')}</span>
+      <span class="str-m">${esc(stDate(d.updated))} · ${esc(stSummary(d))}${has ? '' : ' · PDF 다시 열기 필요'}</span></button>`;
+  }).join('');
+  box.querySelectorAll('.str-i').forEach(b => b.onclick = e => {
+    e.stopPropagation();
+    if (b.dataset.has === '1') stOpenStored(b.dataset.fp);
+    else { toast('이 PDF 파일을 열면 지난 학습이 이어집니다'); document.getElementById('fi').click(); }
+  });
+}
+function stPanel() {
+  document.getElementById('stM').style.display = 'flex';
+  document.getElementById('stKeep').checked = stKeepPdf();
+  stPanelStatus(); stPanelList();
+}
+function stClosePanel() { document.getElementById('stM').style.display = 'none'; }
+function stPanelStatus() {
+  const el = document.getElementById('stCur'); if (!el || document.getElementById('stM').style.display !== 'flex') return;
+  if (!G.pdf || !ST.fp) { el.innerHTML = '<div class="stc-e">PDF를 열면 필기·대화·분석이 이 기기에 저절로 저장됩니다.</div>'; return; }
+  const r = stRecord();
+  el.innerHTML = `<div class="stc-n">${esc(G.fn)}</div>
+    <div class="stc-m">${ST.ok ? (ST.saved ? '자동 저장됨 · ' + esc(stDate(ST.saved)) : '자동 저장 중') : '이 브라우저에서는 저장할 수 없습니다 (사생활 보호 모드 등)'} · ${esc(stSummary(r))}</div>
+    <div class="stc-b"><button class="mbtn ok" type="button" onclick="stExport(ST.fp, document.getElementById('stWithPdf').checked)">학습 파일로 내보내기</button>
+    <label class="stc-c"><input type="checkbox" id="stWithPdf" checked> PDF 원본 포함</label></div>`;
+}
+async function stPanelList() {
+  const el = document.getElementById('stList'); if (!el) return;
+  let docs = [], pdfKeys = [];
+  try { docs = (await stAll('docs')).sort((a, b) => b.updated - a.updated); pdfKeys = await stKeys('pdfs'); } catch (_) {}
+  el.innerHTML = docs.length ? docs.map(d => {
+    const has = pdfKeys.includes(d.fp), cur = d.fp === ST.fp;
+    return `<div class="stl-i${cur ? ' cur' : ''}"><div class="stl-t"><b>${esc(d.name || '이름 없음')}</b>
+      <span>${esc(stDate(d.updated))} · ${esc(stSummary(d))}${has ? ' · PDF 저장됨' : ''}${cur ? ' · 지금 보는 중' : ''}</span></div>
+      <div class="stl-b">${cur ? '' : `<button type="button" data-a="open">${has ? '열기' : 'PDF 열기'}</button>`}
+      <button type="button" data-a="exp">내보내기</button><button type="button" data-a="del" class="dl">지우기</button></div></div>`;
+  }).join('') : '<div class="stc-e">아직 저장된 학습이 없습니다.</div>';
+  el.querySelectorAll('.stl-i').forEach((row, i) => {
+    const d = docs[i];
+    row.querySelectorAll('button').forEach(b => b.onclick = () => {
+      if (b.dataset.a === 'open') { if (pdfKeys.includes(d.fp)) stOpenStored(d.fp); else { stClosePanel(); toast(`「${d.name}」 PDF를 열면 이어집니다`); document.getElementById('fi').click(); } }
+      else if (b.dataset.a === 'exp') stExport(d.fp, true);
+      else if (b.dataset.a === 'del') stDelete(d.fp, d.name);
+    });
+  });
+  const u = document.getElementById('stUse');
+  try {
+    const est = navigator.storage && navigator.storage.estimate ? await navigator.storage.estimate() : null;
+    u.textContent = est ? `이 기기에서 쓰는 저장 공간: ${(est.usage / 1048576).toFixed(1)}MB` : '';
+  } catch (_) { u.textContent = ''; }
+}
+function stSetKeep(on) {
+  try { localStorage.setItem('stKeepPdf', on ? '1' : '0'); } catch (_) {}
+  if (on && ST.file && ST.fp) stStorePdf(ST.file);
+  toast(on ? 'PDF 원본도 저장합니다 — 최근 학습에서 바로 열 수 있습니다' : '앞으로는 PDF 원본을 저장하지 않습니다');
+}
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && document.getElementById('stM')?.style.display === 'flex') stClosePanel(); });
+setTimeout(stRenderRecent, 300);
+
 /* ── PDF 로드 ── */
 async function loadPDF(inp) {
   const f = inp.files[0]; if (!f) return;
+  inp.value = '';                                 // 같은 파일을 다시 골라도 열리게
+  return loadPDFFile(f);
+}
+function welcomeText(name) {
+  return isTouch()
+    ? `**${name}** 업로드 완료! 총 **${G.tot}페이지**입니다.\n\n글자를 **길게 눌러 선택**하면 아래에 질문 · 번역 · 풀이 · 형광펜 · 인용 복사 메뉴가 나타납니다.`
+    : `**${name}** 업로드 완료! 총 **${G.tot}페이지**입니다.\n\n텍스트를 마우스로 드래그하면 질문 · 번역 · 풀이 · 형광펜 · 인용 복사 · 메모장 메뉴가 나타납니다.`;
+}
+async function loadPDFFile(f) {
+  if (ST.fp) { await stSave(false); ST.fp = ''; }   // 앞 문서의 학습 기록을 마저 저장
   G.fn = f.name; G.txts = {}; G.hist = []; G.pg = 1; G.sysPrompt = ''; G.docIdx = null;
   G.ann = {}; G.uStack = {}; G.rStack = {};   // 새 PDF → 필기 초기화
   closeFind();
   try {
     G.pdf = await pdfjsLib.getDocument({ data: await f.arrayBuffer() }).promise;
     G.tot = G.pdf.numPages;
+    stBegin(f);
 
     document.getElementById('dz').style.display   = 'none';
     document.getElementById('pdfV').style.display = 'block';
@@ -1457,10 +1848,9 @@ async function loadPDF(inp) {
     document.getElementById('ci').disabled   = false;
     document.getElementById('sb').disabled   = false;
     document.getElementById('ci').placeholder = '교재 내용에 대해 질문하세요...';
-    const wm = document.getElementById('wm'); if (wm) wm.remove();
-    addAI(isTouch()
-      ? `**${f.name}** 업로드 완료! 총 **${G.tot}페이지**입니다.\n\n글자를 **길게 눌러 선택**하면 아래에 질문 · 번역 · 풀이 · 형광펜 · 인용 복사 메뉴가 나타납니다.`
-      : `**${f.name}** 업로드 완료! 총 **${G.tot}페이지**입니다.\n\n텍스트를 마우스로 드래그하면 질문 · 번역 · 풀이 · 형광펜 · 인용 복사 · 메모장 메뉴가 나타납니다.`, { noActs: true });
+    document.getElementById('msgs').innerHTML = '';   // 문서마다 대화가 따로 (앞 문서 대화는 저장되어 있음)
+    addAI(welcomeText(f.name), { noActs: true, noLog: true });
+    await stResume(f);
     if (G.layout === 'sheet') setSheet(0);
   } catch (e) { alert('PDF 로드 오류: ' + e.message); }
 }
@@ -2842,18 +3232,20 @@ function md(s) {
     .replace(/\n/g,            '<br>');
 }
 
-function addUser(t, quote) {
+function addUser(t, quote, time) {
+  stLog({ t: 'u', text: t, quote: quote ? { text: quote.text, pg: quote.pg } : null });
   const d = mk('div msg u');
   const qh = quote ? `<span class="uq">“${esc(quote.text.length > 80 ? quote.text.slice(0, 80) + '…' : quote.text)}” · ${quote.pg}쪽</span>` : '';
-  d.innerHTML = `<div class="bbl">${qh}${esc(t).replace(/\n/g,'<br>')}</div><span class="mts">${ts()}</span>`;
+  d.innerHTML = `<div class="bbl">${qh}${esc(t).replace(/\n/g,'<br>')}</div><span class="mts">${time || ts()}</span>`;
   app(d);
 }
 function addAI(t, opt) {
   opt = opt || {};
   const d = mk('div msg ai');
   // 현재 선택된 모델명을 레이블로 표시
-  const mLabel = modelLabel(G.model);
-  d.innerHTML = `<span class="sndr">Gemini ${mLabel}</span><div class="bbl" style="font-size:${G.fontSize}px">${md(t)}</div><span class="mts">${ts()}</span>`;
+  const mLabel = opt.label || modelLabel(G.model);
+  if (!opt.noLog) stLog({ t: 'ai', text: t, model: mLabel, noActs: !!opt.noActs });
+  d.innerHTML = `<span class="sndr">Gemini ${mLabel}</span><div class="bbl" style="font-size:${G.fontSize}px">${md(t)}</div><span class="mts">${opt.time || ts()}</span>`;
   if (!opt.noActs) d.insertBefore(mkActs(t), d.querySelector('.mts'));
   const m = document.getElementById('msgs');
   m.appendChild(d);
@@ -2930,16 +3322,19 @@ function syncToolBtns() {
   document.getElementById('annTog').classList.toggle('on', drawing || document.body.classList.contains('ann-open'));
 }
 function addCtx(t) {
+  stLog({ t: 'ctx', text: t });
   const d = mk('div msg ai');
   d.innerHTML = `<div class="ctxb">📌 ${esc(t)}</div>`;
   app(d);
 }
 function addErr(t) {
+  stLog({ t: 'err', text: t });
   const d = mk('div msg ai');
   d.innerHTML = `<div class="errb">${esc(t)}</div>`;
   app(d);
 }
 function addWrn(t) {
+  stLog({ t: 'wrn', html: t });
   const d = mk('div msg ai');
   d.innerHTML = `<div class="wrnb">${t}</div>`;
   app(d);
@@ -2986,8 +3381,9 @@ function showTy() {
 function rmTy() { const t = document.getElementById('tym'); if (t) t.remove(); }
 function clearC() {
   G.hist = []; G.selTxt = ''; setSc('all');
+  ST.log = [];                                    // 저장된 대화도 비움 (필기는 그대로)
   document.getElementById('msgs').innerHTML = '';
-  if (G.pdf) addAI('대화가 초기화되었습니다. 다시 질문해 주세요!', { noActs: true });
+  if (G.pdf) addAI('대화가 초기화되었습니다. 다시 질문해 주세요!', { noActs: true, noLog: true });
 }
 
 /* ══════════════════════════════════════════════════════════
@@ -5320,10 +5716,12 @@ const CL = (() => {
     const m = document.getElementById('msgs'); m.appendChild(d); m.scrollTop = m.scrollHeight;
     return t => { const el = document.getElementById('clProgT'); if (el) el.textContent = t; };
   }
-  function showCard(id) {
+  function showCard(id, time) {
+    const s0 = store[id];
+    stLog({ t: 'cl', text: s0.text, lang: s0.lang, precise: !!s0.precise, pg: s0.pg || null, translit: s0.translit || null, res: { ...s0.res, _cached: undefined } });
     const d = document.createElement('div');
     d.className = 'msg ai';
-    d.innerHTML = `<span class="sndr">고전어 분석 · Gemini</span>${card(id)}<span class="mts">${ts()}</span>`;
+    d.innerHTML = `<span class="sndr">고전어 분석 · Gemini</span>${card(id)}<span class="mts">${time || ts()}</span>`;
     const acts = mkActs('');                         // 공통 작업 줄을 고전어용으로 바꿔 끼움
     acts.innerHTML = '';
     const add = (ico, label, fn) => { const b = document.createElement('button'); b.className = 'act'; b.innerHTML = ico + label; b.onclick = fn; acts.appendChild(b); };
@@ -5463,6 +5861,8 @@ ${css}</style></head><body><div class="wrap"><h1>${E(langName(s.lang))} 구조 �
 
   return {
     LANG, detect, looksGarbled, isLzh, langName, langTag, start, view, closeView, edit, closeEdit, submitEdit, rerun, download,
+    // 저장해 둔 분석 카드를 다시 보이기 (학습 이어하기)
+    restore: e => { const id = ++seq; store[id] = { text: e.text, lang: e.lang, precise: e.precise, pg: e.pg, res: e.res, translit: e.translit }; showCard(id, e.time); },
     viewRerun: () => viewId && rerun(viewId, true),
     viewDownload: k => viewId && download(viewId, k),
     _analyze: analyze, _store: store,
