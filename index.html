@@ -1409,7 +1409,7 @@ function adjFont(d) {
 /* ── PDF 로드 ── */
 async function loadPDF(inp) {
   const f = inp.files[0]; if (!f) return;
-  G.fn = f.name; G.txts = {}; G.hist = []; G.pg = 1; G.sysPrompt = '';
+  G.fn = f.name; G.txts = {}; G.hist = []; G.pg = 1; G.sysPrompt = ''; G.docIdx = null;
   G.ann = {}; G.uStack = {}; G.rStack = {};   // 새 PDF → 필기 초기화
   closeFind();
   try {
@@ -2401,11 +2401,12 @@ async function doSend() {
     ctxBody  = pgTxt(G.pg);
   } else {
     ctxLabel = `[전체 PDF · ${G.tot}페이지]`;
-    const parts = [];
-    for (let i = 1; i <= G.tot; i++) {
-      const t = pgTxt(i); if (t) parts.push(`[${i}페이지]\n${t}`);
-    }
-    ctxBody = parts.join('\n\n');
+    showTy();
+    await ensureAllText(n => tyStatus(`PDF 글자를 읽는 중… ${n}/${G.tot}쪽`));
+    const pick = await buildDocCtx(q, quote);
+    ctxBody = pick.text;
+    if (pick.note) { ctxLabel += `\n(${pick.note})`; }
+    if (pick.uiNote) { rmTy(); addCtx(pick.uiNote); }
   }
 
   // [수정2] 텍스트 추출 미완 시에도 빈 문자열 대신 안내 텍스트로 대체 (오류 없이 진행)
@@ -2419,7 +2420,7 @@ async function doSend() {
   const imgKeywords = /이미지|그림|사진|시각화|표현해|그려|일러스트|장면|풍경|묘사.*이미지|image|draw|paint|illustrat|generat.*image|picture/i;
   const isImageReq = IMAGE_GEN_ON && imgKeywords.test(q);
 
-  showTy();
+  if (!document.getElementById('tym')) showTy();
   try {
     // 이미지 요청이면 이미지 생성 API 시도
     if (isImageReq) {
@@ -2470,6 +2471,176 @@ async function doSend() {
   } finally {
     G.busy = false; document.getElementById('sb').disabled = false;
   }
+}
+
+/* ══════════ 긴 PDF 전체를 AI에게 보내기 ══════════
+   - 글이 예산(추정 18만 토큰) 안이면 모든 쪽을 그대로 보냄 (300쪽 안팎의 영문 논문은 대개 통째로 들어감)
+   - 넘치면 질문에 맞춰 고름:
+       · 요약·주제·구성처럼 전체를 묻는 질문 → 앞쪽(초록·목차)은 전문 + 나머지 모든 쪽의 앞부분
+       · 특정 내용을 묻는 질문 → 관련도(BM25) 높은 쪽 전문(예산의 65%) + 나머지 모든 쪽의 앞부분
+   - 어떤 쪽을 전문/발췌로 보냈는지 AI에게 알려, 보지 못한 부분은 추측하지 않게 함
+   무료 키의 분당 토큰 한도를 넘으면 geminiFetch가 다른 모델로 넘겨 보냄 (한도는 모델마다 따로) */
+const CTX_BUDGET = 180000;
+const DOC_RULE = '자료 이용 규칙: 각 쪽은 [n페이지]로 표시되어 있다. "앞부분 발췌"라고 표시된 쪽은 일부만 실렸으니, ' +
+  '그 쪽의 생략된 내용은 추측하지 말고 필요하면 "해당 쪽 전체를 보려면 그 쪽에서 \'현재 페이지\'로 질문해 달라"고 안내하라. ' +
+  '답할 때 근거가 된 쪽 번호를 (p.12)처럼 밝혀라.\n\n';
+function isWide(c) {
+  return (c >= 0x1100 && c <= 0x11FF) || (c >= 0x2E80 && c <= 0x9FFF) || (c >= 0xAC00 && c <= 0xD7AF) ||
+         (c >= 0xF900 && c <= 0xFAFF) || (c >= 0xFF00 && c <= 0xFFEF) || c >= 0x20000;
+}
+// 토큰 수 어림: 한자·한글은 글자당 1, 그 밖은 4글자당 1
+function estTok(str) {
+  let w = 0, n = 0;
+  for (const ch of str) { n++; if (isWide(ch.codePointAt(0))) w++; }
+  return Math.ceil(w + (n - w) / 4);
+}
+// 검색어 낱말: 로마자(팔리어 부호 포함)는 낱말, 한자는 한 글자 + 두 글자, 한글은 두 글자 묶음
+const EN_STOP = new Set('the of and to in a is that for as on with by it this be are was from or an at which his not have has but its their were also can they he one these such than other into only more been there all would may who what when'.split(' '));
+function docTerms(str) {
+  const out = [];
+  const s2 = String(str).toLowerCase().normalize('NFC');
+  for (const m of s2.matchAll(/[\p{Script=Latin}\p{N}]{2,}/gu)) { const w = m[0]; if (!EN_STOP.has(w)) out.push(w.length > 5 && w.endsWith('s') ? w.slice(0, -1) : w); }
+  for (const m of s2.matchAll(/\p{Script=Han}+/gu)) {
+    const r = [...m[0]];
+    for (let i = 0; i < r.length; i++) { out.push(r[i]); if (i + 1 < r.length) out.push(r[i] + r[i + 1]); }
+  }
+  for (const m of s2.matchAll(/\p{Script=Hangul}+/gu)) {
+    const r = [...m[0]];
+    if (r.length === 1) out.push(r[0]);
+    for (let i = 0; i + 1 < r.length; i++) out.push(r[i] + r[i + 1]);
+  }
+  return out;
+}
+function docIndex() {
+  if (G.docIdx && G.docIdx.tot === G.tot && G.docIdx.fn === G.fn) return G.docIdx;
+  const pages = [], df = new Map();
+  let total = 0, lenSum = 0;
+  for (let i = 1; i <= G.tot; i++) {
+    const text = pgTxt(i);
+    const tok = text ? estTok(text) + 6 : 0;
+    const tf = new Map(); const ts = docTerms(text);
+    for (const t of ts) tf.set(t, (tf.get(t) || 0) + 1);
+    for (const t of tf.keys()) df.set(t, (df.get(t) || 0) + 1);
+    pages.push({ n: i, text, tok, tf, len: ts.length });
+    total += tok; lenSum += ts.length;
+  }
+  G.docIdx = { fn: G.fn, tot: G.tot, pages, df, total, avg: lenSum / Math.max(1, pages.length) };
+  return G.docIdx;
+}
+// 아직 글을 못 읽은 쪽이 있으면 마저 읽기
+async function ensureAllText(onProg) {
+  const pdf = G.pdf; let last = 0;
+  for (let i = 1; i <= G.tot; i++) {
+    if (G.txts[i]) continue;
+    if (Date.now() - last > 300) { onProg && onProg(i); last = Date.now(); }
+    try { const pg = await pdf.getPage(i); G.txts[i] = (await pg.getTextContent()).items.map(it => ({ str: it.str })); }
+    catch (_) { G.txts[i] = []; }
+    if (pdf !== G.pdf) return;
+  }
+}
+const OVERVIEW_RE = /요약|핵심|주제|전체|개요|구성|목차|결론|논지|주장|요지|정리|흐름|무엇에 관한|어떤 내용|무슨 내용|예상 시험|시험 문제|중요 개념|summar|overview|main (idea|point|argument|claim)|thesis statement|outline|structure|conclusion|gist/i;
+function headOf(text, tok) {                     // 쪽의 앞부분을 토큰 어림만큼, 문장 끝에서 자름
+  if (tok <= 0) return '';
+  let w = 0, cut = 0;
+  for (const ch of text) { w += isWide(ch.codePointAt(0)) ? 1 : 0.25; cut += ch.length; if (w >= tok) break; }
+  if (cut >= text.length) return text;
+  let s2 = text.slice(0, cut);
+  const k = Math.max(s2.lastIndexOf('. '), s2.lastIndexOf('。'), s2.lastIndexOf('다. '), s2.lastIndexOf('? '));
+  if (k > s2.length * 0.5) s2 = s2.slice(0, k + 1);
+  return s2 + ' …';
+}
+// 문서의 주 문자(로마자/한글/한자)
+function mainScript(str) {
+  let L = 0, K = 0, H = 0;
+  for (const ch of str.slice(0, 20000)) {
+    if (/\p{Script=Latin}/u.test(ch)) L++; else if (/\p{Script=Hangul}/u.test(ch)) K++; else if (/\p{Script=Han}/u.test(ch)) H++;
+  }
+  return L / 3 > K + H ? 'latin' : K >= H ? 'hangul' : 'han';
+}
+/* 질문과 문서의 언어가 다르면(예: 영어 논문에 한국어로 질문) 낱말이 겹치지 않아 관련 쪽을 못 찾음
+   → AI에게 '문서 언어로 된 검색어'를 짧게 받아 함께 찾음 (작은 호출 1회, 같은 질문은 기억) */
+async function expandQuery(qq, ix) {
+  const sample = ix.pages.slice(0, 8).map(p => p.text).join(' ');
+  const ds = mainScript(sample), qs = mainScript(qq);
+  if (ds === qs || (ds === 'han' && /\p{Script=Han}/u.test(qq))) return '';
+  G.qxCache = G.qxCache || {};
+  const key = G.fn + '|' + qq;
+  if (G.qxCache[key] != null) return G.qxCache[key];
+  try {
+    tyStatus('질문에 맞는 쪽을 찾는 중…');
+    const r = await geminiFetch({
+      contents: [{ role: 'user', parts: [{ text:
+        '아래 문서에서 다음 질문과 관련된 쪽을 찾으려 한다. 문서에 실제로 쓰였을 언어와 표기로 검색어 8~15개를 JSON 문자열 배열로만 출력하라. ' +
+        '인명·서명·개념어는 문서의 표기(로마자 표기의 여러 형태, 한자 병기)를 모두 넣어라.\n\n문서 첫머리:\n' + sample.slice(0, 1500) +
+        '\n\n질문: ' + qq }] }],
+      generationConfig: { temperature: 0, maxOutputTokens: 2048, responseMimeType: 'application/json' },
+    });
+    if (!r.ok) return (G.qxCache[key] = '');
+    const d = await r.json();
+    const t = (d.candidates?.[0]?.content?.parts || []).filter(x => !x.thought).map(x => x.text || '').join('');
+    const arr = JSON.parse(t.slice(t.indexOf('['), t.lastIndexOf(']') + 1));
+    return (G.qxCache[key] = Array.isArray(arr) ? arr.filter(x => typeof x === 'string').join(' ') : '');
+  } catch (_) { return (G.qxCache[key] = ''); }
+}
+async function buildDocCtx(q, quote) {
+  const ix = docIndex();
+  const pages = ix.pages.filter(p => p.tok);
+  const join = arr => arr.sort((a, b) => a.n - b.n)
+    .map(x => `[${x.n}페이지${x.part ? ' · 앞부분 발췌' : ''}]\n${x.text}`).join('\n\n');
+  if (ix.total <= CTX_BUDGET) return { text: join(pages.map(p => ({ n: p.n, text: p.text }))), note: '', uiNote: '' };
+
+  // 질문이 짧으면(예: "더 자세히") 직전 질문도 함께 봄
+  let qq = q + (quote ? ' ' + quote.text : '');
+  if (q.length < 20 && G.hist.length >= 2) qq += ' ' + (G.hist[G.hist.length - 2].parts[0].text || '');
+  const overview = OVERVIEW_RE.test(q) && !quote;
+  const full = new Map();                        // n → 전문으로 보낼 쪽
+  let used = 0;
+  const addFull = p => { if (!full.has(p.n) && used + p.tok <= CTX_BUDGET) { full.set(p.n, p); used += p.tok; return true; } return false; };
+
+  if (overview) {
+    // 앞쪽(제목·초록·목차·서론 첫머리)은 전문
+    for (const p of pages) { if (used + p.tok > CTX_BUDGET * 0.06 && full.size >= 2) break; addFull(p); }
+  } else {
+    // 관련도 순으로 예산의 65%까지 전문
+    const N = pages.length, k1 = 1.2, b = 0.75;
+    const qt = [...new Set(docTerms(qq + ' ' + await expandQuery(qq, ix)))];
+    const scored = pages.map(p => {
+      let sc = 0;
+      for (const t of qt) {
+        const f = p.tf.get(t); if (!f) continue;
+        const d = ix.df.get(t) || 0;
+        const idf = Math.log(1 + (N - d + 0.5) / (d + 0.5));
+        sc += idf * f * (k1 + 1) / (f + k1 * (1 - b + b * p.len / (ix.avg || 1)));
+      }
+      return { p, sc };
+    }).filter(x => x.sc > 0).sort((a, b) => b.sc - a.sc);
+    if (quote && quote.pg) { const qp = pages.find(p => p.n === quote.pg); if (qp) addFull(qp); }
+    for (const { p } of scored) { if (used > CTX_BUDGET * 0.65) break; addFull(p); }
+    // 첫 쪽들(제목·초록)은 조금이라도
+    for (const p of pages.slice(0, 3)) if (used + p.tok <= CTX_BUDGET * 0.72) addFull(p);
+  }
+  // 나머지 모든 쪽은 앞부분만 고르게
+  const rest = pages.filter(p => !full.has(p.n));
+  const restTok = rest.reduce((a, p) => a + p.tok, 0);
+  const ratio = Math.min(1, Math.max(0, (CTX_BUDGET - used) / Math.max(1, restTok)));
+  const parts = [...full.values()].map(p => ({ n: p.n, text: p.text }));
+  let partial = 0;
+  for (const p of rest) {
+    const t = headOf(p.text, Math.floor(p.tok * ratio));
+    if (!t) continue;
+    const isPart = t !== p.text; if (isPart) partial++;
+    parts.push({ n: p.n, text: t, part: isPart });
+  }
+  const fullN = full.size + (rest.length - partial);
+  const pct = Math.round(ratio * 100);
+  const note = `이 PDF는 ${G.tot}쪽으로 길어 한 번에 다 보낼 수 없어, ` + (overview
+    ? `앞쪽 ${full.size}쪽은 전문, 나머지 ${partial}쪽은 각 쪽의 앞부분(약 ${pct}%)만 실었다`
+    : `질문과 관련된 ${full.size}쪽은 전문, 나머지 ${partial}쪽은 각 쪽의 앞부분(약 ${pct}%)만 실었다`);
+  const uiNote = `${G.tot}쪽 전체를 살폈습니다 — 분량이 많아 ` + (overview
+    ? `앞쪽 ${full.size}쪽은 전문, 나머지 ${partial}쪽은 앞부분(약 ${pct}%)을 보냈습니다`
+    : `질문과 관련된 ${full.size}쪽은 전문, 나머지 ${partial}쪽은 앞부분(약 ${pct}%)을 보냈습니다`) +
+    (overview ? '' : ` (가장 관련 깊은 쪽: ${[...full.keys()].slice(0, 6).sort((a, b) => a - b).join('·')})`);
+  return { text: join(parts), note, uiNote, full: [...full.keys()], ratio, fullN };
 }
 
 function pgTxt(n) {
@@ -2553,7 +2724,7 @@ async function callGemini(q, ctx) {
     ? // 웹 검색 ON: 교재 + 인터넷 병행
       `당신은 대학 강의 학습 도우미입니다.\n파일명: ${G.fn}\n\n` +
       `아래 교재 내용을 기반으로 답하되, 교재에 없는 내용은 인터넷 검색으로 보완하세요:\n${'─'.repeat(40)}\n` +
-      `${ctx.slice(0, 40000)}\n${'─'.repeat(40)}\n\n` +
+      `${ctx}\n${'─'.repeat(40)}\n\n` + DOC_RULE +
       `응답 규칙:\n` +
       `1. 교재 내용을 우선 활용하고, 부족한 부분은 최신 인터넷 정보로 보완하세요.\n` +
       `2. 인터넷 정보를 활용할 경우 "인터넷 검색 결과:"로 구분하여 표시하세요.\n` +
@@ -2564,7 +2735,7 @@ async function callGemini(q, ctx) {
     : // 웹 검색 OFF: 교재 내용만
       `당신은 대학 강의 교재 전문 학습 도우미입니다.\n파일명: ${G.fn}\n\n` +
       `아래는 PDF 강의 교재 내용입니다:\n${'─'.repeat(40)}\n` +
-      `${ctx.slice(0, 55000)}\n${'─'.repeat(40)}\n\n` +
+      `${ctx}\n${'─'.repeat(40)}\n\n` + DOC_RULE +
       `응답 규칙:\n` +
       `1. 반드시 위 교재 내용에 근거하여 답하세요.\n` +
       `2. 교재에 없는 내용은 "교재에 명시되어 있지 않습니다"라고 솔직하게 말하세요.\n` +
