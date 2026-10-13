@@ -959,9 +959,11 @@ html.touch .fr .fs{font-size:14px;}
         </select>
         <!-- 모델 선택 -->
         <select id="modelSel" class="model-sel" onchange="changeModel(this.value)">
-          <option value="gemini-2.5-flash">2.5 Flash</option>
+          <option value="gemini-3.8-flash">3.8 Flash</option>
+          <option value="gemini-3.6-flash">3.6 Flash</option>
+          <option value="gemini-3.5-flash-lite">3.5 Flash Lite</option>
           <option value="gemini-3.1-flash-lite">3.1 Flash Lite</option>
-          <option value="gemini-3.5-flash">3.5 Flash</option>
+          <option value="gemini-2.5-flash">2.5 Flash</option>
         </select>
       </div>
       <div id="quoteChip">
@@ -1121,11 +1123,26 @@ html.touch .fr .fs{font-size:14px;}
 pdfjsLib.GlobalWorkerOptions.workerSrc =
   'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 
-const MODELS = [
-  { id: 'gemini-2.5-flash',      label: '2.5 Flash (기본)' },
-  { id: 'gemini-3.1-flash-lite', label: '3.1 Flash Lite' },
-  { id: 'gemini-3.5-flash',      label: '3.5 Flash' },
+/* ── 모델 목록 ──
+   실제 목록은 저장소의 models.json에서 읽습니다. 이 파일은 GitHub Actions(.github/workflows/update-models.yml)가
+   매주 점검해 새 모델은 넣고 종료된 모델은 뺍니다. 아래는 models.json을 못 읽을 때(파일로 직접 열었을 때 등) 쓰는 기본값. */
+let MODELS = [
+  { id: 'gemini-3.8-flash',      label: '3.8 Flash' },
+  { id: 'gemini-3.6-flash',      label: '3.6 Flash' },
+  { id: 'gemini-3.5-flash-lite', label: '3.5 Flash Lite' },
+  { id: 'gemini-3.1-flash-lite', label: '3.1 Flash Lite', shutdown: '2027-05-07' },
+  { id: 'gemini-2.5-flash',      label: '2.5 Flash' },          // models.json의 pin으로 고정
 ];
+let MODEL_DEFAULT = 'gemini-3.8-flash';
+try {                                            // 지난번에 받은 목록이 있으면 그것부터 (첫 화면에서 목록이 바뀌어 보이지 않게)
+  const c = JSON.parse(localStorage.getItem('gmodels') || 'null');
+  if (c && Array.isArray(c.models) && c.models.length) { MODELS = c.models; MODEL_DEFAULT = c.default || MODELS[0].id; }
+} catch (_) {}
+function modelLabel(id) {
+  const m = MODELS.find(x => x.id === id);
+  if (!m) return id.replace(/^gemini-/, '');
+  return m.label + (id === MODEL_DEFAULT ? ' (기본)' : '');
+}
 
 /* ══════════ 필기 도구 설정 (여기 숫자·색만 바꾸면 됩니다) ══════════ */
 const PEN_COLORS = [
@@ -1142,7 +1159,7 @@ const ERASER_R  = 9;                     // 지우개 반경 (PDF 기준)
 // ── 앱 상태 ──
 const G = {
   key:  localStorage.getItem('gk') || '',
-  model: localStorage.getItem('gmodel') || 'gemini-2.5-flash',
+  model: localStorage.getItem('gmodel') || MODEL_DEFAULT,
   webSearch: false,   // 웹 검색 on/off
   pdf:  null, pg: 1, tot: 0, zm: 1.2,
   txts: {},
@@ -1196,8 +1213,8 @@ let popupJustClosed = false;
   if (G.key) { closeM(); setDot(true); }
   document.getElementById('apiInp').value = G.key;
   // 모델 드롭다운 초기값
-  const ms = document.getElementById('modelSel');
-  if (ms) ms.value = G.model;
+  fillModelSel();
+  loadModels();
 
   document.getElementById('fcSmall').addEventListener('click', () => adjFont(-1));
   document.getElementById('fcLarge').addEventListener('click', () => adjFont(1));
@@ -1233,6 +1250,73 @@ function toggleWeb() {
   btn.setAttribute('aria-pressed', G.webSearch ? 'true' : 'false');
   // 켜고 끌 때마다 대화창에 쌓이지 않도록 잠깐 뜨는 알림으로 안내
   toast(G.webSearch ? '웹 검색 켜짐 — 교재 + 인터넷 정보를 함께 답변합니다' : '웹 검색 꺼짐 — 교재 내용만으로 답변합니다');
+}
+
+/* ── 모델 목록 채우기 / models.json 읽기 / 종료된 모델 자동 교체 ── */
+function fillModelSel() {
+  const ms = document.getElementById('modelSel');
+  if (!ms) return;
+  ms.innerHTML = '';
+  for (const m of MODELS) {
+    const o = document.createElement('option');
+    o.value = m.id;
+    o.textContent = m.label + (m.shutdown ? ` (${m.shutdown.slice(2, 4)}.${+m.shutdown.slice(5, 7)} 종료)` : '');
+    ms.appendChild(o);
+  }
+  if (!MODELS.some(m => m.id === G.model)) {     // 목록에 없는 모델(종료되어 빠진 것)을 쓰고 있었다면 기본 모델로
+    const old = G.model;
+    G.model = MODEL_DEFAULT; localStorage.setItem('gmodel', G.model);
+    if (old) setTimeout(() => toast(`${old.replace(/^gemini-/, '')} 모델이 목록에서 빠져 ${modelLabel(G.model)}로 바꿨습니다`, 4000), 600);
+  }
+  ms.value = G.model;
+}
+async function loadModels() {
+  if (location.protocol === 'file:') return;     // 파일로 직접 열면 기본 목록만
+  try {
+    const r = await fetch('models.json', { cache: 'no-cache' });
+    if (!r.ok) return;
+    const d = await r.json();
+    const ms = (d.models || []).filter(m => m && /^gemini-[\w.\-]+$/.test(m.id) && m.label);
+    if (ms.length < 1) return;
+    const same = JSON.stringify(ms) === JSON.stringify(MODELS) && (d.default || ms[0].id) === MODEL_DEFAULT;
+    MODELS = ms; MODEL_DEFAULT = ms.some(m => m.id === d.default) ? d.default : ms[0].id;
+    localStorage.setItem('gmodels', JSON.stringify({ models: MODELS, default: MODEL_DEFAULT }));
+    if (!same) fillModelSel();
+  } catch (_) {}                                 // 파일로 열었거나 오프라인이면 기본값 그대로
+}
+// 종료된 모델 기록 (사흘 동안 다시 고르지 않음)
+function deadModels() {
+  try {
+    const d = JSON.parse(localStorage.getItem('gdead') || '{}'), now = Date.now();
+    for (const k in d) if (now - d[k] > 3 * 864e5) delete d[k];
+    return d;
+  } catch (_) { return {}; }
+}
+function isModelGone(status, msg) {
+  return status === 404 || /no longer available|is not found|not supported for generateContent|has been (deprecated|retired|shut ?down)/i.test(msg || '');
+}
+/* Gemini 호출 공통: 지금 모델이 종료되었다는 답(404 등)이 오면 다른 모델로 바꿔 한 번 더 보냄.
+   돌려주는 것은 fetch의 Response 그대로 — 부르는 쪽의 기존 처리(오류 메시지, 429 재시도 등)는 바뀌지 않음 */
+async function geminiFetch(body) {
+  const tried = new Set();
+  for (;;) {
+    const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${G.model}:generateContent?key=${G.key}`,
+      { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: typeof body === 'string' ? body : JSON.stringify(body) });
+    if (r.ok) return r;
+    let msg = '';
+    try { const t = await r.clone().text(); msg = (JSON.parse(t).error || {}).message || t; } catch (_) {}
+    if (!isModelGone(r.status, msg)) return r;
+    tried.add(G.model);
+    const dead = deadModels(); dead[G.model] = Date.now();
+    try { localStorage.setItem('gdead', JSON.stringify(dead)); } catch (_) {}
+    const ok = id => !tried.has(id) && !dead[id];
+    const next = ok(MODEL_DEFAULT) ? MODEL_DEFAULT : (MODELS.find(m => ok(m.id)) || {}).id;
+    if (!next) return r;                         // 바꿀 모델이 없으면 원래 오류를 그대로
+    const old = G.model;
+    G.model = next; localStorage.setItem('gmodel', next);
+    const ms = document.getElementById('modelSel'); if (ms) ms.value = next;
+    toast(`${old.replace(/^gemini-/, '')} 모델을 더 쓸 수 없어 ${modelLabel(next)}로 바꿔 다시 보냅니다`, 4500);
+  }
 }
 
 /* ── 모델 변경 ── */
@@ -2451,22 +2535,15 @@ async function callGemini(q, ctx) {
     ];
   }
 
-  const resp = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/${G.model}:generateContent?key=${G.key}`,
-    {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        contents,
-        generationConfig: {
-          maxOutputTokens: 65536,
-          temperature: 0.7,
-        },
-        // 웹 검색 모드일 때 google_search grounding 도구 추가
-        ...(G.webSearch ? { tools: [{ google_search: {} }] } : {})
-      })
-    }
-  );
+  const resp = await geminiFetch({
+    contents,
+    generationConfig: {
+      maxOutputTokens: 65536,
+      temperature: 0.7,
+    },
+    // 웹 검색 모드일 때 google_search grounding 도구 추가
+    ...(G.webSearch ? { tools: [{ google_search: {} }] } : {})
+  });
 
   if (!resp.ok) {
     const err = await resp.json().catch(() => ({}));
@@ -2521,8 +2598,8 @@ function addAI(t, opt) {
   opt = opt || {};
   const d = mk('div msg ai');
   // 현재 선택된 모델명을 레이블로 표시
-  const modelLabel = MODELS.find(m => m.id === G.model)?.label || G.model;
-  d.innerHTML = `<span class="sndr">Gemini ${modelLabel}</span><div class="bbl" style="font-size:${G.fontSize}px">${md(t)}</div><span class="mts">${ts()}</span>`;
+  const mLabel = modelLabel(G.model);
+  d.innerHTML = `<span class="sndr">Gemini ${mLabel}</span><div class="bbl" style="font-size:${G.fontSize}px">${md(t)}</div><span class="mts">${ts()}</span>`;
   if (!opt.noActs) d.insertBefore(mkActs(t), d.querySelector('.mts'));
   const m = document.getElementById('msgs');
   m.appendChild(d);
@@ -2648,7 +2725,7 @@ async function continueAnswer() {
 }
 function showTy() {
   const d = mk('div msg ai'); d.id = 'tym';
-  const modelLabel2 = MODELS.find(m => m.id === G.model)?.label || G.model;
+  const modelLabel2 = modelLabel(G.model);
   d.innerHTML = `<span class="sndr">Gemini ${modelLabel2}</span><div class="tyw"><div class="td"></div><div class="td"></div><div class="td"></div></div>`;
   app(d);
 }
@@ -4713,8 +4790,7 @@ const CL = (() => {
     };
     const waits = [5000, 10000, 20000];
     for (let i = 0; ; i++) {
-      const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${G.model}:generateContent?key=${G.key}`,
-        { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+      const r = await geminiFetch(body);
       if (r.ok) {
         const d = await r.json();
         const c = d.candidates && d.candidates[0];
