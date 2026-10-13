@@ -330,6 +330,7 @@ html.touch #dv::before{content:'';position:absolute;left:50%;top:50%;width:4px;h
 .bbl code{background:rgba(0,0,0,.07);padding:1px 5px;border-radius:4px;font-size:12px;font-family:monospace;}
 .mts{font-size:11px;color:var(--ink3);padding:0 2px;}
 .ctxb{background:var(--aml);border:1px solid #fde68a;border-radius:8px;padding:6px 10px;font-size:12px;color:var(--am);max-width:93%;line-height:1.5;}
+#tym .tys{font-size:12px;color:var(--mu,#6b7280);margin-top:6px;line-height:1.5;}
 .tyw{background:var(--bg);border-radius:var(--rl);border-bottom-left-radius:4px;padding:10px 14px;display:flex;gap:5px;align-items:center;}
 .td{width:7px;height:7px;border-radius:50%;background:var(--ink3);animation:td 1.2s infinite;}
 .td:nth-child(2){animation-delay:.2s;}.td:nth-child(3){animation-delay:.4s;}
@@ -1295,27 +1296,81 @@ function deadModels() {
 function isModelGone(status, msg) {
   return status === 404 || /no longer available|is not found|not supported for generateContent|has been (deprecated|retired|shut ?down)/i.test(msg || '');
 }
-/* Gemini 호출 공통: 지금 모델이 종료되었다는 답(404 등)이 오면 다른 모델로 바꿔 한 번 더 보냄.
-   돌려주는 것은 fetch의 Response 그대로 — 부르는 쪽의 기존 처리(오류 메시지, 429 재시도 등)는 바뀌지 않음 */
-async function geminiFetch(body) {
+// 이 키로는 그 모델을 쓸 수 없음 (예: 2.5 계열은 '써 온 사용자만', 새 프로젝트는 일부 모델 무료 한도 0)
+function isModelDenied(status, msg) {
+  return (status === 403 || status === 400 || status === 429) &&
+    /limit: ?0\b|do(es)? not have access to (the )?model|model .*(not available|access)|access to .*model.* (limited|restricted)|only available to/i.test(msg || '');
+}
+// 잠시 붐빔 (503 high demand 등) — 같은 모델로 조금 기다렸다 다시, 그래도 안 되면 다른 모델로
+function isBusy(status, msg) {
+  return [500, 502, 503, 504].includes(status) || /high demand|overloaded|temporarily unavailable|UNAVAILABLE|try again later/i.test(msg || '');
+}
+// 분당 한도 초과 — 모델마다 한도가 따로라 다른 모델로 넘기면 바로 됨
+function isRateLimited(status, msg) {
+  return status === 429 || /RESOURCE_EXHAUSTED|quota|rate limit/i.test(msg || '');
+}
+G.busyUntil = {};                                 // 이번 접속 동안 붐볐던 모델 → 다시 고를 수 있는 시각
+const gSleep = ms => new Promise(r => setTimeout(r, ms));
+// 대화창 '답변 중' 말풍선에 진행 상황 표시
+function tyStatus(t) {
+  const d = document.getElementById('tym'); if (!d) return;
+  d.querySelector('.sndr').textContent = `Gemini ${modelLabel(G.model)}`;
+  let el = d.querySelector('.tys');
+  if (!el) { el = document.createElement('div'); el.className = 'tys'; d.appendChild(el); }
+  el.textContent = t;
+}
+/* Gemini 호출 공통 (질문·고전어 분석 모두 이것을 거침)
+   ① 종료된 모델(404)            → 다른 모델로 바꾸고 기억 (사흘)
+   ② 이 키로 못 쓰는 모델          → 다른 모델로 바꾸고 기억 (사흘)
+   ③ 붐빔(503 high demand 등)     → 같은 모델로 2초·5초 기다려 다시, 그래도 안 되면 다른 모델로 (10분 동안 피함)
+   ④ 분당 한도 초과(429)           → 바로 다른 모델로 (1분 동안 피함)
+   ③④로 바꾼 모델은 이번 접속에만 쓰고, 다음에 열면 원래 고른 모델로 돌아감.
+   돌려주는 것은 fetch의 Response 그대로 — 부르는 쪽의 기존 처리는 바뀌지 않음 */
+async function geminiFetch(body, onStatus) {
+  const say = onStatus || tyStatus;
+  const payload = typeof body === 'string' ? body : JSON.stringify(body);
   const tried = new Set();
+  let first = true, again = 0, last = null;
   for (;;) {
     const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${G.model}:generateContent?key=${G.key}`,
-      { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: typeof body === 'string' ? body : JSON.stringify(body) });
+      { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: payload });
     if (r.ok) return r;
+    last = r;
     let msg = '';
     try { const t = await r.clone().text(); msg = (JSON.parse(t).error || {}).message || t; } catch (_) {}
-    if (!isModelGone(r.status, msg)) return r;
-    tried.add(G.model);
-    const dead = deadModels(); dead[G.model] = Date.now();
-    try { localStorage.setItem('gdead', JSON.stringify(dead)); } catch (_) {}
-    const ok = id => !tried.has(id) && !dead[id];
+    const now = Date.now();
+    let why = '', keep = false;
+    if (isModelGone(r.status, msg) || isModelDenied(r.status, msg)) {
+      const dead = deadModels(); dead[G.model] = now;
+      try { localStorage.setItem('gdead', JSON.stringify(dead)); } catch (_) {}
+      why = isModelGone(r.status, msg) ? '더 쓸 수 없어' : '이 키로는 쓸 수 없어';
+      keep = true;
+    } else if (isBusy(r.status, msg)) {
+      const waits = first ? [2000, 5000] : [3000];
+      if (again < waits.length) {
+        say(`${modelLabel(G.model)} 서버가 붐빕니다 — ${waits[again] / 1000}초 뒤 다시 보냅니다 (${again + 1}/${waits.length})`);
+        await gSleep(waits[again]); again++;
+        continue;
+      }
+      G.busyUntil[G.model] = now + 10 * 60e3;
+      why = '서버가 붐벼';
+    } else if (isRateLimited(r.status, msg)) {
+      G.busyUntil[G.model] = now + 60e3;
+      why = '사용 한도에 걸려';
+    } else {
+      return r;                                  // 키 오류 등은 그대로 돌려줌
+    }
+    tried.add(G.model); first = false; again = 0;
+    const dead = deadModels();
+    const ok = id => !tried.has(id) && !dead[id] && !((G.busyUntil[id] || 0) > now);
     const next = ok(MODEL_DEFAULT) ? MODEL_DEFAULT : (MODELS.find(m => ok(m.id)) || {}).id;
-    if (!next) return r;                         // 바꿀 모델이 없으면 원래 오류를 그대로
+    if (!next) return last;                      // 바꿀 모델이 없으면 마지막 오류 그대로
     const old = G.model;
-    G.model = next; localStorage.setItem('gmodel', next);
+    G.model = next;
+    if (keep) localStorage.setItem('gmodel', next);
     const ms = document.getElementById('modelSel'); if (ms) ms.value = next;
-    toast(`${old.replace(/^gemini-/, '')} 모델을 더 쓸 수 없어 ${modelLabel(next)}로 바꿔 다시 보냅니다`, 4500);
+    const note = `${modelLabel(old).replace(' (기본)', '')}이(가) ${why} ${modelLabel(next).replace(' (기본)', '')}(으)로 보냅니다`;
+    say(note); toast(note, 4000);
   }
 }
 
@@ -1331,6 +1386,10 @@ function changeModel(val) {
 function saveKey() {
   const k = document.getElementById('apiInp').value.trim();
   if (!k) { alert('API 키를 입력해 주세요.'); return; }
+  if (k !== G.key) {                             // 키가 바뀌면 '못 쓰는 모델·붐빈 모델' 기록을 지움
+    try { localStorage.removeItem('gdead'); } catch (_) {}
+    G.busyUntil = {};
+  }
   G.key = k; localStorage.setItem('gk', k);
   closeM(); setDot(true);
 }
@@ -2398,8 +2457,10 @@ async function doSend() {
         '이미지 생성(gemini-2.5-flash-image)은 <strong>Google AI Studio 결제 설정</strong>이 필요합니다.<br>' +
         '텍스트로 대신 설명해 드릴게요. 다시 질문해 주세요!'
       );
+    } else if (/high demand|overloaded|unavailable|try again later/.test(m)) {
+      addWrn('⏳ <strong>구글 서버가 붐빕니다</strong><br>여러 모델로 다시 보내 봤지만 모두 응답하지 못했습니다. 1~2분 뒤 다시 질문해 주세요.<br><span style="opacity:.7;font-size:.9em">(' + esc(e.message || '') + ')</span>');
     } else if (m.includes('quota') || m.includes('resource_exhausted')) {
-      addWrn('⚡ <strong>API 사용량 초과</strong><br>잠시 후 다시 시도해 주세요.');
+      addWrn('⚡ <strong>API 사용량 초과</strong><br>모든 모델의 무료 사용량을 넘었습니다. 1분 뒤(하루 한도면 내일) 다시 시도해 주세요.');
     } else if (m.includes('api_key') || m.includes('401') || m.includes('403')) {
       addErr('🔑 API 키 오류: 키 설정을 확인해 주세요.');
       setDot(false);
@@ -4790,7 +4851,7 @@ const CL = (() => {
     };
     const waits = [5000, 10000, 20000];
     for (let i = 0; ; i++) {
-      const r = await geminiFetch(body);
+      const r = await geminiFetch(body, onStatus);
       if (r.ok) {
         const d = await r.json();
         const c = d.candidates && d.candidates[0];
