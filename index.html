@@ -422,7 +422,11 @@ html.touch .chip,html.touch .web-toggle,html.touch .model-sel,html.touch .sc{fon
 @media(hover:hover) and (pointer:fine){#stRecent .str-i:hover{background:rgba(59,130,246,.12);border-color:rgba(59,130,246,.5);}}
 #stRecent .str-n{display:block;font-size:13.5px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 #stRecent .str-m{display:block;font-size:11.5px;color:#8a8a8a;margin-top:2px;}
-.stn .ctxb{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;}
+.stn .ctxb{display:flex;flex-wrap:wrap;align-items:center;gap:6px 8px;}
+.stni{width:14px;height:14px;flex-shrink:0;align-self:flex-start;margin-top:3px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;}   /* 머리줄 '학습 기록' 버튼과 같은 책갈피 */
+.stn .ctxb > span{flex:1 1 200px;min-width:0;}
+.stbs{display:inline-flex;gap:6px;flex-shrink:0;}
+.stnew.stall{color:#b91c1c;}
 .stnew{border:1px solid var(--ln2);background:var(--sf);color:var(--ink2);border-radius:999px;padding:3px 10px;font-size:12px;font-family:inherit;cursor:pointer;}
 .stm{max-width:520px;max-height:86vh;overflow:auto;}
 .stm-h{display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;}
@@ -446,6 +450,52 @@ html.touch .chip,html.touch .web-toggle,html.touch .model-sel,html.touch .sc{fon
 .stl-b button.dl{color:#b91c1c;}
 .stu{font-size:11.5px;color:var(--ink3);margin-top:8px;}
 html.touch .stl-b button{min-height:34px;padding:0 10px;}
+/* 주석 */
+#ntHl{position:absolute;inset:0;pointer-events:none;z-index:1;}
+#ntHl .nth{position:absolute;background:rgba(250,204,21,.22);border-bottom:2px solid rgba(217,119,6,.7);border-radius:2px;}
+#ntHl .nth.on{background:rgba(250,204,21,.42);box-shadow:0 0 0 1.5px rgba(217,119,6,.75);}
+#ntMk{position:absolute;inset:0;pointer-events:none;z-index:8;}
+.ntm{position:absolute;width:20px;height:20px;padding:2px;border:0;border-radius:5px;background:#f59e0b;color:#fff;pointer-events:auto;cursor:pointer;
+  box-shadow:0 1px 4px rgba(0,0,0,.35);display:flex;align-items:center;justify-content:center;}
+.ntm svg{width:100%;height:100%;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;}
+.ntm i{position:absolute;right:-6px;top:-6px;min-width:14px;height:14px;border-radius:7px;background:#1c1917;color:#fff;font:700 9px/14px system-ui;font-style:normal;padding:0 3px;}
+.ntm.on{background:#b45309;outline:2px solid #fde68a;}
+html.touch .ntm{width:26px;height:26px;padding:4px;}
+#ntCard{position:fixed;z-index:320;width:320px;max-width:calc(100vw - 16px);background:var(--sf);border:1px solid var(--ln2);border-radius:12px;
+  box-shadow:0 10px 32px rgba(0,0,0,.28);padding:10px 12px 12px;display:none;font-size:13px;color:var(--ink);}
+#ntCard.on{display:block;}
+.ntc-h{display:flex;align-items:center;gap:6px;margin-bottom:6px;}
+.ntc-i{width:16px;height:16px;color:#d97706;display:inline-flex;}
+.ntc-i svg{width:100%;height:100%;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;}
+.ntc-h b{white-space:nowrap;}
+.ntc-m{flex:1;min-width:0;font-size:11.5px;color:var(--ink3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.ntb{white-space:nowrap;flex-shrink:0;border:0;background:transparent;color:var(--ink2);font-size:12px;font-weight:500;font-family:inherit;padding:3px 6px;border-radius:6px;cursor:pointer;}
+.ntb.dl{color:#b91c1c;}
+@media(hover:hover) and (pointer:fine){.ntb:hover{background:var(--ln);}}
+.ntx{border:0;background:transparent;color:var(--ink3);font-size:18px;line-height:1;width:24px;height:24px;border-radius:6px;cursor:pointer;}
+.ntc-q{font-size:12px;color:var(--ink3);border-left:3px solid #fbbf24;padding:2px 0 2px 8px;margin-bottom:8px;max-height:3.2em;overflow:hidden;}
+.ntc-t{width:100%;min-height:84px;resize:vertical;border:1.5px solid var(--blm);border-radius:8px;padding:8px 10px;font-size:14px;line-height:1.6;font-family:inherit;color:var(--ink);background:#fff;outline:none;}
+.ntc-f{display:flex;justify-content:flex-end;gap:8px;margin-top:8px;}
+.ntc-f .mbtn{padding:7px 16px;font-size:13px;}
+.ntc-b{white-space:pre-wrap;line-height:1.65;font-size:14px;max-height:40vh;overflow:auto;}
+.ntr{border-top:1px solid var(--ln);margin-top:8px;padding-top:6px;}
+.ntr-h{display:flex;align-items:center;justify-content:space-between;font-size:11px;color:var(--ink3);}
+.ntr-b{white-space:pre-wrap;font-size:13px;line-height:1.6;}
+.ntc-r{display:flex;gap:6px;margin-top:10px;}
+.ntc-ri{flex:1;min-width:0;border:1px solid var(--ln2);border-radius:8px;padding:7px 10px;font-size:13px;font-family:inherit;background:#fff;outline:none;}
+.ntc-ri:focus{border-color:var(--blm);}
+html.touch .ntc-t,html.touch .ntc-ri{font-size:16px;}
+html.touch .ntb{min-height:34px;padding:0 8px;font-size:13px;}
+html.touch .ntx{width:36px;height:36px;}
+html.lay-sheet #ntCard{left:8px !important;right:8px;top:auto !important;bottom:calc(8px + env(safe-area-inset-bottom));width:auto;max-width:none;max-height:62vh;overflow:auto;}
+.ntl-i{display:flex;gap:10px;width:100%;text-align:left;background:none;border:0;border-top:1px solid var(--ln);padding:10px 2px;cursor:pointer;font-family:inherit;color:var(--ink);}
+@media(hover:hover) and (pointer:fine){.ntl-i:hover{background:var(--bg);}}
+.ntl-p{flex-shrink:0;font-size:12px;font-weight:700;color:#b45309;min-width:38px;}
+.ntl-t{flex:1;min-width:0;}
+.ntl-q{display:block;font-size:12px;color:var(--ink3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.ntl-b{display:block;font-size:13.5px;line-height:1.55;margin-top:2px;white-space:pre-wrap;}
+.ntl-r{display:block;font-size:11.5px;color:var(--ink3);margin-top:2px;}
+#ntM .stc-b{margin-bottom:8px;}
 .bdg{position:absolute;top:-2px;right:-2px;width:18px;height:18px;border-radius:50%;background:#ef4444;color:#fff;font-size:11px;font-weight:700;display:none;align-items:center;justify-content:center;border:2px solid var(--sf);}
 
 /* ══════════════════════════════════════════════════════════
@@ -676,7 +726,7 @@ html.pin-ok #pinBtn{display:flex;}
 /* ── 답변 아래 작업 줄 (복사 · 공유 · 메모장 · 다시) ── */
 .acts{display:flex;gap:2px;margin-left:-6px;flex-wrap:wrap;}
 .act{height:32px;padding:0 9px;border-radius:16px;border:0;background:transparent;color:var(--ink2);font-size:12px;font-family:inherit;display:flex;align-items:center;gap:5px;cursor:pointer;}
-.act svg{width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
+.act svg{width:15px;height:15px;overflow:visible;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
 @media(hover:hover) and (pointer:fine){.act:hover{background:var(--ln);color:var(--ink);}}
 html.touch .act{height:40px;padding:0 10px;font-size:13px;}
 html.touch .act svg{width:17px;height:17px;}
@@ -795,8 +845,8 @@ html.touch .fr .fs{font-size:14px;}
     <button class="spa trb" id="spTr" onclick="popAct('tr')" title="한국어로 직역"><svg viewBox="0 0 24 24"><path d="M5 8l6 6"/><path d="M4 14l6-6 2-3"/><path d="M2 5h12"/><path d="M7 2h1"/><path d="M22 22l-5-10-5 10"/><path d="M14 18h6"/></svg><span>번역</span></button>
     <button class="spa" onclick="popAct('ex')" title="자세히 풀이"><svg viewBox="0 0 24 24"><path d="M2 4h6a4 4 0 014 4v13a3 3 0 00-3-3H2z"/><path d="M22 4h-6a4 4 0 00-4 4v13a3 3 0 013-3h7z"/></svg>풀이</button>
     <button class="spa" onclick="popAct('hl')" title="선택한 글에 형광펜"><svg viewBox="0 0 24 24"><path d="M15 3l6 6-9 9H6v-6z"/><line x1="3" y1="21" x2="21" y2="21" stroke="#ffe600" stroke-width="3"/></svg>형광펜</button>
+    <button class="spa" onclick="popAct('note')" title="이 구절에 주석 달기"><svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/><line x1="8" y1="8" x2="16" y2="8"/><line x1="8" y1="12" x2="13" y2="12"/></svg>주석</button>
     <button class="spa" onclick="popAct('cp')" title="출처(파일명·쪽)를 붙여 복사"><svg viewBox="0 0 24 24"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>인용 복사</button>
-    <button class="spa" onclick="popAct('memo')" title="메모장에 붙이기"><svg viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 013 3L7 19l-4 1 1-4z"/></svg>메모장</button>
   </div>
 </div>
 
@@ -869,6 +919,9 @@ html.touch .fr .fs{font-size:14px;}
         <button class="ab" id="bMemo" onclick="wbOpen()" title="메모장 — 별도 창에서 필기·타이핑">
           <svg viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 013 3L7 19l-4 1 1-4z"/></svg><span class="tl">메모장</span>
         </button>
+        <button class="ab" id="bNotes" onclick="ntList()" title="주석 목록 — 이 PDF의 주석을 쪽 순서로 보기 · 메모장으로 모으기">
+          <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/><line x1="8" y1="8" x2="16" y2="8"/><line x1="8" y1="12" x2="13" y2="12"/></svg><span class="tl">주석</span>
+        </button>
       </div>
 
       <div class="asep"></div>
@@ -903,6 +956,7 @@ html.touch .fr .fs{font-size:14px;}
       <button class="pl" data-tool="hl" onclick="pillTool('hl')" aria-label="형광펜"><svg viewBox="0 0 24 24"><path d="M15 3l6 6-9 9H6v-6z"/><line x1="3" y1="21" x2="21" y2="21"/></svg></button>
       <button class="pl" data-tool="eraser" onclick="setTool('eraser')" aria-label="지우개"><svg viewBox="0 0 24 24"><path d="M20 20H8.5L3 14.5a1.5 1.5 0 010-2.1L13 2.4a1.5 1.5 0 012.1 0l6.5 6.5a1.5 1.5 0 010 2.1L11.5 20"/></svg></button>
       <button class="pl" id="pMemo" onclick="wbOpen()" aria-label="메모장"><svg viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 013 3L7 19l-4 1 1-4z"/></svg></button>
+      <button class="pl" id="pNotes" onclick="ntList()" aria-label="주석 목록"><svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/><line x1="8" y1="8" x2="16" y2="8"/><line x1="8" y1="12" x2="13" y2="12"/></svg></button>
       <span class="plsep"></span>
       <button class="pl" data-undo onclick="annUndo()" aria-label="되돌리기" disabled><svg viewBox="0 0 24 24"><polyline points="9 14 4 9 9 4"/><path d="M20 20v-7a4 4 0 00-4-4H4"/></svg></button>
       <button class="pl" id="pMore" onclick="togAnnPanel()" aria-label="색·굵기·옵션"><span class="dot2" id="pDot"></span></button>
@@ -938,8 +992,10 @@ html.touch .fr .fs{font-size:14px;}
       <div id="pdfV">
         <canvas id="pdfCv"></canvas>
         <div id="findHl"></div>
+        <div id="ntHl"></div>
         <div id="tlayer"></div>
         <canvas id="annCv"></canvas>
+        <div id="ntMk"></div>
       </div>
     </div>
   </div>
@@ -962,7 +1018,7 @@ html.touch .fr .fs{font-size:14px;}
           <button class="ib anb" id="anBtn" onclick="CL.edit(null,{})" title="고전어 구조 분석 — 한문·팔리어·산스크리트어·티베트어 원문을 넣어 분석 (경전 문장을 드래그해도 언어를 알아서 감지)" aria-label="고전어 구조 분석">
             <span class="anb-k" aria-hidden="true"><svg viewBox="0 0 1000 1000"><circle cx="500" cy="500" r="455" fill="none" stroke="currentColor" stroke-width="80"/><path transform="translate(240,700) scale(0.7026,-0.7026)" d="M111 638Q111 652 123 659Q144 646 168 637Q186 666 221 666Q245 666 266 656Q287 645 315 645Q361 645 394 683L484 619L304 411Q369 404 435 368Q501 331 558 274V586Q558 622 566 642Q573 663 589 680L679 616Q661 596 654 576Q648 557 648 525V62Q648 8 622 -9L710 -88L687 -114L580 -18Q559 -16 540 -6Q521 4 496 27Q474 47 465 62Q456 78 456 88Q456 107 475 107Q483 107 492 104Q501 100 511 91L541 64Q550 68 554 78Q558 87 558 107V232Q522 265 476 286Q431 307 383 313Q410 288 424 258Q439 227 439 189Q439 138 415 95Q391 52 348 26Q306 0 249 0Q214 0 181 12Q148 25 111 54Q67 89 48 126Q30 164 30 197Q30 251 75 290L165 226Q142 202 132 180Q123 159 123 137Q123 76 189 76Q237 76 273 102Q309 129 329 169Q349 209 349 248Q349 289 331 310Q313 331 286 331Q249 331 216 299L126 363L251 507Q192 546 162 570Q132 595 122 610Q111 626 111 638Z" fill="currentColor"/></svg></span>
           </button>
-          <button class="ib" onclick="clearC()" title="대화 초기화">
+          <button class="ib" onclick="clearC()" title="새 채팅 (대화 초기화)" aria-label="새 채팅">
             <svg viewBox="0 0 24 24"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
           </button>
           <button class="ib" id="pinBtn" onclick="togPin()" title="좌우 분할로 고정" aria-label="좌우 분할로 고정">
@@ -1146,8 +1202,8 @@ html.touch .fr .fs{font-size:14px;}
     <button class="sba trb" id="sbTr" onclick="selAct('tr')"><svg viewBox="0 0 24 24"><path d="M5 8l6 6"/><path d="M4 14l6-6 2-3"/><path d="M2 5h12"/><path d="M7 2h1"/><path d="M22 22l-5-10-5 10"/><path d="M14 18h6"/></svg><span>번역</span></button>
     <button class="sba" onclick="selAct('ex')"><svg viewBox="0 0 24 24"><path d="M2 4h6a4 4 0 014 4v13a3 3 0 00-3-3H2z"/><path d="M22 4h-6a4 4 0 00-4 4v13a3 3 0 013-3h7z"/></svg>풀이</button>
     <button class="sba" onclick="selAct('hl')"><svg viewBox="0 0 24 24"><path d="M15 3l6 6-9 9H6v-6z"/><line x1="3" y1="21" x2="21" y2="21" stroke="#ffe600" stroke-width="3"/></svg>형광펜</button>
+    <button class="sba" onclick="selAct('note')"><svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/><line x1="8" y1="8" x2="16" y2="8"/><line x1="8" y1="12" x2="13" y2="12"/></svg>주석</button>
     <button class="sba" onclick="selAct('cp')"><svg viewBox="0 0 24 24"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>인용 복사</button>
-    <button class="sba" onclick="selAct('memo')"><svg viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 013 3L7 19l-4 1 1-4z"/></svg>메모장</button>
   </div>
 </div>
 
@@ -1177,11 +1233,22 @@ html.touch .fr .fs{font-size:14px;}
 
 <input type="file" id="fi" accept=".pdf" style="display:none;" onchange="loadPDF(this)">
 <input type="file" id="stFi" style="display:none;" onchange="stImport(this)">
+<!-- ══ 주석 창 (말풍선을 누르면) ══ -->
+<div id="ntCard" role="dialog" aria-label="주석"></div>
+<!-- ══ 주석 목록 ══ -->
+<div class="mbg" id="ntM" style="display:none;" onclick="if(event.target===this)ntCloseList()">
+  <div class="modal stm" role="dialog" aria-label="주석 목록">
+    <div class="stm-h"><h2>주석 목록 <small id="ntCnt"></small></h2><button class="anv-x" type="button" onclick="ntCloseList()" aria-label="닫기"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div>
+    <p>이 PDF에 단 주석을 쪽 순서로 보여 줍니다. 누르면 그 구절로 갑니다.</p>
+    <div class="stc-b"><button class="mbtn ok" type="button" id="ntCollect" onclick="ntCollect()">메모장으로 모으기</button></div>
+    <div id="ntList"></div>
+  </div>
+</div>
 <!-- ══ 학습 기록 창 ══ -->
 <div class="mbg" id="stM" style="display:none;" onclick="if(event.target===this)stClosePanel()">
   <div class="modal stm" role="dialog" aria-label="학습 기록">
     <div class="stm-h"><h2>학습 기록</h2><button class="anv-x" type="button" onclick="stClosePanel()" aria-label="닫기"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div>
-    <p>필기·형광펜, AI 대화, 고전어 분석, 보던 쪽이 PDF마다 <b>이 기기에 저절로 저장</b>되고, 같은 PDF를 다시 열면 이어집니다. 다른 기기에서 이어 하려면 학습 파일로 내보내 그 기기에서 불러오세요.</p>
+    <p>필기·형광펜, 주석, AI 대화, 고전어 분석, 보던 쪽이 PDF마다 <b>이 기기에 저절로 저장</b>되고, 같은 PDF를 다시 열면 이어집니다. 다른 기기에서 이어 하려면 학습 파일로 내보내 그 기기에서 불러오세요.</p>
     <div class="stm-s">지금 문서</div>
     <div id="stCur"></div>
     <div class="stm-s">학습 파일 불러오기</div>
@@ -1539,16 +1606,17 @@ function stRecord() {
   return {
     fp: ST.fp, name: G.fn, pages: G.tot, size: ST.file ? ST.file.size : 0,
     created: ST.created || Date.now(), updated: Date.now(),
-    lastPage: G.pg, log: ST.log, hist: G.hist, ann: G.ann,
+    lastPage: G.pg, log: ST.log, hist: G.hist, ann: G.ann, notes: G.notes,
     quote: G.quote ? { text: G.quote.text, pg: G.quote.pg } : null,
-    annPages: a.pages, chats: ST.log.filter(e => e.t === 'u' || e.t === 'cl').length,
+    annPages: a.pages, chats: ST.log.filter(e => e.t === 'u' || e.t === 'cl').length, noteCount: G.notes.length,
   };
 }
 // 바뀐 것이 있는지 가볍게 확인하는 지문 (쪽 · 대화 수 · 필기 획/점 수 · 인용)
 function stSig() {
   let a = 0, p = 0;
   for (const k in G.ann) { const l = G.ann[k] || []; a += l.length; for (const s of l) p += s.pts ? s.pts.length : 0; }
-  return [ST.fp, G.pg, ST.log.length, G.hist.length, a, p, G.quote ? G.quote.pg + ':' + G.quote.text.length : ''].join('|');
+  const nt = G.notes.reduce((t, n) => t + (n.updated || 0) % 100000 + (n.replies ? n.replies.length : 0), 0);
+  return [ST.fp, G.pg, ST.log.length, G.hist.length, a, p, G.quote ? G.quote.pg + ':' + G.quote.text.length : '', G.notes.length, nt].join('|');
 }
 async function stSave(force) {
   if (!ST.fp || !ST.ok) return;
@@ -1582,7 +1650,7 @@ async function stResume(f) {
   try { rec = await stGet('docs', ST.fp); ST.ok = true; }
   catch (e) { ST.ok = false; console.warn('학습 기록을 쓸 수 없습니다', e); }
   if (ST.ok && stKeepPdf()) stStorePdf(f);
-  if (rec && ((rec.log && rec.log.length) || rec.annPages || rec.lastPage > 1)) {
+  if (rec && ((rec.log && rec.log.length) || rec.annPages || (rec.notes && rec.notes.length) || rec.lastPage > 1)) {
     await stApply(rec);
     stResumeNote(rec);
   }
@@ -1608,9 +1676,10 @@ async function stApply(rec) {
   G.hist = Array.isArray(rec.hist) ? rec.hist : [];
   G.ann = rec.ann && typeof rec.ann === 'object' ? rec.ann : {};
   G.uStack = {}; G.rStack = {};
+  G.notes = Array.isArray(rec.notes) ? rec.notes : [];
   if (rec.quote && rec.quote.text) setQuote(rec.quote.text, rec.quote.pg);
   const pg = Math.min(Math.max(1, rec.lastPage | 0), G.tot);
-  if (pg !== G.pg) { G.pg = pg; await render(pg); } else { annRedraw(); }
+  if (pg !== G.pg) { G.pg = pg; await render(pg); } else { annRedraw(); paintNotes(); }
   updAnnBtns && updAnnBtns();
 }
 function stDate(t) {
@@ -1623,28 +1692,33 @@ function stSummary(rec) {
   const parts = [`${rec.lastPage || 1}쪽까지`];
   if (rec.chats) parts.push(`대화 ${rec.chats}개`);
   if (rec.annPages) parts.push(`필기 ${rec.annPages}쪽`);
+  if (rec.noteCount) parts.push(`주석 ${rec.noteCount}개`);
   return parts.join(' · ');
 }
 // "지난 학습을 이어서 불러왔습니다" 안내 (대화 기록에는 남기지 않음)
 function stResumeNote(rec) {
   const d = mk('div msg ai stn');
-  d.innerHTML = `<div class="ctxb">📚 지난 학습을 이어서 불러왔습니다 — ${esc(stDate(rec.updated))} · ${esc(stSummary(rec))}
-    <button class="stnew" type="button">처음부터 새로</button></div>`;
-  d.querySelector('.stnew').onclick = stRestart;
+  d.innerHTML = `<div class="ctxb"><svg class="stni" viewBox="0 0 24 24" aria-hidden="true"><path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z"/></svg><span>지난 학습을 이어서 불러왔습니다 — ${esc(stDate(rec.updated))} · ${esc(stSummary(rec))}</span>
+    <span class="stbs"><button class="stnew" type="button">새 채팅</button><button class="stnew stall" type="button">학습 초기화</button></span></div>`;
+  d.querySelector('.stnew').onclick = () => clearC();
+  d.querySelector('.stall').onclick = stResetAll;
   app(d);
 }
-async function stRestart() {
-  if (!confirm('이 PDF에 저장된 필기·대화·분석을 모두 지우고 처음부터 시작할까요?\n(지우기 전에 학습 기록 창에서 파일로 내보내 둘 수 있습니다)')) return;
+// 학습 초기화: 이 PDF의 대화·분석·필기·형광펜·인용·보던 쪽을 모두 지우고 처음 연 상태로 (PDF 원본은 남김)
+async function stResetAll() {
+  if (!confirm('이 PDF의 학습 기록을 모두 지우고 처음 연 상태로 되돌릴까요?\n\n· 지워지는 것: AI 대화, 고전어 분석, 필기·형광펜, 주석, 인용 구절, 보던 쪽\n· 남는 것: PDF 원본, 메모장\n\n되돌릴 수 없습니다. 필요하면 먼저 학습 기록 창에서 파일로 내보내 두세요.')) return;
   try { await stDel('docs', ST.fp); } catch (_) {}
   ST.log = []; ST.created = Date.now(); ST.saved = 0;
   G.hist = []; G.ann = {}; G.uStack = {}; G.rStack = {};
+  G.notes = []; ntClose();
   clearQuote(true);
   document.getElementById('msgs').innerHTML = '';
   addAI(welcomeText(G.fn), { noActs: true, noLog: true });
   G.pg = 1; await render(1);
   ST.sig = stSig();
   updAnnBtns && updAnnBtns();
-  toast('처음부터 새로 시작합니다');
+  stRenderRecent(); stPanelList();
+  toast('학습 기록을 모두 지웠습니다');
 }
 // PDF 원본 저장 (다시 올리지 않고 바로 열기용)
 async function stStorePdf(f) {
@@ -1806,6 +1880,205 @@ function stSetKeep(on) {
 document.addEventListener('keydown', e => { if (e.key === 'Escape' && document.getElementById('stM')?.style.display === 'flex') stClosePanel(); });
 setTimeout(stRenderRecent, 300);
 
+/* ══════════ 주석 (아크로뱃식 댓글) ══════════
+   · 글을 드래그 → 선택 메뉴 '주석' → 그 구절에 옅은 표시와 말풍선이 붙고 주석 창이 열림
+   · 말풍선을 누르면 주석 보기 · 고치기 · 지우기 · 답글
+   · 위치는 PDF 좌표로 저장해 확대·축소해도 제자리 (학습 기록에 함께 저장 · 내보내기 포함)
+   · 주석 목록에서 쪽 순서로 모아 보고, '메모장으로 모으기'로 한꺼번에 메모장에 정리 */
+G.notes = [];
+const NT = { cur: null, draft: null, editing: false };
+const NT_ICO = '<svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/><line x1="8" y1="8" x2="16" y2="8"/><line x1="8" y1="12" x2="13" y2="12"/></svg>';
+function ntNow() { const d = new Date(), p = n => String(n).padStart(2, '0'); return `${d.getMonth() + 1}.${d.getDate()} ${p(d.getHours())}:${p(d.getMinutes())}`; }
+// 선택 범위 → 줄 단위 사각형 (PDF 좌표)
+function ntRects(range) {
+  const cr = annEl().getBoundingClientRect(), z = G.zm;
+  const rects = Array.from(range.getClientRects()).filter(r => r.width > 1 && r.height > 1)
+    .map(r => ({ l: r.left - cr.left, r: r.right - cr.left, t: r.top - cr.top, b: r.bottom - cr.top }))
+    .sort((a, b) => (a.t - b.t) || (a.l - b.l));
+  const lines = [];
+  for (const r of rects) {
+    const L = lines[lines.length - 1], h = r.b - r.t;
+    if (L && Math.abs((L.t + L.b) / 2 - (r.t + r.b) / 2) < h * 0.5 && r.l <= L.r + h) {
+      L.l = Math.min(L.l, r.l); L.r = Math.max(L.r, r.r); L.t = Math.min(L.t, r.t); L.b = Math.max(L.b, r.b);
+    } else lines.push({ ...r });
+  }
+  return lines.map(L => [L.l / z, L.t / z, (L.r - L.l) / z, (L.b - L.t) / z].map(v => Math.round(v * 10) / 10));
+}
+// 이 쪽의 주석 표시 그리기 (쪽을 그릴 때마다 · 확대·축소 뒤에도)
+function paintNotes() {
+  const hl = document.getElementById('ntHl'), mk = document.getElementById('ntMk');
+  if (!hl || !mk) return;
+  hl.innerHTML = ''; mk.innerHTML = '';
+  if (!G.pdf) return;
+  const z = G.zm;
+  const list = G.notes.filter(n => n.pg === G.pg);
+  if (NT.draft && NT.draft.pg === G.pg) list.push(NT.draft);
+  for (const n of list) {
+    const on = (NT.cur && NT.cur.id === n.id) || n === NT.draft;
+    for (const [x, y, w, h] of n.rects) {
+      const d = document.createElement('div');
+      d.className = 'nth' + (on ? ' on' : '');
+      d.style.cssText = `left:${x * z - 1}px;top:${y * z - 1}px;width:${w * z + 2}px;height:${h * z + 2}px`;
+      hl.appendChild(d);
+    }
+    if (n === NT.draft || !n.rects.length) continue;
+    const [x, y] = n.rects[0];
+    const b = document.createElement('button');
+    b.className = 'ntm' + (on ? ' on' : '');
+    b.type = 'button';
+    b.title = (n.body || '').slice(0, 80);
+    b.setAttribute('aria-label', `${n.pg}쪽 주석 열기`);
+    b.innerHTML = NT_ICO + (n.replies && n.replies.length ? `<i>${n.replies.length + 1}</i>` : '');
+    const sz = isTouch() ? 26 : 20;
+    b.style.left = Math.max(2, x * z - sz - 4) + 'px';
+    b.style.top = Math.max(2, y * z - 2) + 'px';
+    b.onclick = e => { e.stopPropagation(); ntOpen(n.id); };
+    mk.appendChild(b);
+  }
+}
+// 선택 메뉴 '주석' → 새 주석 쓰기
+function ntStart(s) {
+  if (!s || !s.range) return;
+  const rects = ntRects(s.range);
+  if (!rects.length) { toast('이 부분에는 주석을 달 수 없습니다'); return; }
+  NT.cur = null;
+  NT.draft = { id: 'n' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5), pg: s.pg || G.pg, quote: s.text, rects, body: '', replies: [], created: Date.now() };
+  NT.editing = true;
+  paintNotes(); ntShowCard();
+}
+function ntOpen(id) {
+  const n = G.notes.find(x => x.id === id); if (!n) return;
+  NT.draft = null; NT.cur = n; NT.editing = false;
+  paintNotes(); ntShowCard();
+}
+function ntClose() {
+  NT.cur = null; NT.draft = null; NT.editing = false;
+  document.getElementById('ntCard').classList.remove('on');
+  paintNotes();
+}
+function ntShowCard() {
+  const n = NT.draft || NT.cur; if (!n) return;
+  const c = document.getElementById('ntCard');
+  const isNew = n === NT.draft;
+  const reps = (n.replies || []).map((r, i) => `<div class="ntr"><div class="ntr-h">답글 · ${esc(r.time || '')}<button type="button" class="ntx" data-del-reply="${i}" aria-label="답글 지우기">×</button></div><div class="ntr-b">${esc(r.body)}</div></div>`).join('');
+  c.innerHTML = `
+    <div class="ntc-h"><span class="ntc-i">${NT_ICO}</span><b>주석</b><span class="ntc-m">${n.pg}쪽${isNew ? '' : ' · ' + esc(n.time || '')}</span>
+      <button type="button" class="ntb" data-act="list" title="주석 목록">목록</button>
+      ${isNew ? '' : `<button type="button" class="ntb" data-act="edit" title="고치기">고치기</button><button type="button" class="ntb dl" data-act="del" title="지우기">지우기</button>`}
+      <button type="button" class="ntx" data-act="close" aria-label="닫기">×</button></div>
+    <div class="ntc-q">「${esc((n.quote || '').length > 120 ? n.quote.slice(0, 120) + '…' : n.quote || '')}」</div>
+    ${NT.editing
+      ? `<textarea class="ntc-t" placeholder="주석을 입력하세요 (Ctrl+Enter로 게시)">${esc(n.body || '')}</textarea>
+         <div class="ntc-f"><button type="button" class="mbtn sk" data-act="cancel">취소</button><button type="button" class="mbtn ok" data-act="post">${isNew ? '게시' : '저장'}</button></div>`
+      : `<div class="ntc-b">${esc(n.body || '')}</div>${reps}
+         <div class="ntc-r"><input type="text" class="ntc-ri" placeholder="답글 달기…" enterkeyhint="send"><button type="button" class="ntb" data-act="reply">달기</button></div>`}`;
+  c.classList.add('on');
+  ntPlace();
+  c.querySelectorAll('[data-act]').forEach(b => b.onclick = e => { e.stopPropagation(); ntAct(b.dataset.act); });
+  c.querySelectorAll('[data-del-reply]').forEach(b => b.onclick = e => {
+    e.stopPropagation(); if (!confirm('이 답글을 지울까요?')) return;
+    NT.cur.replies.splice(+b.dataset.delReply, 1); NT.cur.updated = Date.now(); ntShowCard(); paintNotes();
+  });
+  const ta = c.querySelector('.ntc-t');
+  if (ta) {
+    ta.addEventListener('keydown', e => { if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); ntAct('post'); } else if (e.key === 'Escape') { e.preventDefault(); ntAct('cancel'); } });
+    setTimeout(() => { ta.focus(); ta.setSelectionRange(ta.value.length, ta.value.length); }, 30);
+  }
+  const ri = c.querySelector('.ntc-ri');
+  if (ri) ri.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.isComposing) { e.preventDefault(); ntAct('reply'); } else if (e.key === 'Escape') ntClose(); });
+}
+// 주석 창 위치: PC·태블릿은 말풍선 옆, 휴대폰은 화면 아래
+function ntPlace() {
+  const c = document.getElementById('ntCard');
+  if (G.layout === 'sheet') { c.style.left = c.style.top = ''; return; }
+  const n = NT.draft || NT.cur; if (!n || !n.rects.length) return;
+  const vr = document.getElementById('pdfV').getBoundingClientRect(), z = G.zm;
+  const [x, y, w, h] = n.rects[0];
+  const last = n.rects[n.rects.length - 1];
+  const W = c.offsetWidth || 320, H = c.offsetHeight || 200;
+  // 구절 오른쪽 끝 바깥(여백)에, 안 되면 구절 아래에
+  let left = vr.left + Math.max(...n.rects.map(r => (r[0] + r[2]) * z)) + 16;
+  let top = vr.top + y * z - 8;
+  if (left + W > window.innerWidth - 8) { left = Math.min(window.innerWidth - W - 8, vr.left + x * z); top = vr.top + (last[1] + last[3]) * z + 10; }
+  top = Math.min(Math.max(8, top), window.innerHeight - H - 8);
+  left = Math.max(8, left);
+  c.style.left = left + 'px'; c.style.top = top + 'px';
+}
+function ntAct(a) {
+  const c = document.getElementById('ntCard');
+  if (a === 'close') return ntClose();
+  if (a === 'list') { ntClose(); return ntList(); }
+  if (a === 'cancel') { if (NT.draft) return ntClose(); NT.editing = false; return ntShowCard(); }
+  if (a === 'edit') { NT.editing = true; return ntShowCard(); }
+  if (a === 'del') {
+    if (!confirm('이 주석을 지울까요? (답글도 함께 지워집니다)')) return;
+    G.notes = G.notes.filter(x => x !== NT.cur); ntClose(); toast('주석을 지웠습니다'); return;
+  }
+  if (a === 'post') {
+    const body = c.querySelector('.ntc-t').value.trim();
+    if (!body) { toast('주석 내용을 입력하세요'); return; }
+    if (NT.draft) {
+      const n = NT.draft; n.body = body; n.time = ntNow(); n.updated = Date.now();
+      G.notes.push(n); NT.draft = null; NT.cur = n;
+      toast('주석을 달았습니다');
+    } else { NT.cur.body = body; NT.cur.updated = Date.now(); }
+    NT.editing = false; paintNotes(); ntShowCard(); stSave(false); return;
+  }
+  if (a === 'reply') {
+    const ri = c.querySelector('.ntc-ri'), body = ri.value.trim(); if (!body) return;
+    NT.cur.replies = NT.cur.replies || []; NT.cur.replies.push({ body, time: ntNow() }); NT.cur.updated = Date.now();
+    paintNotes(); ntShowCard(); stSave(false);
+  }
+}
+// 바깥을 누르면 닫기 (쓰는 중이 아닐 때)
+document.addEventListener('pointerdown', e => {
+  const c = document.getElementById('ntCard');
+  if (!c || !c.classList.contains('on')) return;
+  if (c.contains(e.target) || (e.target.closest && e.target.closest('.ntm'))) return;
+  if (NT.editing && (c.querySelector('.ntc-t') || {}).value) return;   // 쓰던 글이 있으면 그대로 둠
+  ntClose();
+}, true);
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && document.getElementById('ntCard')?.classList.contains('on') && !NT.editing) ntClose(); });
+window.addEventListener('resize', () => { if (document.getElementById('ntCard')?.classList.contains('on')) ntPlace(); });
+
+/* ── 주석 목록 · 메모장으로 모으기 ── */
+function ntSorted() { return [...G.notes].sort((a, b) => (a.pg - b.pg) || ((a.rects[0] || [0, 0])[1] - (b.rects[0] || [0, 0])[1])); }
+function ntList() {
+  const m = document.getElementById('ntM'), box = document.getElementById('ntList');
+  const list = ntSorted();
+  document.getElementById('ntCnt').textContent = list.length ? `${list.length}개` : '';
+  document.getElementById('ntCollect').disabled = !list.length;
+  box.innerHTML = list.length ? list.map(n => `<button type="button" class="ntl-i" data-id="${esc(n.id)}">
+      <span class="ntl-p">${n.pg}쪽</span><span class="ntl-t"><span class="ntl-q">「${esc((n.quote || '').slice(0, 60))}${(n.quote || '').length > 60 ? '…' : ''}」</span>
+      <span class="ntl-b">${esc(n.body)}</span>${n.replies && n.replies.length ? `<span class="ntl-r">답글 ${n.replies.length}개</span>` : ''}</span></button>`).join('')
+    : `<div class="stc-e">${G.pdf ? '아직 주석이 없습니다. 글을 드래그한 뒤 선택 메뉴에서 <b>주석</b>을 누르세요.' : 'PDF를 열면 주석을 달 수 있습니다.'}</div>`;
+  box.querySelectorAll('.ntl-i').forEach(b => b.onclick = () => ntGo(b.dataset.id));
+  m.style.display = 'flex';
+}
+function ntCloseList() { document.getElementById('ntM').style.display = 'none'; }
+async function ntGo(id) {
+  const n = G.notes.find(x => x.id === id); if (!n) return;
+  ntCloseList();
+  if (G.layout === 'sheet' && G.sheet > 0) setSheet(0);
+  if (G.layout === 'overlay' && G.chatOpen) togC();
+  if (n.pg !== G.pg) { G.pg = n.pg; clrSel(); await render(n.pg); }
+  // 구절이 화면에 오게
+  const sc = document.getElementById('pdfSc'), vr = document.getElementById('pdfV').getBoundingClientRect(), sr = sc.getBoundingClientRect();
+  if (n.rects[0]) sc.scrollTop += vr.top + n.rects[0][1] * G.zm - sr.top - sc.clientHeight * 0.3;
+  ntOpen(id);
+}
+function ntCollect() {
+  const list = ntSorted(); if (!list.length) return;
+  const doc = (G.fn || '').replace(/\.pdf$/i, '');
+  const text = `■ ${doc} — 주석 ${list.length}개 (${new Date().toLocaleDateString('ko-KR')})\n\n` + list.map(n =>
+    `p.${n.pg} 「${n.quote}」\n→ ${n.body}` + (n.replies || []).map(r => `\n   ↳ ${r.body}`).join('')).join('\n\n');
+  wbAddText(text);
+  ntCloseList();
+  toast(`주석 ${list.length}개를 메모장에 모았습니다`);
+  wbOpen();
+}
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && document.getElementById('ntM')?.style.display === 'flex') ntCloseList(); });
+
 /* ── PDF 로드 ── */
 async function loadPDF(inp) {
   const f = inp.files[0]; if (!f) return;
@@ -1814,13 +2087,14 @@ async function loadPDF(inp) {
 }
 function welcomeText(name) {
   return isTouch()
-    ? `**${name}** 업로드 완료! 총 **${G.tot}페이지**입니다.\n\n글자를 **길게 눌러 선택**하면 아래에 질문 · 번역 · 풀이 · 형광펜 · 인용 복사 메뉴가 나타납니다.`
-    : `**${name}** 업로드 완료! 총 **${G.tot}페이지**입니다.\n\n텍스트를 마우스로 드래그하면 질문 · 번역 · 풀이 · 형광펜 · 인용 복사 · 메모장 메뉴가 나타납니다.`;
+    ? `**${name}** 업로드 완료! 총 **${G.tot}페이지**입니다.\n\n글자를 **길게 눌러 선택**하면 아래에 질문 · 번역 · 풀이 · 형광펜 · 주석 · 인용 복사 메뉴가 나타납니다.`
+    : `**${name}** 업로드 완료! 총 **${G.tot}페이지**입니다.\n\n텍스트를 마우스로 드래그하면 질문 · 번역 · 풀이 · 형광펜 · 주석 · 인용 복사 메뉴가 나타납니다.`;
 }
 async function loadPDFFile(f) {
   if (ST.fp) { await stSave(false); ST.fp = ''; }   // 앞 문서의 학습 기록을 마저 저장
   G.fn = f.name; G.txts = {}; G.hist = []; G.pg = 1; G.sysPrompt = ''; G.docIdx = null;
   G.ann = {}; G.uStack = {}; G.rStack = {};   // 새 PDF → 필기 초기화
+  G.notes = []; ntClose();
   closeFind();
   try {
     G.pdf = await pdfjsLib.getDocument({ data: await f.arrayBuffer() }).promise;
@@ -1928,6 +2202,7 @@ async function renderNow(n) {
   eoc.className = 'endOfContent';
   tl.appendChild(eoc);
   if (FIND.open && FIND.hits.length) paintFind();    // 검색 중이면 이 쪽의 결과를 표시
+  paintNotes();                                       // 이 쪽의 주석 표시
 }
 
 async function bgEx() {
@@ -2638,6 +2913,9 @@ async function selAct(kind) {
     const ok = await copyText(`${s.text}\n— ${docName}, ${s.pg}쪽`);
     dismissSel();
     toast(ok ? `복사했습니다 · 출처(${s.pg}쪽) 포함` : '복사하지 못했습니다');
+  } else if (kind === 'note') {
+    ntStart(s);
+    dismissSel();
   } else if (kind === 'memo') {
     wbAddText(`${s.text}\n— ${docName}, ${s.pg}쪽`);
     dismissSel();
@@ -3262,7 +3540,7 @@ const ICO = {
   copy:  '<svg viewBox="0 0 24 24"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>',
   share: '<svg viewBox="0 0 24 24"><path d="M4 12v7a2 2 0 002 2h12a2 2 0 002-2v-7"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>',
   memo:  '<svg viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 013 3L7 19l-4 1 1-4z"/></svg>',
-  again: '<svg viewBox="0 0 24 24"><polyline points="1 4 1 10 7 10"/><path d="M3.5 15a9 9 0 101.9-4.4L1 10"/></svg>',
+  again: '<svg viewBox="0 0 24 24"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>',   // 호가 아래로 넘쳐 잘리던 것 바로잡음
 };
 function plainMd(t) {
   return String(t).replace(/\*\*(.+?)\*\*/g, '$1').replace(/(^|[^*])\*([^*\n]+)\*/g, '$1$2').replace(/`([^`]+)`/g, '$1');
@@ -3379,7 +3657,10 @@ function showTy() {
   app(d);
 }
 function rmTy() { const t = document.getElementById('tym'); if (t) t.remove(); }
+// 새 채팅: 대화·분석만 지우고 필기·형광펜과 보던 쪽은 남김 (머리줄 초기화 버튼과 '새 채팅' 버튼이 같이 씀)
 function clearC() {
+  const has = ST.log.length || G.hist.length;
+  if (has && !confirm('지금까지의 대화와 분석을 지우고 새 채팅을 시작할까요?\n필기·형광펜과 보던 쪽은 그대로 남습니다.\n(지우기 전에 학습 기록 창에서 파일로 내보내 둘 수 있습니다)')) return;
   G.hist = []; G.selTxt = ''; setSc('all');
   ST.log = [];                                    // 저장된 대화도 비움 (필기는 그대로)
   document.getElementById('msgs').innerHTML = '';
