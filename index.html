@@ -1708,7 +1708,8 @@ function stResumeNote(rec) {
 }
 // 학습 초기화: 이 PDF의 대화·분석·필기·형광펜·인용·보던 쪽을 모두 지우고 처음 연 상태로 (PDF 원본은 남김)
 async function stResetAll() {
-  if (!confirm('이 PDF의 학습 기록을 모두 지우고 처음 연 상태로 되돌릴까요?\n\n학습 초기화 후엔 이전 작업을 되돌릴 수 없습니다.')) return;
+  const br = isTouch() ? '\n' : '\n\n';           // PC만 줄 사이를 띄움 (휴대폰·태블릿은 창이 좁아 붙여서)
+  if (!confirm(['이 PDF의 학습 기록을 모두 지우고 처음 상태로 되돌릴까요?', '학습 초기화 후엔 이전 작업을 되돌릴 수 없습니다.', '(지우기 전에 학습 기록 창에서 파일로 내보내 둘 수 있습니다)'].join(br))) return;
   try { await stDel('docs', ST.fp); } catch (_) {}
   ST.log = []; ST.created = Date.now(); ST.saved = 0;
   G.hist = []; G.ann = {}; G.uStack = {}; G.rStack = {};
@@ -3663,7 +3664,8 @@ function rmTy() { const t = document.getElementById('tym'); if (t) t.remove(); }
 // 새 채팅: 대화·분석만 지우고 필기·형광펜과 보던 쪽은 남김 (머리줄 초기화 버튼과 '새 채팅' 버튼이 같이 씀)
 function clearC() {
   const has = ST.log.length || G.hist.length;
-  if (has && !confirm('지금까지의 대화와 분석을 지우고 새 채팅을 시작할까요?\n필기·형광펜과 보던 쪽은 그대로 남습니다.\n(지우기 전에 학습 기록 창에서 파일로 내보내 둘 수 있습니다)')) return;
+  const br = isTouch() ? '\n' : '\n\n';           // PC만 줄 사이를 띄움
+  if (has && !confirm(['지금까지의 대화와 분석을 지우고 새 채팅을 시작할까요?', '필기·형광펜과 보던 쪽은 그대로 남습니다.', '(지우기 전에 학습 기록 창에서 파일로 내보내 둘 수 있습니다)'].join(br))) return;
   G.hist = []; G.selTxt = ''; setSc('all');
   ST.log = [];                                    // 저장된 대화도 비움 (필기는 그대로)
   document.getElementById('msgs').innerHTML = '';
