@@ -455,12 +455,14 @@ html.touch .stl-b button{min-height:34px;padding:0 10px;}
 #ntHl .nth{position:absolute;background:rgba(250,204,21,.22);border-bottom:2px solid rgba(217,119,6,.7);border-radius:2px;}
 #ntHl .nth.on{background:rgba(250,204,21,.42);box-shadow:0 0 0 1.5px rgba(217,119,6,.75);}
 #ntMk{position:absolute;inset:0;pointer-events:none;z-index:8;}
-.ntm{position:absolute;width:20px;height:20px;padding:2px;border:0;border-radius:5px;background:#f59e0b;color:#fff;pointer-events:auto;cursor:pointer;
-  box-shadow:0 1px 4px rgba(0,0,0,.35);display:flex;align-items:center;justify-content:center;}
+.ntm{position:absolute;width:14px;height:14px;padding:1.5px;border:0;border-radius:50%;background:#fff;color:#b45309;pointer-events:auto;cursor:pointer;
+  box-shadow:0 0 0 1.5px #d97706,0 1px 3px rgba(0,0,0,.3);display:flex;align-items:center;justify-content:center;}
+.ntm::before{content:'';position:absolute;inset:-8px;}   /* 작아도 누르기 쉽게 */
 .ntm svg{width:100%;height:100%;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;}
 .ntm i{position:absolute;right:-6px;top:-6px;min-width:14px;height:14px;border-radius:7px;background:#1c1917;color:#fff;font:700 9px/14px system-ui;font-style:normal;padding:0 3px;}
-.ntm.on{background:#b45309;outline:2px solid #fde68a;}
-html.touch .ntm{width:26px;height:26px;padding:4px;}
+.ntm.on{background:#d97706;color:#fff;}
+html.touch .ntm{width:16px;height:16px;padding:1.5px;}
+html.touch .ntm::before{inset:-12px;}
 #ntCard{position:fixed;z-index:320;width:320px;max-width:calc(100vw - 16px);background:var(--sf);border:1px solid var(--ln2);border-radius:12px;
   box-shadow:0 10px 32px rgba(0,0,0,.28);padding:10px 12px 12px;display:none;font-size:13px;color:var(--ink);}
 #ntCard.on{display:block;}
@@ -1706,7 +1708,7 @@ function stResumeNote(rec) {
 }
 // 학습 초기화: 이 PDF의 대화·분석·필기·형광펜·인용·보던 쪽을 모두 지우고 처음 연 상태로 (PDF 원본은 남김)
 async function stResetAll() {
-  if (!confirm('이 PDF의 학습 기록을 모두 지우고 처음 연 상태로 되돌릴까요?\n\n· 지워지는 것: AI 대화, 고전어 분석, 필기·형광펜, 주석, 인용 구절, 보던 쪽\n· 남는 것: PDF 원본, 메모장\n\n되돌릴 수 없습니다. 필요하면 먼저 학습 기록 창에서 파일로 내보내 두세요.')) return;
+  if (!confirm('이 PDF의 학습 기록을 모두 지우고 처음 연 상태로 되돌릴까요?\n\n학습 초기화 후엔 이전 작업을 되돌릴 수 없습니다.')) return;
   try { await stDel('docs', ST.fp); } catch (_) {}
   ST.log = []; ST.created = Date.now(); ST.saved = 0;
   G.hist = []; G.ann = {}; G.uStack = {}; G.rStack = {};
@@ -1928,10 +1930,11 @@ function paintNotes() {
     b.type = 'button';
     b.title = (n.body || '').slice(0, 80);
     b.setAttribute('aria-label', `${n.pg}쪽 주석 열기`);
-    b.innerHTML = NT_ICO + (n.replies && n.replies.length ? `<i>${n.replies.length + 1}</i>` : '');
-    const sz = isTouch() ? 26 : 20;
-    b.style.left = Math.max(2, x * z - sz - 4) + 'px';
-    b.style.top = Math.max(2, y * z - 2) + 'px';
+    b.innerHTML = NT_ICO;
+    if (n.replies && n.replies.length) b.title += ` (답글 ${n.replies.length}개)`;
+    const sz = isTouch() ? 16 : 14;                 // 구절 맨 앞 글자의 왼쪽 위 모서리에 걸치게
+    b.style.left = Math.max(0, x * z - sz * 0.75) + 'px';
+    b.style.top = Math.max(0, y * z - sz * 0.75) + 'px';
     b.onclick = e => { e.stopPropagation(); ntOpen(n.id); };
     mk.appendChild(b);
   }
