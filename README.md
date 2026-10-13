@@ -58,13 +58,6 @@ PDF 강의 교재를 보면서 AI에게 바로 질문할 수 있는 웹 앱입�
 - 계열마다 최신 2개씩 두고, 기본 모델은 가장 새 Flash입니다. **2.5 Flash는 `pin`으로 고정**되어 구글이 실제로 종료할 때까지 목록에 남습니다. 종료일이 잡힌 모델은 목록에 `(27.5 종료)`처럼 표시됩니다.
 - 앱에서도 한 번 더 지킵니다: 질문 중 모델이 예고 없이 끊기면 다음 모델로 바꿔 자동으로 다시 보냅니다.
 
-**처음 한 번 설정**
-
-1. 저장소 **Settings → Secrets and variables → Actions → New repository secret**
-   이름 `GEMINI_API_KEY`, 값은 무료 Gemini API 키
-2. **Settings → Actions → General → Workflow permissions**에서 *Read and write permissions* 선택
-3. **Actions** 탭 → *Gemini 모델 목록 점검* → **Run workflow**로 한 번 돌려 확인
-
 규칙은 `models.json`의 `rules`에서 바꿀 수 있습니다 (`perFamily` 계열당 개수, `pin` 늘 남길 모델, `exclude` 넣지 않을 모델 등).
 
 ---
