@@ -498,6 +498,24 @@ html.lay-sheet #ntCard{left:8px !important;right:8px;top:auto !important;bottom:
 .ntl-b{display:block;font-size:13.5px;line-height:1.55;margin-top:2px;white-space:pre-wrap;}
 .ntl-r{display:block;font-size:11.5px;color:var(--ink3);margin-top:2px;}
 #ntM .stc-b{margin-bottom:8px;}
+/* 대화창 글자 크기 조절(A- · A+) — 답변 말고도 같은 비율로 커지고 작아짐 */
+#msgs .msg.u .bbl{font-size:calc(13.5px * var(--cs, 1));}
+html.touch #msgs .msg.u .bbl{font-size:calc(15px * var(--cs, 1));}
+#msgs .ctxb{font-size:calc(12px * var(--cs, 1));}
+#msgs .errb,#msgs .wrnb{font-size:calc(13px * var(--cs, 1));}
+#msgs .anc-l{font-size:calc(12px * var(--cs, 1));}
+#msgs .anc-m{font-size:calc(11.5px * var(--cs, 1));}
+#msgs .anc-warn{font-size:calc(12.5px * var(--cs, 1));}
+#msgs .anc-src{font-size:calc(17px * var(--cs, 1));}
+#msgs .ig b{font-size:calc(17px * var(--cs, 1));}
+#msgs .ig b i,#msgs .ig u,#msgs .ig small{font-size:calc(11px * var(--cs, 1));}
+#msgs .ig small,#msgs .ig em{max-width:calc(110px * var(--cs, 1));}
+#msgs .ig em{font-size:calc(10px * var(--cs, 1));}
+#msgs .anc-tip{font-size:calc(12.5px * var(--cs, 1));}
+#msgs .anc-tip b{font-size:calc(15px * var(--cs, 1));}
+#msgs .anc-tr span{font-size:calc(11px * var(--cs, 1));}
+#msgs .anc-tr p{font-size:calc(14px * var(--cs, 1));}
+#msgs .anc-st{font-size:calc(12px * var(--cs, 1));}
 .bdg{position:absolute;top:-2px;right:-2px;width:18px;height:18px;border-radius:50%;background:#ef4444;color:#fff;font-size:11px;font-weight:700;display:none;align-items:center;justify-content:center;border:2px solid var(--sf);}
 
 /* ══════════════════════════════════════════════════════════
@@ -1546,6 +1564,8 @@ function adjFont(d) {
   document.querySelectorAll('.msg.ai .bbl').forEach(el => {
     el.style.fontSize = G.fontSize + 'px';
   });
+  // 내 질문 · 고전어 분석 카드 · 안내 문구도 같은 비율로 (처음 크기 = 1배: PC 13.5px, 휴대폰·태블릿 15.5px)
+  document.getElementById('msgs').style.setProperty('--cs', (G.fontSize / (G.fontBase || 13.5)).toFixed(3));
 }
 
 /* ══════════ 학습 기록 — 자동 저장 · 이어하기 · 학습 파일 내보내기/불러오기 ══════════
@@ -4916,7 +4936,7 @@ function checkMob() {
   const root = document.documentElement;
   const coarse = window.matchMedia('(pointer: coarse)').matches || window.matchMedia('(hover: none)').matches;
   root.classList.toggle('touch', coarse);
-  if (!G.layoutInit && coarse) G.fontSize = 15.5;           // 손가락 기기에서는 답변 글자를 조금 크게
+  if (!G.layoutInit && coarse) { G.fontSize = 15.5; G.fontBase = 15.5; }           // 손가락 기기에서는 답변 글자를 조금 크게
   G.layoutInit = true;
 
   const prev = G.layout;
