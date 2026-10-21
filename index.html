@@ -6387,9 +6387,10 @@ const VO = (() => {
   const $ = id => document.getElementById(id);
   const escA = s => esc(String(s)).replace(/"/g, '&quot;');
 
-  const cfg = Object.assign({ gender: 'f', delay: 1.5, web: true, lang: 'ko-KR', loop: true, engine: 'auto', ready: false },
+  const cfg = Object.assign({ gender: 'f', delay: 1.5, web: true, lang: 'ko-KR', loop: true, engine: 'dev', ready: false },
     (() => { try { return JSON.parse(localStorage.getItem('voCfg') || '{}'); } catch (_) { return {}; } })());
   const save = () => { try { localStorage.setItem('voCfg', JSON.stringify(cfg)); } catch (_) {} };
+  if ((cfg.ver || 0) < 2) { cfg.engine = 'dev'; cfg.ver = 2; save(); }   // 읽기 기본값을 기기 음성(무료)으로 — 예전 설정도 한 번 바꿈
 
   let on = false, st = 'idle';
   let rec = null, carry = '', sFin = '', sInt = '';
@@ -6412,8 +6413,13 @@ const VO = (() => {
     speak: '답하는 중 — 구슬을 누르면 끊어요',
     idle: '쉬는 중 — 구슬을 누르면 다시 들어요',
   };
+  // 아이폰·아이패드(사파리 16.4+): 마이크를 쓴 뒤 답이 통화용 수화부로 작게 나오는 문제 → 읽을 때는 '재생' 모드로
+  function audioMode(s) {
+    const as = navigator.audioSession; if (!as) return;
+    try { as.type = s === 'listen' ? 'play-and-record' : s === 'speak' ? 'playback' : 'auto'; } catch (_) {}
+  }
   function setSt(s, msg) {
-    st = s;
+    st = s; audioMode(on ? s : 'idle');
     const p = $('voP'); p.dataset.st = s;
     if (s !== 'listen') p.classList.remove('lv', 'cd');
     $('voStat').textContent = msg || STAT[s];
@@ -6820,10 +6826,15 @@ const VO = (() => {
       .replace(/https?:\/\/\S+/g, '')
       .replace(/([가-힣]+)\s*[(（][㐀-鿿豈-﫿\u{20000}-\u{2FFFF}\s·,、]+[)）]/gu, '$1')   // 진여(眞如) → 진여
       .replace(/[㐀-鿿豈-﫿]+\s*[(（]([가-힣\s]+)[)）]/g, '$1')                          // 眞如(진여) → 진여
-      .replace(/\(?\bpp?\.\s*(\d+)\s*[-–~]\s*(\d+)\)?/gi, ko ? '$1~$2쪽' : 'pages $1 to $2')
+      .replace(/\s*[(（]\s*pp?\.\s*[\d\s\-–~,]+[)）]/gi, '')                                    // 괄호 속 출처 (p.19)는 읽지 않음(쪽은 말로 밝히게 지시함)
+      .replace(/\(?\bpp?\.\s*(\d+)\s*[-–~]\s*(\d+)\)?/gi, ko ? '$1쪽에서 $2쪽' : 'pages $1 to $2')
+      .replace(/(\d+)\s*[-–~]\s*(\d+)\s*쪽/g, '$1쪽에서 $2쪽')
       .replace(/\(?\bpp?\.\s*(\d+)\)?/gi, ko ? '$1쪽' : 'page $1')
       .replace(/^#+\s*/gm, '').replace(/^\s*(?:[-*•]|\d+\.)\s+/gm, '').replace(/[|#>`_~]/g, ' ')
       .replace(/[\u{1F000}-\u{1FAFF}☀-➿️]/gu, '')
+      .replace(ko ? /[\u3400-\u9FFF\uF900-\uFAFF\u{20000}-\u{2FFFF}]+/gu : /(?!)/g, '')   // 남은 한자는 읽지 않음(한글 독음으로 답하게 지시함)
+      .replace(/[「」『』《》〈〉“”"'‘’\[\]{}<>*]/g, '').replace(/\s*[·—–]\s*/g, ', ').replace(/\s*\/\s*/g, ' ')
+      .replace(/\(\s*\)/g, '').replace(/\s+([,.?!])/g, '$1').replace(/,\s*,/g, ',')
       .replace(/\s+/g, ' ').trim();
   }
   function chunks(s) {                     // 크롬은 긴 문장을 읽다 멈추는 일이 있어 160자 안팎으로 끊어 읽음
@@ -6893,11 +6904,11 @@ const VO = (() => {
   }
   async function ttsFetch(text, signal, retried) {
     const id = await ttsModelId();
-    const style = 'Say in a warm, calm, natural conversational tone:\n';
+    // 말투 지시문은 넣지 않음: 음성 모델이 지시문까지 영어로 소리 내어 읽거나 잡음을 섞는 일이 있어, 읽을 글만 보냄
     const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${id}:generateContent?key=${G.key}`, {
       method: 'POST', signal, headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        contents: [{ role: 'user', parts: [{ text: style + text }] }],
+        contents: [{ role: 'user', parts: [{ text }] }],
         generationConfig: { responseModalities: ['AUDIO'], speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: TTS_VOICE[cfg.gender] || 'Sulafat' } } } },
       }),
     });
@@ -6926,7 +6937,8 @@ const VO = (() => {
       let e = 0, z = 0, prev = f[j * F];
       for (let i = j * F; i < (j + 1) * F; i++) { const v = f[i]; e += v * v; if ((v >= 0) !== (prev >= 0)) z++; prev = v; }
       const rms = Math.sqrt(e / F);
-      kind[j] = rms < 0.008 ? 0 : (z / F > 0.3 ? 2 : 1);
+      let pk = 0; for (let i = j * F; i < (j + 1) * F; i++) { const v = Math.abs(f[i]); if (v > pk) pk = v; }
+      kind[j] = rms < 0.008 ? 0 : (z / F > 0.3 || (pk / rms > 8 && z / F > 0.15) ? 2 : 1);   // 쉭 하는 잡음 · 뾰족한 지직 소리
     }
     const drop = new Uint8Array(nF); let noise = 0, voice = 0;
     for (let j = 0; j < nF;) {
@@ -6959,14 +6971,26 @@ const VO = (() => {
     return { f: g, rate, bad: noise / Math.max(1, noise + voice) };
   }
   // 받아서 거르고, 잡음이 대부분이면(망가진 생성) 한 번 더 받음
+  // 글 길이로 본 읽는 시간 어림 (한국어 1음절 ≈ 0.2초)
+  function expSec(t) {
+    let h = 0, l = 0, d = 0;
+    for (const ch of t) { if (/[가-힣]/.test(ch)) h++; else if (/[A-Za-z\u00C0-\u024F]/.test(ch)) l++; else if (/\d/.test(ch)) d++; }
+    return h * 0.2 + l * 0.07 + d * 0.3 + 0.5;
+  }
+  // 받아서 거르고, 잡음이 대부분이거나 길이가 이상하면(글에 없는 말을 덧붙였거나 중간에 끊김) 한 번 더 받음.
+  // 두 번 다 이상하면 그 부분은 기기 음성으로 읽음
   async function ttsGet(text, signal) {
-    let best = null;
+    const ex = expSec(text);
+    let best = null, bestScore = 1e9;
     for (let t = 0; t < 2; t++) {
       const c = cleanPcm(await ttsFetch(text, signal));
-      if (!best || c.bad < best.bad) best = c;
-      if (c.bad <= 0.35 && c.f.length) break;
+      const dur = c.f.length / c.rate;
+      const odd = !c.f.length || dur > ex * 1.7 + 1.5 || dur < ex * 0.35;
+      const score = (odd ? 10 : 0) + c.bad;
+      if (score < bestScore) { best = c; bestScore = score; }
+      if (!odd && c.bad <= 0.35) break;
     }
-    if (!best.f.length) throw new Error('음성이 비어 있습니다');
+    if (bestScore >= 10) { const e = new Error('AI 음성이 글과 맞지 않습니다'); e.odd = true; throw e; }
     return best;
   }
   function audioCtx() {
@@ -7009,7 +7033,7 @@ const VO = (() => {
       try { pcm = await nextP; }
       catch (e) {
         if (gen !== sayGen || e.name === 'AbortError') return;
-        aiFail(e);
+        if (!e.odd) aiFail(e);                      // 한 번 엉뚱하게 만든 것은 이 답만 기기 음성으로 (AI 음성을 끄지 않음)
         return synth ? sayDev(chunks(parts.slice(i).join(' ')), gen, fin) : fin();
       }
       if (gen !== sayGen) return;
@@ -7154,11 +7178,19 @@ const VO = (() => {
   function hushListen() { hush(); listen(); }
 
   document.body.appendChild($('voP'));             // 대화창이 접혀 있어도 보이도록 화면 위에 띄움
+  // 설정창 바깥을 누르거나 터치하면 작은 알약으로 접힘 (음성 대화는 계속됨)
+  document.addEventListener('pointerdown', e => {
+    if (!on || isMini()) return;
+    const t = e.target;
+    if ($('voP').contains(t) || $('mb').contains(t)) return;
+    setMini(true);
+  }, true);
   window.addEventListener('resize', () => place());
   if (synth) synth.addEventListener?.('voiceschanged', () => { if ($('voP').classList.contains('on')) fillVoices(); });
   document.addEventListener('keydown', e => {
     if (e.key !== 'Escape' || !on) return;
-    if (st === 'speak') hushListen(); else stop();
+    if (!isMini()) setMini(true);                  // 설정창이 펼쳐져 있으면 먼저 접기만
+    else if (st === 'speak') hushListen(); else stop();
   });
   document.addEventListener('visibilitychange', () => {   // 다른 탭으로 가면 마이크를 내려놓음
     if (document.hidden && on && st === 'listen') { clearTimers(); endRec(); setSt('idle'); }
