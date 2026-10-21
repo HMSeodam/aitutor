@@ -6375,6 +6375,8 @@ const VO = (() => {
   const synth = window.speechSynthesis || null;
   const UA = navigator.userAgent;
   const MOBILE = /Android|iPhone|iPad|iPod/i.test(UA) || (/Macintosh/.test(UA) && navigator.maxTouchPoints > 1);
+  const ANDROID = /Android/i.test(UA);
+  let micOffAt = 0;                // 마이크를 마지막으로 내려놓은 때 (휴대폰 소리 경로 전환 대기용)
   const V_FULL = 24000;            // PDF 전체가 이 토큰 이하면 통째로 (고정 앞부분 → 캐시 할인)
   const V_BUDGET = 12000;          // 넘으면 이만큼만 골라 보냄
   const V_HIST = 8, V_HCUT = 700;  // 기록 4왕복, 답 하나는 700자까지
@@ -6459,7 +6461,7 @@ const VO = (() => {
     clearInterval(placeT); placeT = setInterval(place, 250);
     listen();
   }
-  function releaseMic() { if (mic) { mic.getTracks().forEach(t => t.stop()); mic = null; } }
+  function releaseMic() { if (mic) { mic.getTracks().forEach(t => t.stop()); mic = null; micOffAt = performance.now(); } }
   function stop() {
     on = false;
     clearTimers(); endRec(); hush(); releaseMic();
@@ -6532,8 +6534,8 @@ const VO = (() => {
   }
   function endRec() {
     clearTimeout(restartT);
-    if (rec) { const r = rec; rec = null; try { r.abort(); } catch (_) {} }
-    if (raw) { rawDown(raw); raw = null; }
+    if (rec) { const r = rec; rec = null; try { r.abort(); } catch (_) {} micOffAt = performance.now(); }
+    if (raw) { rawDown(raw); raw = null; micOffAt = performance.now(); }
   }
 
   /* ── 녹음 방식 (브라우저 인식이 없을 때): 소리 크기로 말 시작·끝을 잡고 WAV로 Gemini에 받아쓰기 ── */
@@ -6845,14 +6847,26 @@ const VO = (() => {
     const p = synth && pickVoice();
     return p && p.v && !p.alt && isNatural(p.v) ? 'dev' : 'ai';
   }
+  /* 휴대폰(특히 안드로이드)에서 '치직' 하는 무전기 소리 막기
+     마이크가 열려 있는 동안 기기는 소리를 '통화 모드'(좁은 대역·잡음 억제, 블루투스는 헤드셋 모드)로 내보냅니다.
+     ① 답을 읽기 전에 마이크를 완전히 내려놓고  ② 소리 경로가 '미디어 모드'로 돌아올 때까지 잠깐 기다린 뒤
+     ③ 안드로이드는 답마다 새 소리 출력(재생 전용 설정)을 열어 통화 모드에 묶인 출력을 다시 쓰지 않음
+     ④ 조각의 처음·끝을 아주 짧게 페이드해 '틱' 소리를 없앰 */
+  async function settle() {
+    if (!MOBILE) return;
+    const wait = 450 - (performance.now() - micOffAt);
+    if (wait > 0) await gSleep(wait);
+  }
+  function closeOut() { if (ANDROID && outAC) { const ac = outAC; outAC = null; ac.close().catch(() => {}); } }
   function say(text, done) {
     hush();
+    if (!FILE || MOBILE) releaseMic();
     const gen = ++sayGen;
     const list = chunks(speakable(text));
     if (!list.length) { done && done(); return; }
     setSt('speak');
     if (speakingEl) speakingEl.classList.add('speaking');
-    const fin = () => { if (gen !== sayGen) return; endSpeak(); done && done(); };
+    const fin = () => { if (gen !== sayGen) return; closeOut(); endSpeak(); done && done(); };
     const eng = engineNow();
     if (eng === 'ai') sayAI(list, gen, fin);
     else if (eng === 'dev') sayDev(list, gen, fin);
@@ -6879,7 +6893,7 @@ const VO = (() => {
   }
   async function ttsFetch(text, signal, retried) {
     const id = await ttsModelId();
-    const style = 'Read aloud in a warm, calm, natural conversational voice, like a thoughtful person explaining beside the listener, at a relaxed natural pace:\n';
+    const style = 'Say in a warm, calm, natural conversational tone:\n';
     const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${id}:generateContent?key=${G.key}`, {
       method: 'POST', signal, headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -6900,33 +6914,96 @@ const VO = (() => {
     for (let i = 0; i < n; i++) { let v = bin.charCodeAt(2 * i) | (bin.charCodeAt(2 * i + 1) << 8); if (v >= 32768) v -= 65536; f[i] = v / 32768; }
     return { f, rate };
   }
+  /* AI 음성의 '치직' 잡음 걸러내기
+     Gemini 음성 생성은 가끔(특히 짧은 문장의 끝이나 문장 사이 쉼에서) 무전기 같은 잡음을 섞어 냄.
+     20ms씩 잘라 소리 크기와 '0을 지나는 횟수'(잡음은 아주 잦고, 목소리는 드묾)를 보고,
+     잡음이 0.2초 넘게 이어지는 덩어리는 짧은 쉼으로 바꾸고, 앞뒤의 무음·잡음은 잘라 냄.
+     ('스'·'쓰' 같은 마찰음은 보통 0.15초 안팎이라 그대로 남음) */
+  function cleanPcm(pcm) {
+    const { f, rate } = pcm, F = Math.max(1, Math.round(rate * 0.02)), nF = Math.floor(f.length / F);
+    const kind = new Uint8Array(nF);                // 0 무음 · 1 목소리 · 2 잡음
+    for (let j = 0; j < nF; j++) {
+      let e = 0, z = 0, prev = f[j * F];
+      for (let i = j * F; i < (j + 1) * F; i++) { const v = f[i]; e += v * v; if ((v >= 0) !== (prev >= 0)) z++; prev = v; }
+      const rms = Math.sqrt(e / F);
+      kind[j] = rms < 0.008 ? 0 : (z / F > 0.3 ? 2 : 1);
+    }
+    const drop = new Uint8Array(nF); let noise = 0, voice = 0;
+    for (let j = 0; j < nF;) {
+      if (kind[j] !== 2) { if (kind[j] === 1) voice++; j++; continue; }
+      let k = j, cnt = 0;
+      while (k < nF && (kind[k] === 2 || (kind[k] === 0 && k + 1 < nF && kind[k + 1] === 2))) { if (kind[k] === 2) cnt++; k++; }
+      if (cnt >= 10) { for (let m = j; m < k; m++) drop[m] = 1; noise += cnt; } else voice += cnt;
+      j = k;
+    }
+    let fv = -1, lv = -1;
+    for (let j = 0; j < nF; j++) if (kind[j] === 1) { if (fv < 0) fv = j; lv = j; }   // 앞뒤는 목소리 기준으로 (끝에 붙은 짧은 잡음도 잘림)
+    if (fv < 0) return { f: new Float32Array(0), rate, bad: 1 };
+    const a = Math.max(0, fv - 3), b = Math.min(nF, lv + 5);       // 앞 60ms · 뒤 100ms 여유
+    const pause = Math.round(rate * 0.15), out = [], cuts = [];
+    let len = 0, inDrop = false;
+    for (let j = a; j < b; j++) {
+      if (drop[j]) { if (!inDrop) { cuts.push(len); out.push(new Float32Array(pause)); len += pause; inDrop = true; } continue; }
+      inDrop = false; const seg = f.subarray(j * F, (j + 1) * F); out.push(seg); len += seg.length;
+    }
+    const g = new Float32Array(len); let o = 0;
+    for (const seg of out) { g.set(seg, o); o += seg.length; }
+    // 잘라 낸 자리 앞뒤 10ms 페이드 (이음매 '틱' 방지)
+    const fd = Math.round(rate * 0.01);
+    for (const c of cuts) {
+      for (let i = 1; i <= fd && c - i >= 0; i++) g[c - i] *= (i - 1) / fd;          // 쉼 앞: 줄어들며
+      for (let i = 0; i < fd && c + pause + i < len; i++) g[c + pause + i] *= i / fd; // 쉼 뒤: 커지며
+    }
+    const ed = Math.min(len >> 1, Math.round(rate * 0.012));
+    for (let i = 0; i < ed; i++) { const k = i / ed; g[i] *= k; g[len - 1 - i] *= k; }
+    return { f: g, rate, bad: noise / Math.max(1, noise + voice) };
+  }
+  // 받아서 거르고, 잡음이 대부분이면(망가진 생성) 한 번 더 받음
+  async function ttsGet(text, signal) {
+    let best = null;
+    for (let t = 0; t < 2; t++) {
+      const c = cleanPcm(await ttsFetch(text, signal));
+      if (!best || c.bad < best.bad) best = c;
+      if (c.bad <= 0.35 && c.f.length) break;
+    }
+    if (!best.f.length) throw new Error('음성이 비어 있습니다');
+    return best;
+  }
   function audioCtx() {
-    if (!outAC) { const AC = window.AudioContext || window.webkitAudioContext; outAC = new AC(); }
+    if (!outAC || outAC.state === 'closed') {
+      const AC = window.AudioContext || window.webkitAudioContext;
+      try { outAC = new AC({ latencyHint: 'playback' }); } catch (_) { outAC = new AC(); }   // 재생 전용: 버퍼를 넉넉히 잡아 끊김·잡음 방지
+    }
     if (outAC.state === 'suspended') outAC.resume().catch(() => {});
     return outAC;
   }
-  function play(pcm) {
+  async function play(pcm) {
+    const ac = audioCtx();
+    if (ac.state !== 'running') { await Promise.race([ac.resume().catch(() => {}), gSleep(600)]); }
+    if (ac.state !== 'running') throw new Error('소리 출력을 열지 못했습니다');
     return new Promise(res => {
-      const ac = audioCtx();
       const b = ac.createBuffer(1, pcm.f.length, pcm.rate);
       b.getChannelData(0).set(pcm.f);
       const sN = ac.createBufferSource(); sN.buffer = b; sN.connect(ac.destination);
-      sN.onended = () => { if (outSrc === sN) outSrc = null; res(); };
+      const wd = setTimeout(() => { if (outSrc === sN) outSrc = null; res(); }, b.duration * 1000 + 1500);   // 끝 신호가 안 와도 멈추지 않게
+      sN.onended = () => { clearTimeout(wd); if (outSrc === sN) outSrc = null; res(); };
       outSrc = sN; sN.start();
     });
   }
   async function sayAI(list, gen, fin) {
-    // 긴 답은 첫 문장만 먼저 만들어 빨리 말을 시작하고, 나머지는 450자 안팎으로 묶음 (짧은 답은 한 번에 — 호출 수 절약)
+    // 보통 답(400자 이하)은 한 번에 만들어 이음매가 없게. 긴 답만 나누되, 첫 조각도 120자 넘게
+    // (아주 짧은 조각일수록 끝에 잡음이 붙기 쉬움), 나머지는 500자 안팎. 첫 두 조각은 처음부터 함께 받아 기다림을 없앰
     const all = list.join(' ');
-    const sents = all.length > 200 ? (all.match(/[^.!?。？！…]+[.!?。？！…]*\s*/g) || [all]).map(x => x.trim()).filter(Boolean) : [all];
+    const sents = all.length > 400 ? (all.match(/[^.!?。？！…]+[.!?。？！…]*\s*/g) || [all]).map(x => x.trim()).filter(Boolean) : [all];
     let k = 0, first = '';
-    while (k < sents.length && (first.length < 25 || k === 0)) first += (first ? ' ' : '') + sents[k++];
+    while (k < sents.length && (first.length < 120 || k === 0)) first += (first ? ' ' : '') + sents[k++];
     const parts = [first]; let buf = '';
-    for (const t of sents.slice(k)) { if (buf && (buf + ' ' + t).length > 450) { parts.push(buf); buf = ''; } buf = buf ? buf + ' ' + t : t; }
+    for (const t of sents.slice(k)) { if (buf && (buf + ' ' + t).length > 500) { parts.push(buf); buf = ''; } buf = buf ? buf + ' ' + t : t; }
     if (buf) parts.push(buf);
     const ab = ttsAbort = new AbortController();
-    const get = i => { if (i >= parts.length) return null; const pr = ttsFetch(parts[i], ab.signal); pr.catch(() => {}); return pr; };
-    let nextP = get(0);
+    const got = [];
+    const get = i => { if (i >= parts.length) return null; if (!got[i]) { got[i] = ttsGet(parts[i], ab.signal); got[i].catch(() => {}); } return got[i]; };
+    let nextP = get(0); get(1);
     for (let i = 0; i < parts.length; i++) {
       let pcm;
       try { pcm = await nextP; }
@@ -6936,9 +7013,13 @@ const VO = (() => {
         return synth ? sayDev(chunks(parts.slice(i).join(' ')), gen, fin) : fin();
       }
       if (gen !== sayGen) return;
-      nextP = get(i + 1);                           // 지금 부분을 읽는 동안 다음 부분을 받아 둠
+      if (i === 0) { await settle(); if (gen !== sayGen) return; }
+      nextP = get(i + 1); get(i + 2);               // 지금 부분을 읽는 동안 다음 부분을 받아 둠
+      if (i > 0) await gSleep(200);                 // 조각 사이는 문장 사이처럼 짧게 쉼
+      if (gen !== sayGen) return;
       drawTx(parts[i]);
-      await play(pcm);
+      try { await play(pcm); }
+      catch (_) { if (gen !== sayGen) return; return synth ? sayDev(chunks(parts.slice(i).join(' ')), gen, fin) : fin(); }
       if (gen !== sayGen) return;
     }
     fin();
@@ -6970,7 +7051,7 @@ const VO = (() => {
       synth.speak(u);
       arm(u, 3000 + t.length * 160);
     };
-    next();
+    settle().then(() => { if (gen === sayGen) next(); });
   }
   function endSpeak() { if (speakingEl) speakingEl.classList.remove('speaking'); speakingEl = null; }
   function hush() {
@@ -6978,6 +7059,7 @@ const VO = (() => {
     if (synth && (synth.speaking || synth.pending)) synth.cancel();
     if (ttsAbort) { ttsAbort.abort(); ttsAbort = null; }
     if (outSrc) { const sN = outSrc; outSrc = null; try { sN.stop(); } catch (_) {} }
+    closeOut();
     endSpeak();
   }
   function unlockTTS() {                    // iOS·사파리: 손으로 누른 순간에 소리 출력을 열어 둬야 나중에 답을 읽을 수 있음
