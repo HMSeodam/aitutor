@@ -1,5 +1,5 @@
 {
-  "checked": "2026-10-13",
+  "checked": "2026-11-09",
   "default": "gemini-3.8-flash",
   "models": [
     {
@@ -16,8 +16,7 @@
     },
     {
       "id": "gemini-3.1-flash-lite",
-      "label": "3.1 Flash Lite",
-      "shutdown": "2027-05-07"
+      "label": "3.1 Flash Lite"
     },
     {
       "id": "gemini-2.5-flash",
